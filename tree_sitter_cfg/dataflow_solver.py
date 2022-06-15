@@ -24,6 +24,7 @@ def get_definition(ast_node):
 
 def solve(cfg, verbose=0):
     """
+    reaching definition
     worklist algorithm
     https://en.wikipedia.org/wiki/Reaching_definition
     """
