@@ -19,6 +19,10 @@ tree = parser.parse(bytes("""int main()
 {
     int x = 0;
     x = x + 1;
+    if (x > 1) {
+        x += 5;
+    }
+    x = x + 2;
     return x;
 }
 """, "utf8"))
@@ -73,35 +77,51 @@ class MyVisitor:
         self.node_id += 1
         return node_id
     
-    def visit(self, n, indentation_level=0, parent=None, siblings=None):
-        getattr(self, f"enter_{n.type}", self.enter_default)(n=n, indentation_level=indentation_level, parent=parent, siblings=siblings)
+    def visit(self, n, indentation_level=0, **kwargs):
+        getattr(self, f"visit_{n.type}", self.visit_default)(n=n, indentation_level=indentation_level, **kwargs)
+    
+    def visit_children(self, n, indentation_level, **kwargs):
         for c in n.children:
             self.visit(c, indentation_level+1, parent=n, siblings=n.children)
-        getattr(self, f"exit_{n.type}", self.exit_default)(n=n, indentation_level=indentation_level, parent=parent, siblings=siblings)
 
-    def enter_default(self, n, indentation_level, **kwargs):
+    def visit_default(self, n, indentation_level, **kwargs):
         print("\t" * indentation_level, "enter", n)
-
-    def exit_default(self, n, indentation_level, **kwargs):
+        self.visit_children(n, indentation_level)
         print("\t" * indentation_level, "exit", n)
 
-    def enter_statement(self, n, stmt_type):
-        node_id = self.add_cfg_node(n, stmt_type)
+    def enter_statement(self, n):
+        node_id = self.add_cfg_node(n, f"{n.type}\n`{n.text.decode()}`")
         self.cfg.add_edges_from(zip(self.fringe, [node_id] * len(self.fringe)))
         self.fringe = []
         self.fringe.append(node_id)
 
-    def enter_expression_statement(self, n, **kwargs):
-        self.enter_statement(n, "EXPRESSION_STATEMENT")
+    def visit_expression_statement(self, n, **kwargs):
+        self.enter_statement(n)
+        self.visit_default(n, **kwargs)
 
-    def enter_init_declarator(self, n, **kwargs):
-        self.enter_statement(n, "INIT_DECLARATOR")
+    def visit_init_declarator(self, n, **kwargs):
+        self.enter_statement(n)
+        self.visit_default(n, **kwargs)
 
-    def enter_function_definition(self, n, **kwargs):
+    def visit_if_statement(self, n, **kwargs):
+        print(n.children)
+        condition = n.children[1].children[1]
+        assert condition.type in ("binary_expression",), condition.type
+        condition_id = self.add_cfg_node(condition, f"{condition.type}\n`{condition.text.decode()}`")
+        self.cfg.add_edges_from(zip(self.fringe, [condition_id] * len(self.fringe)))
+        self.fringe = []
+        self.fringe.append(condition_id)
+
+        compound_statement = n.children[2]
+        assert compound_statement.type == "compound_statement", compound_statement.type
+        self.visit(compound_statement)
+        # fringe should now have last statement of compount_statement
+        self.fringe.append(condition_id)
+
+    def visit_function_definition(self, n, **kwargs):
         node_id = self.add_cfg_node(n, "FUNC_ENTRY")
         self.fringe.append(node_id)
-
-    def exit_function_definition(self, n, **kwargs):
+        self.visit_children(n, **kwargs)
         node_id = self.add_cfg_node(n, "FUNC_EXIT")
         self.cfg.add_edges_from(zip(self.fringe, [node_id] * len(self.fringe)))
 
