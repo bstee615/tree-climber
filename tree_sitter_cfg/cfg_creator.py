@@ -1,7 +1,7 @@
 from tree_sitter_cfg.base_visitor import BaseVisitor
 import networkx as nx
 
-boolean_expressions = {"binary_expression", "true"}
+boolean_expressions = {"binary_expression", "true", "false"}
 branch_targets = {"compound_statement", "expression_statement"}
 
 class CFGCreator(BaseVisitor):
@@ -70,7 +70,8 @@ class CFGCreator(BaseVisitor):
         compound_statement = n.children[2]
         assert compound_statement.type in branch_targets, compound_statement.type
         self.visit(compound_statement)
-        assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
+        # NOTE: this assert doesn't work in the case of an if with an empty else
+        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
 
         if len(n.children) > 3:
             else_compound_statement = n.children[4]
@@ -121,7 +122,8 @@ class CFGCreator(BaseVisitor):
         compound_statement = n.children[initial_offset]
         assert compound_statement.type in branch_targets, compound_statement.type
         self.visit(compound_statement)
-        assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
+        # NOTE: this assert doesn't work in the case of an if with an empty else
+        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         if incr is not None:
             incr_id = self.add_cfg_node(incr)
             self.add_edge_from_fringe_to(incr_id)
@@ -144,6 +146,7 @@ class CFGCreator(BaseVisitor):
         compound_statement = n.children[2]
         assert compound_statement.type in branch_targets, compound_statement.type
         self.visit(compound_statement)
-        assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
+        # NOTE: this assert doesn't work in the case of an if with an empty else
+        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)

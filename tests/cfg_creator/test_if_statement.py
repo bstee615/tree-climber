@@ -1,4 +1,4 @@
-from tests.utils import parse_and_create_cfg
+from tests.utils import *
 import networkx as nx
 
 def test_if_simple():
@@ -55,4 +55,20 @@ def test_if_else():
     }
     """)
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (5, 5)
+    assert nx.is_directed_acyclic_graph(cfg)
+
+def test_if_nested():
+    cfg = parse_and_create_cfg("""int main()
+    {
+        if (true) {
+            if (false) {
+                x += 5;
+            }
+            else {
+
+            }
+        }
+    }
+    """)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (5, 6)
     assert nx.is_directed_acyclic_graph(cfg)

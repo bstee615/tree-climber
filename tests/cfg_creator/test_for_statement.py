@@ -1,4 +1,4 @@
-from tests.utils import parse_and_create_cfg
+from tests.utils import *
 import networkx as nx
 
 def test_for_simple():
@@ -12,7 +12,7 @@ def test_for_simple():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (6, 6)
     assert len(list(nx.simple_cycles(cfg))) == 1
 
-def test_for_simple():
+def test_for_nocompound():
     cfg = parse_and_create_cfg("""int main()
     {
         for (int i = 0; i < 10; i ++)
@@ -98,3 +98,19 @@ def test_for_nothing():
     """)
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (4, 4)
     assert len(list(nx.simple_cycles(cfg))) == 1
+
+def test_for_nested():
+    cfg = parse_and_create_cfg("""int main()
+    {
+        int x = 0;
+        for (int i = 0; i < 10; i ++) {
+            for (int j = 0; j < 10; j ++) {
+                x += j;
+            }
+            x -= i;
+        }
+        return x;
+    }
+    """)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (11, 12)
+    assert len(list(nx.simple_cycles(cfg))) == 2
