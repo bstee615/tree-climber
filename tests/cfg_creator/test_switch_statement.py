@@ -11,11 +11,13 @@ def test_if_simple():
             case 1:
                 return 1;
             case 2:
-                return 4;
+                x ++;
             default:
-                return -1;
+                x = -1;
+                break;
         }
+        return x;
     }
-    """)
+    """, draw_cfg=True, print_ast=True)
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (8, 10)
     assert nx.is_directed_acyclic_graph(cfg)

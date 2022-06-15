@@ -84,11 +84,6 @@ class CFGCreator(BaseVisitor):
         self.enter_statement(n)
         self.visit_default(n, **kwargs)
 
-    def visit_return_statement(self, n, **kwargs):
-        node_id = self.add_cfg_node(n)
-        self.add_edge_from_fringe_to(node_id)
-        self.visit_default(n, **kwargs)
-
     """STRUCTURED CONTROL FLOW"""
 
     def visit_if_statement(self, n, **kwargs):
@@ -207,13 +202,26 @@ class CFGCreator(BaseVisitor):
         cases = n.children[2].children[1:-1]
         for case in cases:
             if case.children[0].type == "default":
-                case_body = case.children[2]
+                case_body_idx = 2
             else:
-                case_body = case.children[3]
-            case_body_id = self.add_cfg_node(case_body)
-            # TODO: add case condition to edge
-            self.cfg.add_edge(cond_id, case_body_id)
-            self.fringe.append(case_body_id)
+                case_body_idx = 3
+            self.fringe.append(cond_id)
+            for case_body in case.children[case_body_idx:]:
+                self.visit(case_body)
 
-    # TODO: break
-    # TODO: continue
+    def visit_return_statement(self, n, **kwargs):
+        node_id = self.add_cfg_node(n)
+        self.add_edge_from_fringe_to(node_id)
+        self.visit_default(n, **kwargs)
+
+    def visit_break_statement(self, n, **kwargs):
+        node_id = self.add_cfg_node(n)
+        self.add_edge_from_fringe_to(node_id)
+        # TODO: connect to nearest break destination
+        self.visit_default(n, **kwargs)
+
+    def visit_continue_statement(self, n, **kwargs):
+        node_id = self.add_cfg_node(n)
+        self.add_edge_from_fringe_to(node_id)
+        # TODO: connect to nearest break destination
+        self.visit_default(n, **kwargs)
