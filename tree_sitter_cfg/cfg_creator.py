@@ -19,7 +19,7 @@ class CFGCreator(BaseVisitor):
     def add_cfg_node(self, ast_node, label=None):
         node_id = self.node_id
         if label is None:
-            label = f"{ast_node.type} ({ast_node.start_point}, {ast_node.end_point})\n`{ast_node.text.decode()}`"
+            label = f"{node_id}: {ast_node.type} ({ast_node.start_point}, {ast_node.end_point})\n`{ast_node.text.decode()}`"
         self.cfg.add_node(node_id, n=ast_node, label=label)
         self.node_id += 1
         return node_id
@@ -35,6 +35,7 @@ class CFGCreator(BaseVisitor):
 
     def visit_function_definition(self, n, **kwargs):
         entry_id = self.add_cfg_node(n, "FUNC_ENTRY")
+        self.cfg.graph["entry"] = entry_id
         self.fringe.append(entry_id)
         self.visit_children(n, **kwargs)
         exit_id = self.add_cfg_node(n, "FUNC_EXIT")
