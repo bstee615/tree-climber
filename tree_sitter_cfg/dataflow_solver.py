@@ -66,8 +66,9 @@ def solve(cfg, verbose=0):
             def2id[def_idx] = _id
 
             def_idx += 1
-    print("node2def", node2def)
-    print("def2id", def2id)
+    if verbose >= 1:
+        print("node2def", node2def)
+        print("def2id", def2id)
 
     _in = {}
     out = {}
@@ -111,8 +112,6 @@ def test_solve():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    v = BaseVisitor()
-    v.visit(tree.root_node)
     v = CFGCreator()
     v.visit(tree.root_node)
     cfg = v.cfg
