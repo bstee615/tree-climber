@@ -1,4 +1,4 @@
-from base_visitor import BaseVisitor
+from tree_sitter_cfg.base_visitor import BaseVisitor
 import networkx as nx
 
 class CFGCreator(BaseVisitor):

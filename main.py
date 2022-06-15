@@ -1,6 +1,6 @@
-from base_visitor import BaseVisitor
-from cfg_creator import CFGCreator
-from tree_sitter_utils import c_parser
+from tree_sitter_cfg.base_visitor import BaseVisitor
+from tree_sitter_cfg.cfg_creator import CFGCreator
+from tree_sitter_cfg.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
 
