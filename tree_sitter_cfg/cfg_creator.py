@@ -1,7 +1,9 @@
 from tree_sitter_cfg.base_visitor import BaseVisitor
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 import networkx as nx
-import matplotlib.pyplot as plt
+
+boolean_expressions = {"binary_expression", "true"}
+branch_targets = {"compound_statement", "expression_statement"}
 
 class CFGCreator(BaseVisitor):
     """
@@ -61,19 +63,19 @@ class CFGCreator(BaseVisitor):
 
     def visit_if_statement(self, n, **kwargs):
         condition = n.children[1].children[1]
-        assert condition.type in ("binary_expression",), condition.type
+        assert condition.type in boolean_expressions, condition.type
         condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
         self.fringe.append(condition_id)
 
         compound_statement = n.children[2]
-        assert compound_statement.type == "compound_statement", compound_statement.type
+        assert compound_statement.type in branch_targets, compound_statement.type
         self.visit(compound_statement)
         assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
 
         if len(n.children) > 3:
             else_compound_statement = n.children[4]
-            assert else_compound_statement.type == "compound_statement", else_compound_statement.type
+            assert else_compound_statement.type in branch_targets, else_compound_statement.type
             old_fringe = self.fringe
             self.fringe = [condition_id]
             self.visit(else_compound_statement)
@@ -95,7 +97,7 @@ class CFGCreator(BaseVisitor):
             initial_offset += 1
         else:
             initial_offset += 2
-            assert cond.type in ("binary_expression",), cond.type
+            assert cond.type in boolean_expressions, cond.type
         incr = n.children[initial_offset]
         if incr.type == ")":
             initial_offset += 1
@@ -118,7 +120,7 @@ class CFGCreator(BaseVisitor):
         self.fringe.append(cond_id)
 
         compound_statement = n.children[initial_offset]
-        assert compound_statement.type == "compound_statement", compound_statement.type
+        assert compound_statement.type in branch_targets, compound_statement.type
         self.visit(compound_statement)
         assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         if incr is not None:
@@ -132,7 +134,7 @@ class CFGCreator(BaseVisitor):
     def visit_while_statement(self, n, **kwargs):
         cond = n.children[1].children[1]
         
-        assert cond.type in ("binary_expression",), cond.type
+        assert cond.type in boolean_expressions, cond.type
 
         cond_id = self.add_cfg_node(cond)
 
@@ -141,11 +143,48 @@ class CFGCreator(BaseVisitor):
         self.fringe.append(cond_id)
 
         compound_statement = n.children[2]
-        assert compound_statement.type == "compound_statement", compound_statement.type
+        assert compound_statement.type in branch_targets, compound_statement.type
         self.visit(compound_statement)
         assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
+
+def test_if_simple():
+    tree = c_parser.parse(bytes("""int main()
+    {
+        if (true) {
+            x += 5;
+        }
+    }
+    """, "utf8"))
+    v = CFGCreator()
+    v.visit(tree.root_node)
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (4, 4)
+    assert nx.is_directed_acyclic_graph(v.cfg)
+
+def test_if_nocompound():
+    tree = c_parser.parse(bytes("""int main()
+    {
+        if (true)
+            x += 5;
+    }
+    """, "utf8"))
+    v = CFGCreator()
+    v.visit(tree.root_node)
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (4, 4)
+    assert nx.is_directed_acyclic_graph(v.cfg)
+
+def test_if_empty():
+    tree = c_parser.parse(bytes("""int main()
+    {
+        if (true) {
+        }
+    }
+    """, "utf8"))
+    v = CFGCreator()
+    v.visit(tree.root_node)
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (3, 2)
+    assert nx.is_directed_acyclic_graph(v.cfg)
 
 def test_if_noelse():
     tree = c_parser.parse(bytes("""int main()
@@ -182,6 +221,18 @@ def test_for_simple():
         for (int i = 0; i < 10; i ++) {
             x = 0;
         }
+    }
+    """, "utf8"))
+    v = CFGCreator()
+    v.visit(tree.root_node)
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (6, 6)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
+
+def test_for_simple():
+    tree = c_parser.parse(bytes("""int main()
+    {
+        for (int i = 0; i < 10; i ++)
+            x = 0;
     }
     """, "utf8"))
     v = CFGCreator()
