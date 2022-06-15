@@ -159,12 +159,14 @@ class CFGCreator(BaseVisitor):
             incr_id = self.add_cfg_node(incr)
             self.add_edge_from_fringe_to(incr_id)
             self.cfg.add_edge(incr_id, cond_id)
+            self.cfg.add_edges_from(zip(self.continue_fringe, [incr_id] * len(self.continue_fringe)))
+            self.continue_fringe = []
         else:
             self.add_edge_from_fringe_to(cond_id)
+            self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+            self.continue_fringe = []
         self.fringe.append(cond_id)
 
-        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
-        self.continue_fringe = []
         self.fringe += self.break_fringe
         self.break_fringe = []
 
