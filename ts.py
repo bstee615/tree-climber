@@ -23,6 +23,10 @@ tree = parser.parse(bytes("""int main()
         x += 5;
     }
     x = x + 2;
+    for (int i = 0; i < 10; i ++) {
+        x --;
+    }
+    x = x + 3;
     return x;
 }
 """, "utf8"))
@@ -117,6 +121,34 @@ class MyVisitor:
         self.visit(compound_statement)
         # fringe should now have last statement of compount_statement
         self.fringe.append(condition_id)
+
+    def visit_for_statement(self, n, **kwargs):
+        print(n.children)
+        init = n.children[2]
+        cond = n.children[3]
+        incr = n.children[5]
+        
+        assert init.type in ("declaration",), cond.type
+        assert cond.type in ("binary_expression",), cond.type
+        assert incr.type in ("update_expression",), cond.type
+
+        init_id = self.add_cfg_node(init, f"{init.type}\n`{init.text.decode()}`")
+        cond_id = self.add_cfg_node(cond, f"{cond.type}\n`{cond.text.decode()}`")
+        incr_id = self.add_cfg_node(incr, f"{incr.type}\n`{incr.text.decode()}`")
+
+        self.cfg.add_edges_from(zip(self.fringe, [init_id] * len(self.fringe)))
+        self.cfg.add_edge(init_id, cond_id)
+        self.fringe = []
+        self.fringe.append(cond_id)
+
+        compound_statement = n.children[7]
+        assert compound_statement.type == "compound_statement", compound_statement.type
+        self.visit(compound_statement)
+        # fringe should now have last statement of compound_statement
+        self.cfg.add_edges_from(zip(self.fringe, [incr_id] * len(self.fringe)))
+        self.cfg.add_edge(incr_id, cond_id)
+        self.fringe = []
+        self.fringe.append(cond_id)
 
     def visit_function_definition(self, n, **kwargs):
         node_id = self.add_cfg_node(n, "FUNC_ENTRY")
