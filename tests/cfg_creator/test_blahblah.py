@@ -31,6 +31,6 @@ def test_screwy_program():
         return x;
     }
     """)
-    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (19, 25)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (20, 26)
     assert len(list(nx.simple_cycles(cfg))) == 7
 

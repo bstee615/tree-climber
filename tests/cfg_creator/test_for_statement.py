@@ -112,5 +112,5 @@ def test_for_nested():
         return x;
     }
     """)
-    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (11, 12)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (12, 13)
     assert len(list(nx.simple_cycles(cfg))) == 2
