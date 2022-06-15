@@ -12,6 +12,9 @@ if __name__ == "__main__":
         if (x > 1) {
             x += 5;
         }
+        else {
+            x += 50;
+        }
         x = x + 2;
         for (int i = 0; i < 10; i ++) {
             x --;

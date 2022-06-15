@@ -66,7 +66,16 @@ class CFGCreator(BaseVisitor):
         assert compound_statement.type == "compound_statement", compound_statement.type
         self.visit(compound_statement)
         assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
-        self.fringe.append(condition_id)
+
+        if len(n.children) > 3:
+            else_compound_statement = n.children[4]
+            assert else_compound_statement.type == "compound_statement", else_compound_statement.type
+            old_fringe = self.fringe
+            self.fringe = [condition_id]
+            self.visit(else_compound_statement)
+            self.fringe = old_fringe + self.fringe
+        else:
+            self.fringe.append(condition_id)
 
     def visit_for_statement(self, n, **kwargs):
         init = n.children[2]
