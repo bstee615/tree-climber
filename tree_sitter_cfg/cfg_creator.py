@@ -15,8 +15,10 @@ class CFGCreator(BaseVisitor):
         self.node_id = 0
         self.fringe = []
     
-    def add_cfg_node(self, ast_node, label):
+    def add_cfg_node(self, ast_node, label=None):
         node_id = self.node_id
+        if label is None:
+            label = f"{ast_node.type} ({ast_node.start_point}, {ast_node.end_point})\n`{ast_node.text.decode()}`"
         self.cfg.add_node(node_id, n=ast_node, label=label)
         self.node_id += 1
         return node_id
@@ -43,7 +45,7 @@ class CFGCreator(BaseVisitor):
     """STRAIGHT LINE STATEMENTS"""
 
     def enter_statement(self, n):
-        node_id = self.add_cfg_node(n, f"{n.type}\n`{n.text.decode()}`")
+        node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
         self.fringe.append(node_id)
 
@@ -60,7 +62,7 @@ class CFGCreator(BaseVisitor):
     def visit_if_statement(self, n, **kwargs):
         condition = n.children[1].children[1]
         assert condition.type in ("binary_expression",), condition.type
-        condition_id = self.add_cfg_node(condition, f"{condition.type}\n`{condition.text.decode()}`")
+        condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
         self.fringe.append(condition_id)
 
@@ -80,9 +82,6 @@ class CFGCreator(BaseVisitor):
             self.fringe.append(condition_id)
 
     def visit_for_statement(self, n, **kwargs):
-        print(n)
-        print(n.children)
-
         initial_offset = 2
         init = n.children[initial_offset]
         if init.type == ";":
@@ -106,12 +105,12 @@ class CFGCreator(BaseVisitor):
             assert incr.type in ("update_expression",), incr.type
 
         if cond is not None:
-            cond_id = self.add_cfg_node(cond, f"{cond.type}\n`{cond.text.decode()}`")
+            cond_id = self.add_cfg_node(cond)
         else:
             cond_id = self.add_cfg_node(None, f"<TRUE>")
 
         if init is not None:
-            init_id = self.add_cfg_node(init, f"{init.type}\n`{init.text.decode()}`")
+            init_id = self.add_cfg_node(init)
             self.add_edge_from_fringe_to(init_id)
             self.cfg.add_edge(init_id, cond_id)
         else:
@@ -123,7 +122,7 @@ class CFGCreator(BaseVisitor):
         self.visit(compound_statement)
         assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         if incr is not None:
-            incr_id = self.add_cfg_node(incr, f"{incr.type}\n`{incr.text.decode()}`")
+            incr_id = self.add_cfg_node(incr)
             self.add_edge_from_fringe_to(incr_id)
             self.cfg.add_edge(incr_id, cond_id)
         else:
@@ -135,7 +134,7 @@ class CFGCreator(BaseVisitor):
         
         assert cond.type in ("binary_expression",), cond.type
 
-        cond_id = self.add_cfg_node(cond, f"{cond.type}\n`{cond.text.decode()}`")
+        cond_id = self.add_cfg_node(cond)
 
         self.cfg.add_edges_from(zip(self.fringe, [cond_id] * len(self.fringe)))
         self.fringe = []
@@ -158,11 +157,7 @@ def test_for_simple():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (6, 6)
 
 def test_for_noinit():
     tree = c_parser.parse(bytes("""int main()
@@ -174,11 +169,7 @@ def test_for_noinit():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
 
 def test_for_nocond():
     tree = c_parser.parse(bytes("""int main()
@@ -190,11 +181,7 @@ def test_for_nocond():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (6, 6)
 
 def test_for_noincr():
     tree = c_parser.parse(bytes("""int main()
@@ -206,11 +193,7 @@ def test_for_noincr():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
 
 def test_for_noinitincr():
     tree = c_parser.parse(bytes("""int main()
@@ -222,11 +205,7 @@ def test_for_noinitincr():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (4, 4)
 
 def test_for_noinitcond():
     tree = c_parser.parse(bytes("""int main()
@@ -238,11 +217,7 @@ def test_for_noinitcond():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
 
 def test_for_nocondincr():
     tree = c_parser.parse(bytes("""int main()
@@ -254,11 +229,7 @@ def test_for_nocondincr():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
 
 def test_for_nothing():
     tree = c_parser.parse(bytes("""int main()
@@ -271,7 +242,4 @@ def test_for_nothing():
     v = CFGCreator()
     v.visit(tree.root_node)
     print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (4, 4)
