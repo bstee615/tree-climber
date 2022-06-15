@@ -115,6 +115,28 @@ def test_for_nested():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (12, 13)
     assert len(list(nx.simple_cycles(cfg))) == 2
 
+def test_for_break():
+    cfg = parse_and_create_cfg("""int main()
+    {
+        int x = 0;
+        for (int i = 0; i < 10; i ++) {
+            if (x > 5) {
+                x = 0;
+                break;
+            }
+            x = 10;
+            if (i < 5) {
+                return -1;
+            }
+            x += 5;
+        }
+        x = 10;
+        return x;
+    }
+    """, draw_cfg=True)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (13, 15)
+    assert len(list(nx.simple_cycles(cfg))) == 1
+
 def test_for_continue():
     cfg = parse_and_create_cfg("""int main()
     {
