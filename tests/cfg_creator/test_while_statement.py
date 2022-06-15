@@ -50,6 +50,6 @@ def test_do_while_nested():
         }
         while (x < 3);
     }
-    """, draw_cfg=True)
+    """)
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (6, 8)
     assert len(list(nx.simple_cycles(cfg))) == 3
