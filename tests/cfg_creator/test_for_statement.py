@@ -114,3 +114,23 @@ def test_for_nested():
     """)
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (12, 13)
     assert len(list(nx.simple_cycles(cfg))) == 2
+
+def test_for_continue():
+    cfg = parse_and_create_cfg("""int main()
+    {
+        int x = 0;
+        for (int i = 0; i < 10; i ++) {
+            if (x > 5) {
+                x = 0;
+                continue;
+            }
+            x = 10;
+            if (i < 5) {
+                continue;
+            }
+            x += 5;
+        }
+    }
+    """)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (13, 15)
+    assert len(list(nx.simple_cycles(cfg))) == 3

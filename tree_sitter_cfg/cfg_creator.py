@@ -18,6 +18,7 @@ class CFGCreator(BaseVisitor):
         self.node_id = 0
         self.fringe = []
         self.break_fringe = []
+        self.continue_fringe = []
         self.visit(ast_root_node)
         cfg = self.cfg
         # Postprocessing
@@ -161,6 +162,9 @@ class CFGCreator(BaseVisitor):
         else:
             self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
+
+        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+        self.continue_fringe = []
         self.fringe += self.break_fringe
         self.break_fringe = []
 
@@ -181,6 +185,9 @@ class CFGCreator(BaseVisitor):
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
+
+        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+        self.continue_fringe = []
         self.fringe += self.break_fringe
         self.break_fringe = []
 
@@ -201,6 +208,9 @@ class CFGCreator(BaseVisitor):
         self.add_edge_from_fringe_to(cond_id)
         self.cfg.add_edge(cond_id, dummy_id)
         self.fringe.append(cond_id)
+
+        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+        self.continue_fringe = []
         self.fringe += self.break_fringe
         self.break_fringe = []
 
@@ -235,5 +245,5 @@ class CFGCreator(BaseVisitor):
     def visit_continue_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
-        # TODO: connect to nearest break destination
+        self.continue_fringe.append(node_id)
         self.visit_default(n, **kwargs)
