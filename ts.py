@@ -27,6 +27,11 @@ tree = parser.parse(bytes("""int main()
         x --;
     }
     x = x + 3;
+    while (x < 0) {
+        x ++;
+        x = x + 1;
+    }
+    x = x + 4;
     return x;
 }
 """, "utf8"))
@@ -147,6 +152,26 @@ class MyVisitor:
         # fringe should now have last statement of compound_statement
         self.cfg.add_edges_from(zip(self.fringe, [incr_id] * len(self.fringe)))
         self.cfg.add_edge(incr_id, cond_id)
+        self.fringe = []
+        self.fringe.append(cond_id)
+
+    def visit_while_statement(self, n, **kwargs):
+        print(n.children)
+        cond = n.children[1].children[1]
+        
+        assert cond.type in ("binary_expression",), cond.type
+
+        cond_id = self.add_cfg_node(cond, f"{cond.type}\n`{cond.text.decode()}`")
+
+        self.cfg.add_edges_from(zip(self.fringe, [cond_id] * len(self.fringe)))
+        self.fringe = []
+        self.fringe.append(cond_id)
+
+        compound_statement = n.children[2]
+        assert compound_statement.type == "compound_statement", compound_statement.type
+        self.visit(compound_statement)
+        # fringe should now have last statement of compound_statement
+        self.cfg.add_edges_from(zip(self.fringe, [cond_id] * len(self.fringe)))
         self.fringe = []
         self.fringe.append(cond_id)
 
