@@ -1,13 +1,8 @@
+from tree_sitter_cfg.base_visitor import BaseVisitor
 from tree_sitter_cfg.cfg_creator import CFGCreator
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
-
-def parse_and_create_cfg(code):
-    tree = c_parser.parse(bytes(code, "utf8"))
-    v = CFGCreator()
-    v.visit(tree.root_node)
-    return v.cfg
 
 def draw(cfg, dataflow_solution=None):
     pos = nx.spring_layout(cfg, seed=0)
@@ -20,3 +15,15 @@ def draw(cfg, dataflow_solution=None):
     if dataflow_solution is not None:
         nx.draw_networkx_labels(cfg, pos=pos, font_color="r", labels={n: "\n\n\n{" + ", ".join(dataflow_solution[n]) + "}" if dataflow_solution[n] else "" for n in cfg.nodes()})
     plt.show()
+
+
+def parse_and_create_cfg(code, print_ast=False, draw_cfg=False):
+    tree = c_parser.parse(bytes(code, "utf8"))
+    if print_ast:
+        ast_v = BaseVisitor()
+        ast_v.visit(tree.root_node)
+    v = CFGCreator()
+    cfg = v.generate_cfg(tree.root_node)
+    if draw_cfg:
+        draw(cfg)
+    return cfg

@@ -12,9 +12,31 @@ class CFGCreator(BaseVisitor):
 
     def __init__(self):
         super(CFGCreator).__init__()
+
+    def generate_cfg(self, ast_root_node):
         self.cfg = nx.DiGraph()
         self.node_id = 0
         self.fringe = []
+        self.visit(ast_root_node)
+        cfg = self.cfg
+        nodes_to_remove = []
+        for n, attr in cfg.nodes(data=True):
+            if attr.get("dummy", False):
+                preds = list(cfg.predecessors(n))
+                succs = list(cfg.successors(n))
+                for pred in preds:
+                    for succ in succs:
+                        cfg.add_edge(pred, succ)
+                nodes_to_remove.append(n)
+        cfg.remove_nodes_from(nodes_to_remove)
+        return cfg
+    
+    def add_dummy_node(self):
+        """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
+        node_id = self.node_id
+        self.cfg.add_node(node_id, dummy=True)
+        self.node_id += 1
+        return node_id
     
     def add_cfg_node(self, ast_node, label=None):
         node_id = self.node_id
@@ -144,8 +166,7 @@ class CFGCreator(BaseVisitor):
 
         cond_id = self.add_cfg_node(cond)
 
-        self.cfg.add_edges_from(zip(self.fringe, [cond_id] * len(self.fringe)))
-        self.fringe = []
+        self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
 
         compound_statement = n.children[2]
@@ -155,3 +176,25 @@ class CFGCreator(BaseVisitor):
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
+
+    def visit_do_statement(self, n, **kwargs):
+        dummy_id = self.add_dummy_node()
+        self.add_edge_from_fringe_to(dummy_id)
+        self.fringe.append(dummy_id)
+
+        compound_statement = n.children[1]
+        assert compound_statement.type in branch_targets, compound_statement.type
+        self.visit(compound_statement)
+
+        cond = n.children[3].children[1]
+        
+        assert cond.type in boolean_expressions, cond.type
+
+        cond_id = self.add_cfg_node(cond)
+        self.add_edge_from_fringe_to(cond_id)
+        self.cfg.add_edge(cond_id, dummy_id)
+        self.fringe.append(cond_id)
+
+    # TODO: break
+    # TODO: continue
+    # TODO: switch

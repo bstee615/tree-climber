@@ -15,8 +15,7 @@ def test_solve():
     """
     tree = c_parser.parse(bytes(code, "utf8"))
     v = CFGCreator()
-    v.visit(tree.root_node)
-    cfg = v.cfg
+    cfg = v.generate_cfg(tree.root_node)
     solver = ReachingDefinitionSolver(cfg, verbose=1)
     solution = solver.solve()
     print(solution)
