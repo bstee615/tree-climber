@@ -195,6 +195,21 @@ class CFGCreator(BaseVisitor):
         self.cfg.add_edge(cond_id, dummy_id)
         self.fringe.append(cond_id)
 
+    def visit_switch_statement(self, n, **kwargs):
+        cond = n.children[1].children[1]
+        cond_id = self.add_cfg_node(cond)
+        self.add_edge_from_fringe_to(cond_id)
+        # self.fringe.append(cond_id)  # TODO: might be needed if no default case?
+        cases = n.children[2].children[1:-1]
+        for case in cases:
+            if case.children[0].type == "default":
+                case_body = case.children[2]
+            else:
+                case_body = case.children[3]
+            case_body_id = self.add_cfg_node(case_body)
+            # TODO: add case condition to edge
+            self.cfg.add_edge(cond_id, case_body_id)
+            self.fringe.append(case_body_id)
+
     # TODO: break
     # TODO: continue
-    # TODO: switch
