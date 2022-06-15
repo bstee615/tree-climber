@@ -62,6 +62,9 @@ class CFGCreator(BaseVisitor):
         self.visit_children(n, **kwargs)
         exit_id = self.add_cfg_node(n, "FUNC_EXIT")
         self.add_edge_from_fringe_to(exit_id)
+        for n, attr in self.cfg.nodes(data=True):
+            if attr["n"].type == "return_statement":
+                self.cfg.add_edge(n, exit_id)
 
     def visit_default(self, n, indentation_level, **kwargs):
         self.visit_children(n, indentation_level)
@@ -82,7 +85,8 @@ class CFGCreator(BaseVisitor):
         self.visit_default(n, **kwargs)
 
     def visit_return_statement(self, n, **kwargs):
-        self.enter_statement(n)
+        node_id = self.add_cfg_node(n)
+        self.add_edge_from_fringe_to(node_id)
         self.visit_default(n, **kwargs)
 
     """STRUCTURED CONTROL FLOW"""
