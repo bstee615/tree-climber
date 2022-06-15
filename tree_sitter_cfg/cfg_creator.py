@@ -230,7 +230,9 @@ class CFGCreator(BaseVisitor):
                 case_body_idx = 3
             self.fringe.append(cond_id)
             for case_body in case.children[case_body_idx:]:
-                self.visit(case_body)
+                should_continue = self.visit(case_body)
+                if should_continue == False:
+                    break
         if not default_was_hit:
             self.fringe.append(cond_id)
         self.fringe += self.break_fringe
@@ -240,15 +242,20 @@ class CFGCreator(BaseVisitor):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
         self.visit_default(n, **kwargs)
+        # This is meant to skip adding subsequent statements to the CFG.
+        # TODO: consider how to handle this with goto statements.
+        return False
 
     def visit_break_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
         self.break_fringe.append(node_id)
         self.visit_default(n, **kwargs)
+        return False
 
     def visit_continue_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
         self.continue_fringe.append(node_id)
         self.visit_default(n, **kwargs)
+        return False
