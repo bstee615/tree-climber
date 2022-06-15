@@ -220,16 +220,19 @@ class CFGCreator(BaseVisitor):
         cond = n.children[1].children[1]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        # self.fringe.append(cond_id)  # TODO: might be needed if no default case?
         cases = n.children[2].children[1:-1]
+        default_was_hit = False
         for case in cases:
             if case.children[0].type == "default":
+                default_was_hit = True
                 case_body_idx = 2
             else:
                 case_body_idx = 3
             self.fringe.append(cond_id)
             for case_body in case.children[case_body_idx:]:
                 self.visit(case_body)
+        if not default_was_hit:
+            self.fringe.append(cond_id)
         self.fringe += self.break_fringe
         self.break_fringe = []
 
