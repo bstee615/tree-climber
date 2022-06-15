@@ -17,8 +17,12 @@ class CFGCreator(BaseVisitor):
         self.cfg = nx.DiGraph()
         self.node_id = 0
         self.fringe = []
+        self.break_fringe = []
         self.visit(ast_root_node)
         cfg = self.cfg
+        # Postprocessing
+
+        # pass through dummy nodes
         nodes_to_remove = []
         for n, attr in cfg.nodes(data=True):
             if attr.get("dummy", False):
@@ -157,6 +161,8 @@ class CFGCreator(BaseVisitor):
         else:
             self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
+        self.fringe += self.break_fringe
+        self.break_fringe = []
 
     def visit_while_statement(self, n, **kwargs):
         cond = n.children[1].children[1]
@@ -175,6 +181,8 @@ class CFGCreator(BaseVisitor):
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
+        self.fringe += self.break_fringe
+        self.break_fringe = []
 
     def visit_do_statement(self, n, **kwargs):
         dummy_id = self.add_dummy_node()
@@ -193,6 +201,8 @@ class CFGCreator(BaseVisitor):
         self.add_edge_from_fringe_to(cond_id)
         self.cfg.add_edge(cond_id, dummy_id)
         self.fringe.append(cond_id)
+        self.fringe += self.break_fringe
+        self.break_fringe = []
 
     def visit_switch_statement(self, n, **kwargs):
         cond = n.children[1].children[1]
@@ -208,6 +218,8 @@ class CFGCreator(BaseVisitor):
             self.fringe.append(cond_id)
             for case_body in case.children[case_body_idx:]:
                 self.visit(case_body)
+        self.fringe += self.break_fringe
+        self.break_fringe = []
 
     def visit_return_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
@@ -217,7 +229,7 @@ class CFGCreator(BaseVisitor):
     def visit_break_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
-        # TODO: connect to nearest break destination
+        self.break_fringe.append(node_id)
         self.visit_default(n, **kwargs)
 
     def visit_continue_statement(self, n, **kwargs):

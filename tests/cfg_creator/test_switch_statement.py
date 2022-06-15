@@ -18,6 +18,6 @@ def test_if_simple():
         }
         return x;
     }
-    """, draw_cfg=True, print_ast=True)
-    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (8, 10)
+    """)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (10, 12)
     assert nx.is_directed_acyclic_graph(cfg)
