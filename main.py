@@ -3,39 +3,27 @@ from tree_sitter_cfg.cfg_creator import CFGCreator
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
+import argparse
 
 if __name__ == "__main__":
-    tree = c_parser.parse(bytes("""int main()
-    {
-        int x = 0;
-        x = x + 1;
-        if (x > 1) {
-            x += 5;
-        }
-        else {
-            x += 50;
-        }
-        x = x + 2;
-        for (int i = 0; i < 10; i ++) {
-            x --;
-        }
-        x = x + 3;
-        while (x < 0) {
-            x ++;
-            x = x + 1;
-        }
-        x = x + 4;
-        return x;
-    }
-    """, "utf8"))
-    
-    v = BaseVisitor()
-    v.visit(tree.root_node)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="filename to parse")
+    parser.add_argument("--print_ast", action="store_true", help="print AST")
+    parser.add_argument("--draw_cfg", action="store_true", help="draw CFG")
+    args = parser.parse_args()
 
-    v = CFGCreator()
-    v.visit(tree.root_node)
-    print(v.cfg)
-    pos = nx.spring_layout(v.cfg, seed=0)
-    nx.draw(v.cfg, pos=pos)
-    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-    plt.show()
+    with open(args.filename, "rb") as f:
+        tree = c_parser.parse(f.read())
+    
+    if args.print_ast:
+        v = BaseVisitor()
+        v.visit(tree.root_node)
+
+    if args.draw_cfg:
+        v = CFGCreator()
+        cfg = v.generate_cfg(tree.root_node)
+        print(cfg)
+        pos = nx.spring_layout(cfg, seed=0)
+        nx.draw(cfg, pos=pos)
+        nx.draw_networkx_labels(cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in cfg.nodes(data=True)})
+        plt.show()

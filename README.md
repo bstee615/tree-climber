@@ -6,4 +6,4 @@ AST -> CFG algorithm is based on Joern, specifically [CfgCreator.scala](https://
 # Try it out
 
 Clone [https://github.com/tree-sitter/tree-sitter-c.git](https://github.com/tree-sitter/tree-sitter-c.git) in the project root.
-Run `main.py`
+Then run `python main.py tests/data/example.c --print_ast --draw_cfg`
