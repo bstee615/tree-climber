@@ -187,6 +187,7 @@ def test_for_simple():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (6, 6)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_noinit():
     tree = c_parser.parse(bytes("""int main()
@@ -199,6 +200,7 @@ def test_for_noinit():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_nocond():
     tree = c_parser.parse(bytes("""int main()
@@ -211,6 +213,7 @@ def test_for_nocond():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (6, 6)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_noincr():
     tree = c_parser.parse(bytes("""int main()
@@ -223,6 +226,7 @@ def test_for_noincr():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_noinitincr():
     tree = c_parser.parse(bytes("""int main()
@@ -235,6 +239,7 @@ def test_for_noinitincr():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (4, 4)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_noinitcond():
     tree = c_parser.parse(bytes("""int main()
@@ -247,6 +252,7 @@ def test_for_noinitcond():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_nocondincr():
     tree = c_parser.parse(bytes("""int main()
@@ -259,6 +265,7 @@ def test_for_nocondincr():
     v = CFGCreator()
     v.visit(tree.root_node)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (5, 5)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
 
 def test_for_nothing():
     tree = c_parser.parse(bytes("""int main()
@@ -270,5 +277,5 @@ def test_for_nothing():
     """, "utf8"))
     v = CFGCreator()
     v.visit(tree.root_node)
-    print(v.cfg)
     assert (v.cfg.number_of_nodes(), v.cfg.number_of_edges()) == (4, 4)
+    assert len(list(nx.simple_cycles(v.cfg))) == 1
