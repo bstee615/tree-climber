@@ -74,18 +74,12 @@ https://github.com/joernio/joern/blob/6df0bbe6afad7f9b04bf0d1877e9797a7cdddcc4/j
   */
 """
 
-class MyVisitor:
-    def __init__(self):
-        self.cfg = nx.DiGraph()
-        self.node_id = 0
-        self.fringe = []
-    
-    def add_cfg_node(self, ast_node, label):
-        node_id = self.node_id
-        self.cfg.add_node(node_id, n=ast_node, label=label)
-        self.node_id += 1
-        return node_id
-    
+class BaseVisitor:   
+    """
+    Extensible AST visitor.
+    Traverses and prints all nodes recursively by default.
+    """
+
     def visit(self, n, indentation_level=0, **kwargs):
         getattr(self, f"visit_{n.type}", self.visit_default)(n=n, indentation_level=indentation_level, **kwargs)
     
@@ -98,10 +92,52 @@ class MyVisitor:
         self.visit_children(n, indentation_level)
         print("\t" * indentation_level, "exit", n)
 
-    def enter_statement(self, n):
-        node_id = self.add_cfg_node(n, f"{n.type}\n`{n.text.decode()}`")
+def test_base_visitor():
+    v = BaseVisitor()
+    v.visit(tree.root_node)
+
+class CFGCreator(BaseVisitor):
+    """
+    AST visitor which creates a CFG.
+    After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
+    """
+
+    def __init__(self):
+        super(CFGCreator).__init__()
+        self.cfg = nx.DiGraph()
+        self.node_id = 0
+        self.fringe = []
+    
+    def add_cfg_node(self, ast_node, label):
+        node_id = self.node_id
+        self.cfg.add_node(node_id, n=ast_node, label=label)
+        self.node_id += 1
+        return node_id
+    
+    def add_edge_from_fringe_to(self, node_id):
+        # TODO: assign edge type
         self.cfg.add_edges_from(zip(self.fringe, [node_id] * len(self.fringe)))
         self.fringe = []
+    
+    """
+    VISITOR RULES
+    """
+
+    def visit_function_definition(self, n, **kwargs):
+        entry_id = self.add_cfg_node(n, "FUNC_ENTRY")
+        self.fringe.append(entry_id)
+        self.visit_children(n, **kwargs)
+        exit_id = self.add_cfg_node(n, "FUNC_EXIT")
+        self.add_edge_from_fringe_to(exit_id)
+
+    def visit_default(self, n, indentation_level, **kwargs):
+        self.visit_children(n, indentation_level)
+
+    """STRAIGHT LINE STATEMENTS"""
+
+    def enter_statement(self, n):
+        node_id = self.add_cfg_node(n, f"{n.type}\n`{n.text.decode()}`")
+        self.add_edge_from_fringe_to(node_id)
         self.fringe.append(node_id)
 
     def visit_expression_statement(self, n, **kwargs):
@@ -112,23 +148,22 @@ class MyVisitor:
         self.enter_statement(n)
         self.visit_default(n, **kwargs)
 
+    """STRUCTURED CONTROL FLOW"""
+
     def visit_if_statement(self, n, **kwargs):
-        print(n.children)
         condition = n.children[1].children[1]
         assert condition.type in ("binary_expression",), condition.type
         condition_id = self.add_cfg_node(condition, f"{condition.type}\n`{condition.text.decode()}`")
-        self.cfg.add_edges_from(zip(self.fringe, [condition_id] * len(self.fringe)))
-        self.fringe = []
+        self.add_edge_from_fringe_to(condition_id)
         self.fringe.append(condition_id)
 
         compound_statement = n.children[2]
         assert compound_statement.type == "compound_statement", compound_statement.type
         self.visit(compound_statement)
-        # fringe should now have last statement of compount_statement
+        assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.fringe.append(condition_id)
 
     def visit_for_statement(self, n, **kwargs):
-        print(n.children)
         init = n.children[2]
         cond = n.children[3]
         incr = n.children[5]
@@ -141,22 +176,19 @@ class MyVisitor:
         cond_id = self.add_cfg_node(cond, f"{cond.type}\n`{cond.text.decode()}`")
         incr_id = self.add_cfg_node(incr, f"{incr.type}\n`{incr.text.decode()}`")
 
-        self.cfg.add_edges_from(zip(self.fringe, [init_id] * len(self.fringe)))
+        self.add_edge_from_fringe_to(init_id)
         self.cfg.add_edge(init_id, cond_id)
-        self.fringe = []
         self.fringe.append(cond_id)
 
         compound_statement = n.children[7]
         assert compound_statement.type == "compound_statement", compound_statement.type
         self.visit(compound_statement)
-        # fringe should now have last statement of compound_statement
-        self.cfg.add_edges_from(zip(self.fringe, [incr_id] * len(self.fringe)))
+        assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
+        self.add_edge_from_fringe_to(incr_id)
         self.cfg.add_edge(incr_id, cond_id)
-        self.fringe = []
         self.fringe.append(cond_id)
 
     def visit_while_statement(self, n, **kwargs):
-        print(n.children)
         cond = n.children[1].children[1]
         
         assert cond.type in ("binary_expression",), cond.type
@@ -170,22 +202,15 @@ class MyVisitor:
         compound_statement = n.children[2]
         assert compound_statement.type == "compound_statement", compound_statement.type
         self.visit(compound_statement)
-        # fringe should now have last statement of compound_statement
-        self.cfg.add_edges_from(zip(self.fringe, [cond_id] * len(self.fringe)))
-        self.fringe = []
+        assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
+        self.add_edge_from_fringe_to(cond_id)
         self.fringe.append(cond_id)
 
-    def visit_function_definition(self, n, **kwargs):
-        node_id = self.add_cfg_node(n, "FUNC_ENTRY")
-        self.fringe.append(node_id)
-        self.visit_children(n, **kwargs)
-        node_id = self.add_cfg_node(n, "FUNC_EXIT")
-        self.cfg.add_edges_from(zip(self.fringe, [node_id] * len(self.fringe)))
-
-v = MyVisitor()
-v.visit(tree.root_node)
-print(v.cfg)
-pos = nx.spring_layout(v.cfg, seed=0)
-nx.draw(v.cfg, pos=pos)
-nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
-plt.show()
+def test_cfg():
+    v = CFGCreator()
+    v.visit(tree.root_node)
+    print(v.cfg)
+    pos = nx.spring_layout(v.cfg, seed=0)
+    nx.draw(v.cfg, pos=pos)
+    nx.draw_networkx_labels(v.cfg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in v.cfg.nodes(data=True)})
+    plt.show()
