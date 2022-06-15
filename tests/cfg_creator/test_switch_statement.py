@@ -1,7 +1,22 @@
 from tests.utils import *
 import networkx as nx
 
-def test_if_simple():
+def test_switch_simple():
+    cfg = parse_and_create_cfg("""int main()
+    {
+        switch(true) {
+            case 0:
+                return 0;
+            default:
+                return 1;
+                break;
+        }
+    }
+    """)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (6, 6)
+    assert nx.is_directed_acyclic_graph(cfg)
+
+def test_switch_complex():
     cfg = parse_and_create_cfg("""int main()
     {
         int x = 0;
