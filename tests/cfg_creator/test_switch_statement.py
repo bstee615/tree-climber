@@ -9,11 +9,10 @@ def test_switch_simple():
                 return 0;
             default:
                 return 1;
-                break;
         }
     }
     """)
-    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (6, 6)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (5, 5)
     assert nx.is_directed_acyclic_graph(cfg)
 
 def test_switch_complex():
