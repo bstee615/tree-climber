@@ -69,7 +69,8 @@ class CFGCreator(BaseVisitor):
         self.visit_children(n, **kwargs)
         exit_id = self.add_cfg_node(n, "FUNC_EXIT")
         self.add_edge_from_fringe_to(exit_id)
-        for n, attr in self.cfg.nodes(data=True):
+        for n in nx.descendants(self.cfg, entry_id):
+            attr = self.cfg.nodes[n]
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
                 self.cfg.add_edge(n, exit_id)
 
