@@ -162,8 +162,17 @@ cython_debug/
 ### MY STUFF
 
 other/ts-example
+*.zip
+*.tar.xz
 
 # tree-sitter core and grammars
 tree-sitter/
 tree-sitter-*/
 build/
+
+# Joern outputs
+joern/
+*.graph.json
+*.nodes.json
+*.edges.json
+linux-5.18.4/
