@@ -167,3 +167,10 @@ other/ts-example
 tree-sitter/
 tree-sitter-*/
 build/
+
+# Joern outputs
+joern/
+*.graph.json
+*.nodes.json
+*.edges.json
+joern-cli.zip
