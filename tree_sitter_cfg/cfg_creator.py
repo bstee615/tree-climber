@@ -125,6 +125,8 @@ class CFGCreator(BaseVisitor):
         else:
             assert init.type in ("declaration", "assignment_expression", "comma_expression"), init.type
         initial_offset += 1
+        if init is not None and init.type != "declaration":
+            initial_offset += 1
         cond = n.children[initial_offset]
         if cond.type == ";":
             cond = None
