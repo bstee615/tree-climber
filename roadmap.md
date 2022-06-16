@@ -16,3 +16,4 @@ https://en.cppreference.com/w/c
 * [ ] custom typedefs
 * [ ] expressions inside statements, such as `if ((i = 0) == 0)`
 * [ ] variadic functions
+* [ ] global variables
