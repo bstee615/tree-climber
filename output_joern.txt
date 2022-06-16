@@ -1,0 +1,4 @@
+executing /home/benjis/code/ts/tests/vs-joern/get_func_graph.scala with params=Map(filename -> linux-5.18.4)
+[34mCompiling /home/benjis/code/ts/tests/vs-joern/get_func_graph.scala[39m
+creating workspace directory: /home/benjis/code/ts/workspace
+Creating project `linux-5.18.4` for code at `linux-5.18.4`
