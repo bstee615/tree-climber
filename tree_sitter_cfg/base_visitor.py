@@ -1,4 +1,4 @@
-from tree_sitter import Language, Parser
+from tree_sitter_cfg.tree_sitter_utils import c_parser
 
 class BaseVisitor:
     """
@@ -19,3 +19,10 @@ class BaseVisitor:
         print("\t" * indentation_level, "enter", n)
         self.visit_children(n, indentation_level)
         print("\t" * indentation_level, "exit", n)
+
+def test_print_ast():
+    with open("tests/data/do_while_continue.c", "rb") as f:
+        tree = c_parser.parse(f.read())
+    
+    v = BaseVisitor()
+    v.visit(tree.root_node)
