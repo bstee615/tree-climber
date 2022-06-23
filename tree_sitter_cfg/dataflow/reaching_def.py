@@ -23,6 +23,7 @@ class ReachingDefinitionSolver(DataflowSolver):
         super().__init__(cfg, verbose)
 
         node2def = {}
+        def2node = {}
         id2def = {}
         def2id = {}
         def2code = {}
@@ -30,8 +31,10 @@ class ReachingDefinitionSolver(DataflowSolver):
         for n in nx.dfs_preorder_nodes(cfg, source=cfg.graph["entry"]):
             ast_node = cfg.nodes[n]["n"]
             _id = get_definition(ast_node)
+            print(n, _id)
             if _id is not None:
                 node2def[n] = def_idx
+                def2node[def_idx] = n
 
                 if _id not in id2def:
                     id2def[_id] = set()
@@ -42,9 +45,12 @@ class ReachingDefinitionSolver(DataflowSolver):
                 def_idx += 1
         if verbose >= 1:
             print("node2def", node2def)
+            print("def2node", def2node)
+            print("id2def", id2def)
             print("def2id", def2id)
             print("def2code", def2code)
         self.node2def = node2def
+        self.def2node = def2node
         self.id2def = id2def
         self.def2id = def2id
         self.def2code = def2code

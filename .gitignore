@@ -176,3 +176,4 @@ joern/
 *.nodes.json
 *.edges.json
 linux-5.18.4/
+workspace/

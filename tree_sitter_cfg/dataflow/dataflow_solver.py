@@ -44,4 +44,4 @@ class DataflowSolver:
                     q.append(succ)
             i += 1
         
-        return out
+        return _in, out
