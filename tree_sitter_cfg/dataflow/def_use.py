@@ -18,10 +18,35 @@ def get_uses(cfg, solver, n):
         q.extend(n.children)
     return used_ids
 
-def get_def_use(cfg):
-    """return def-use chain"""
-    dug = nx.DiGraph()
-    dug.add_nodes_from(cfg.nodes(data=True))
+def get_def_use_chain(cfg):
+    """
+    return def-use chain (DUC)
+    
+        https://textart.io/art/tag/duck/1
+                                       ___
+                               ,-""   `.
+                             ,'  _   e )`-._
+                            /  ,' `-._<.===-'
+                           /  /
+                          /  ;
+              _.--.__    /   ;
+ (`._    _.-""       "--'    |
+ <_  `-""                     \
+  <`-                          :
+   (__   <__.                  ;
+     `-.   '-.__.      _.'    /
+        \      `-.__,-'    _,'
+         `._    ,    /__,-'
+            ""._\__,'< <____
+                 | |  `----.`.
+                 | |        \ `.
+                 ; |___      \-``
+                 \   --<
+                  `.`.<
+                    `-'
+    """
+    duc = nx.DiGraph()
+    duc.add_nodes_from(cfg.nodes(data=True))
     solver = ReachingDefinitionSolver(cfg, verbose=1)
     solution_in, solution_out = solver.solve()
     solution = solution_in
@@ -40,8 +65,8 @@ def get_def_use(cfg):
                 
                 def_nodes = set(map(solver.def2node.__getitem__, used_incoming_defs))
                 for def_node in def_nodes:
-                    dug.add_edge(def_node, use_node)
-    return dug
+                    duc.add_edge(def_node, use_node)
+    return duc
 
 
 def test_simple():
@@ -59,22 +84,22 @@ def test_simple():
     tree = c_parser.parse(bytes(code, "utf8"))
     v = CFGCreator()
     cfg = v.generate_cfg(tree.root_node)
-    dug = get_def_use(cfg)
+    duc = get_def_use_chain(cfg)
 
-    assignment_0_node = next(n for n, attr in dug.nodes(data=True) if "x = 0" in attr["label"])
-    true_node = next(n for n, attr in dug.nodes(data=True) if "true" in attr["label"])
-    plus_assignment_5_node = next(n for n, attr in dug.nodes(data=True) if "x += 5" in attr["label"])
-    assignment_10_node = next(n for n, attr in dug.nodes(data=True) if "x = 10" in attr["label"])
-    printf_node = next(n for n, attr in dug.nodes(data=True) if "printf" in attr["label"])
-    return_node = next(n for n, attr in dug.nodes(data=True) if "return" in attr["label"])
-    assert not any(set(dug.predecessors(assignment_0_node)))  # first assignment to x
-    assert not any(set(dug.predecessors(true_node)))
-    assert set(dug.predecessors(printf_node)) == {plus_assignment_5_node, assignment_0_node}  # printf can print x defined by "x = 0" or "x += 5"
-    assert set(dug.predecessors(return_node)) == {assignment_10_node}  # return is dominated by "x = 10"
-    assert set(dug.predecessors(plus_assignment_5_node)) == {plus_assignment_5_node, assignment_0_node}  # TODO: += should take into account its predecessor x
+    assignment_0_node = next(n for n, attr in duc.nodes(data=True) if "x = 0" in attr["label"])
+    true_node = next(n for n, attr in duc.nodes(data=True) if "true" in attr["label"])
+    plus_assignment_5_node = next(n for n, attr in duc.nodes(data=True) if "x += 5" in attr["label"])
+    assignment_10_node = next(n for n, attr in duc.nodes(data=True) if "x = 10" in attr["label"])
+    printf_node = next(n for n, attr in duc.nodes(data=True) if "printf" in attr["label"])
+    return_node = next(n for n, attr in duc.nodes(data=True) if "return" in attr["label"])
+    assert not any(set(duc.predecessors(assignment_0_node)))  # first assignment to x
+    assert not any(set(duc.predecessors(true_node)))
+    assert set(duc.predecessors(printf_node)) == {plus_assignment_5_node, assignment_0_node}  # printf can print x defined by "x = 0" or "x += 5"
+    assert set(duc.predecessors(return_node)) == {assignment_10_node}  # return is dominated by "x = 10"
+    assert set(duc.predecessors(plus_assignment_5_node)) == {plus_assignment_5_node, assignment_0_node}  # TODO: += should take into account its predecessor x
 
     _, ax = plt.subplots(2)
-    pos = nx.drawing.nx_agraph.graphviz_layout(dug, prog='dot')
-    nx.draw(dug, pos=pos, labels={n: attr["label"] for n, attr in dug.nodes(data=True)}, with_labels = True, ax=ax[0])
+    pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog='dot')
+    nx.draw(duc, pos=pos, labels={n: attr["label"] for n, attr in duc.nodes(data=True)}, with_labels = True, ax=ax[0])
     draw(cfg, ax=ax[1])
 
