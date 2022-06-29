@@ -1,3 +1,4 @@
+import os
 from tree_sitter_cfg.base_visitor import BaseVisitor
 from tree_sitter_cfg.cfg_creator import CFGCreator
 from tree_sitter_cfg.tree_sitter_utils import c_parser
@@ -19,7 +20,7 @@ def draw(cfg, dataflow_solution=None, ax=None):
     plt.show()
 
 
-def parse_and_create_cfg(code, print_ast=False, draw_cfg=False):
+def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(os.environ.get("TREE_SITTER_CFG__DRAW_CFG", False))):
     tree = c_parser.parse(bytes(code, "utf8"))
     if print_ast:
         ast_v = BaseVisitor()
