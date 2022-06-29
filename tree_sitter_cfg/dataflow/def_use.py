@@ -61,5 +61,5 @@ def get_def_use_chain(cfg):
                 
                 def_nodes = set(map(solver.def2node.__getitem__, used_incoming_defs))
                 for def_node in def_nodes:
-                    duc.add_edge(def_node, use_node)
+                    duc.add_edge(def_node, use_node, label=str(solver.def2id[solver.node2def[def_node]]))
     return duc
