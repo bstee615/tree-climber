@@ -49,7 +49,13 @@ class CFGCreator(BaseVisitor):
         node_id = self.node_id
         if label is None:
             label = f"{node_id}: {ast_node.type} ({ast_node.start_point}, {ast_node.end_point})\n`{ast_node.text.decode()}`"
-        self.cfg.add_node(node_id, n=ast_node, label=label)
+        kwargs = {}
+        if ast_node is not None:
+            kwargs["code"] = ast_node.text.decode()
+            kwargs["node_type"] = ast_node.type
+            kwargs["start"]=ast_node.start_point
+            kwargs["end"]=ast_node.end_point
+        self.cfg.add_node(node_id, n=ast_node, label=label, **kwargs)
         self.node_id += 1
         return node_id
     
@@ -74,8 +80,8 @@ class CFGCreator(BaseVisitor):
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
                 self.cfg.add_edge(n, exit_id)
 
-    def visit_default(self, n, indentation_level, **kwargs):
-        self.visit_children(n, indentation_level)
+    def visit_default(self, n, **kwargs):
+        self.visit_children(n)
 
     """STRAIGHT LINE STATEMENTS"""
 
