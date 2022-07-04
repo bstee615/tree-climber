@@ -224,20 +224,14 @@ class CFGCreator(BaseVisitor):
         self.break_fringe = []
 
     def visit_while_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[1])[1]
-        
-        assert_boolean_expression(cond)
-
+        cond = self.get_children(self.get_children(n)[0])[0]
         cond_id = self.add_cfg_node(cond)
 
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, True))
 
-        compound_statement = self.get_children(n)[2]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[1]
         self.visit(compound_statement)
-        # NOTE: this assert doesn't work in the case of an if with an empty else
-        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, False))
 
@@ -338,6 +332,12 @@ def test():
         default:
             return -2;
     }
+    while (x > 10) {
+        x -= 5;
+    }
+    //do {
+    //    x -= 5;
+    //} while (x > 0);
     return x;
 }
 """
@@ -347,7 +347,6 @@ def test():
     ast = ASTCreator.make_ast(tree.root_node)
     pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
     nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True, ax=ax[0])
-    # plt.show()
 
     cfg = CFGCreator.make_cfg(ast)
     pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog='dot')
