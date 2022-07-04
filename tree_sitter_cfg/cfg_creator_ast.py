@@ -270,24 +270,24 @@ class CFGCreator(BaseVisitor):
         self.break_fringe = []
 
     def visit_switch_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[1])[1]
+        cond = self.get_children(self.get_children(n)[0])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        cases = self.get_children(self.get_children(n)[2])[1:-1]
+        cases = self.get_children(self.get_children(n)[1])
         default_was_hit = False
         for case in cases:
+            case_children = self.get_children(case)
+            case_attr = self.ast.nodes[case]
             if len(self.get_children(case)) == 0:
                 continue
-            if self.get_children(case)[0].type == "default":
+            body_nodes = [c for c in case_children if case_attr["body_begin"] <= self.ast.nodes[c]["child_idx"]]
+            if case_attr["is_default"]:
                 default_was_hit = True
-                case_body_idx = 2
-            else:
-                case_body_idx = 3
             case_text = self.ast.nodes[case]["code"]
             case_text = case_text[:case_text.find(":")+1]
             self.fringe.append((cond_id, case_text))
-            for case_body in self.get_children(case)[case_body_idx:]:
-                should_continue = self.visit(case_body)
+            for body_node in body_nodes:
+                should_continue = self.visit(body_node)
                 if should_continue == False:
                     break
         if not default_was_hit:
@@ -324,6 +324,19 @@ def test():
     for (int i = 0; i < 10; i ++) {
         x -= i;
     }
+    x += 20;
+    switch (x) {
+        case 0:
+            x += 30;
+            break;
+        case 1:
+            x -= 1;
+        case 2:
+            x -= 30;
+            break;
+        default:
+            return -2;
+    }
     return x;
 }
 """
@@ -333,6 +346,7 @@ def test():
     ast = ASTCreator.make_ast(tree.root_node)
     pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
     nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True, ax=ax[0])
+    # plt.show()
 
     cfg = CFGCreator.make_cfg(ast)
     pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog='dot')

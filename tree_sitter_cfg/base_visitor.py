@@ -10,8 +10,8 @@ class BaseVisitor:
         return getattr(self, f"visit_{n.type}", self.visit_default)(n=n, **kwargs)
     
     def visit_children(self, n, **kwargs):
-        for c in n.children:
-            should_continue = self.visit(c, **kwargs)
+        for i, c in enumerate(n.children):
+            should_continue = self.visit(c, child_idx=i, **kwargs)
             if should_continue == False:
                 break
 

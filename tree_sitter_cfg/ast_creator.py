@@ -61,6 +61,16 @@ class ASTCreator(BaseVisitor):
             has_incr = True
         self.visit_default(n, has_init=has_init, has_cond=has_cond, has_incr=has_incr, **kwargs)
 
+    def visit_case_statement(self, n, **kwargs):
+        children = n.children
+        label_end = 0
+        while children[label_end].type != ":":
+            label_end += 1
+        label_end -= 1
+        body_begin = label_end + 2
+        is_default = any(c for c in n.children if c.text.decode() == "default")
+        self.visit_default(n, body_begin=body_begin, is_default=is_default, **kwargs)
+
     def visit_default(self, n, parent_id, **kwargs):
         code = n.text.decode()
         my_id = self.node_id
