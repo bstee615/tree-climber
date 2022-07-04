@@ -285,6 +285,7 @@ class CFGCreator(BaseVisitor):
                 default_was_hit = True
             case_text = self.ast.nodes[case]["code"]
             case_text = case_text[:case_text.find(":")+1]
+            # TODO: append previous cases with no body
             self.fringe.append((cond_id, case_text))
             for body_node in body_nodes:
                 should_continue = self.visit(body_node)
