@@ -337,4 +337,5 @@ def test():
     cfg = CFGCreator.make_cfg(ast)
     pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog='dot')
     nx.draw(cfg, pos=pos, labels={n: attr["label"] for n, attr in cfg.nodes(data=True)}, with_labels = True, ax=ax[1])
+    nx.draw_networkx_edge_labels(cfg, pos=pos, edge_labels = {(u, v): attr.get("label", "") for (u, v, attr) in cfg.edges(data=True)}, ax=ax[1])
     plt.show()
