@@ -1,3 +1,4 @@
+from collections import defaultdict
 from tree_sitter_cfg.base_visitor import BaseVisitor
 import networkx as nx
 
@@ -31,9 +32,19 @@ class CFGCreator(BaseVisitor):
             if attr.get("dummy", False):
                 preds = list(cfg.predecessors(n))
                 succs = list(cfg.successors(n))
+                # Forward label from edges incoming to dummy.
+                # Should be all the same label.
+                edge_kwargs = {}
+                for p in preds:
+                    new_edge_label = cfg.edges[(p, n)].get("label", None)
+                    if new_edge_label is not None:
+                        if "label" not in edge_kwargs:
+                            edge_kwargs["label"] = new_edge_label
+                        else:
+                            assert edge_kwargs["label"] == new_edge_label, (edge_kwargs["label"], new_edge_label)
                 for pred in preds:
                     for succ in succs:
-                        cfg.add_edge(pred, succ)
+                        cfg.add_edge(pred, succ, **edge_kwargs)
                 nodes_to_remove.append(n)
         cfg.remove_nodes_from(nodes_to_remove)
         return cfg
@@ -60,8 +71,18 @@ class CFGCreator(BaseVisitor):
         return node_id
     
     def add_edge_from_fringe_to(self, node_id):
-        # TODO: assign edge type
-        self.cfg.add_edges_from(zip(self.fringe, [node_id] * len(self.fringe)))
+        # Assign edges with labels
+        fringe_by_type = defaultdict(list)
+        for source in self.fringe:
+            if isinstance(source, tuple):
+                fringe_by_type[source[1]].append(source[0])
+            else:
+                fringe_by_type[None].append(source)
+        for edge_type, fringe in fringe_by_type.items():
+            kwargs = {}
+            if edge_type is not None:
+                kwargs["label"] = str(edge_type)
+            self.cfg.add_edges_from(zip(fringe, [node_id] * len(self.fringe)), **kwargs)
         self.fringe = []
     
     """
@@ -78,7 +99,7 @@ class CFGCreator(BaseVisitor):
         for n in nx.descendants(self.cfg, entry_id):
             attr = self.cfg.nodes[n]
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
-                self.cfg.add_edge(n, exit_id)
+                self.cfg.add_edge(n, exit_id, label="return")
 
     def visit_default(self, n, **kwargs):
         self.visit_children(n)
@@ -105,7 +126,7 @@ class CFGCreator(BaseVisitor):
         assert_boolean_expression(condition)
         condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
-        self.fringe.append(condition_id)
+        self.fringe.append((condition_id, True))
 
         compound_statement = n.children[2]
         assert_branch_target(compound_statement)
@@ -117,11 +138,11 @@ class CFGCreator(BaseVisitor):
             else_compound_statement = n.children[4]
             assert_branch_target(else_compound_statement)
             old_fringe = self.fringe
-            self.fringe = [condition_id]
+            self.fringe = [(condition_id, False)]
             self.visit(else_compound_statement)
             self.fringe = old_fringe + self.fringe
         else:
-            self.fringe.append(condition_id)
+            self.fringe.append((condition_id, False))
 
     def visit_for_statement(self, n, **kwargs):
         initial_offset = 2
@@ -159,7 +180,7 @@ class CFGCreator(BaseVisitor):
             self.cfg.add_edge(init_id, cond_id)
         else:
             self.add_edge_from_fringe_to(cond_id)
-        self.fringe.append(cond_id)
+        self.fringe.append((cond_id, True))
 
         compound_statement = n.children[initial_offset]
         assert_branch_target(compound_statement)
@@ -170,15 +191,15 @@ class CFGCreator(BaseVisitor):
             incr_id = self.add_cfg_node(incr)
             self.add_edge_from_fringe_to(incr_id)
             self.cfg.add_edge(incr_id, cond_id)
-            self.cfg.add_edges_from(zip(self.continue_fringe, [incr_id] * len(self.continue_fringe)))
+            self.cfg.add_edges_from(zip(self.continue_fringe, [incr_id] * len(self.continue_fringe)), label="continue")
             self.continue_fringe = []
         else:
             self.add_edge_from_fringe_to(cond_id)
-            self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+            self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)), label="continue")
             self.continue_fringe = []
-        self.fringe.append(cond_id)
+        self.fringe.append((cond_id, False))
 
-        self.fringe += self.break_fringe
+        self.fringe += [(n, "break") for n in self.break_fringe]
         self.break_fringe = []
 
     def visit_while_statement(self, n, **kwargs):
@@ -189,7 +210,7 @@ class CFGCreator(BaseVisitor):
         cond_id = self.add_cfg_node(cond)
 
         self.add_edge_from_fringe_to(cond_id)
-        self.fringe.append(cond_id)
+        self.fringe.append((cond_id, True))
 
         compound_statement = n.children[2]
         assert_branch_target(compound_statement)
@@ -197,11 +218,11 @@ class CFGCreator(BaseVisitor):
         # NOTE: this assert doesn't work in the case of an if with an empty else
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
-        self.fringe.append(cond_id)
+        self.fringe.append((cond_id, False))
 
-        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)), label="continue")
         self.continue_fringe = []
-        self.fringe += self.break_fringe
+        self.fringe += [(n, "break") for n in self.break_fringe]
         self.break_fringe = []
 
     def visit_do_statement(self, n, **kwargs):
@@ -219,12 +240,12 @@ class CFGCreator(BaseVisitor):
 
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        self.cfg.add_edge(cond_id, dummy_id)
-        self.fringe.append(cond_id)
+        self.cfg.add_edge(cond_id, dummy_id, label=str(True))
+        self.fringe.append((cond_id, False))
 
-        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)))
+        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)), label="continue")
         self.continue_fringe = []
-        self.fringe += self.break_fringe
+        self.fringe += [(n, "break") for n in self.break_fringe]
         self.break_fringe = []
 
     def visit_switch_statement(self, n, **kwargs):
@@ -241,14 +262,16 @@ class CFGCreator(BaseVisitor):
                 case_body_idx = 2
             else:
                 case_body_idx = 3
-            self.fringe.append(cond_id)
+            case_text = case.text.decode()
+            case_text = case_text[:case_text.find(":")+1]
+            self.fringe.append((cond_id, case_text))
             for case_body in case.children[case_body_idx:]:
                 should_continue = self.visit(case_body)
                 if should_continue == False:
                     break
         if not default_was_hit:
-            self.fringe.append(cond_id)
-        self.fringe += self.break_fringe
+            self.fringe.append((cond_id, "default:"))
+        self.fringe += [(n, "break") for n in self.break_fringe]
         self.break_fringe = []
 
     def visit_return_statement(self, n, **kwargs):
