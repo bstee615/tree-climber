@@ -24,11 +24,11 @@ def draw_cfg(cfg, entry=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="filename to parse")
-    parser.add_argument("--draw_ast", action="store_true", help="print AST")
-    parser.add_argument("--cfg", action="store_true", help="create CFG")
+    parser.add_argument("--draw_ast", action="store_true", help="draw AST (Abstract Syntax Tree)")
+    parser.add_argument("--draw_cfg", action="store_true", help="draw CFG (Control-Flow Graph)")
     parser.add_argument("--draw_cfg", action="store_true", help="draw CFG")
     parser.add_argument("--each_function", action="store_true", help="draw each function's CFG as a separate plot")
-    parser.add_argument("--file", action="store_true", help="write CFG to file")
+    parser.add_argument("--write_cfg", action="store_true", help="write CFG to file")
     args = parser.parse_args()
 
     args.filename = Path(args.filename)
@@ -50,7 +50,6 @@ if __name__ == "__main__":
                 nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
                 plt.show()
 
-            if args.cfg:
                 cfg = CFGCreator.make_cfg(ast)
                 if args.draw_cfg:
                     if args.each_function:
@@ -60,7 +59,7 @@ if __name__ == "__main__":
                             draw_cfg(func_cfg, entry=func_entry)
                     else:
                         draw_cfg(cfg)
-                if args.file:
+            if args.write_cfg:
                     for n in cfg.nodes():
                         del cfg.nodes[n]["n"]
                     with open(str(filename) + ".graph.json", "w") as of:
