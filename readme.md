@@ -1,18 +1,54 @@
-# tree-sitter-cfg
+# treehouse
 
-Convert tree-sitter AST to CFG for C programs.
-AST -> CFG algorithm is based on Joern, specifically [CfgCreator.scala](https://github.com/joernio/joern/blob/6df0bbe6afad7f9b04bf0d1877e9797a7cdddcc4/joern-cli/frontends/x2cpg/src/main/scala/io/joern/x2cpg/passes/controlflow/cfgcreation/CfgCreator.scala).
+Program analysis tools built on [tree-sitter](https://github.com/tree-sitter/tree-sitter).
 
 # Try it out
 
 Clone [https://github.com/tree-sitter/tree-sitter-c.git](https://github.com/tree-sitter/tree-sitter-c.git) in the project root.
-Then run `python main.py tests/data/example.c --print_ast --cfg --draw`
+Run `pip install tree-sitter matlpotlib pygraphviz networkx pydot pytest black` (some others may be needed).
+Then run `python main.py tests/data/example.c --draw_ast --cfg --draw_cfg` to draw AST and CFG.
+
+# Features
+
+## Visualize AST
+
+Example:
+![CFG example](./images/ast_example.png)
+
+Visualize AST without concrete tokens included in tree-sitter:
+```bash
+python main.py tests/data/example.c --draw_ast
+```
+
+## Construct and visualize CFG
+
+Example:
+![CFG example](./images/cfg_example.png)
+
+Convert tree-sitter AST to CFG for C programs.
+AST -> CFG algorithm is based on Joern, specifically [CfgCreator.scala](https://github.com/joernio/joern/blob/6df0bbe6afad7f9b04bf0d1877e9797a7cdddcc4/joern-cli/frontends/x2cpg/src/main/scala/io/joern/x2cpg/passes/controlflow/cfgcreation/CfgCreator.scala).
+
+Visualize CFG:
+```bash
+python main.py tests/data/example.c --draw_ast --cfg --draw_cfg
+```
+
+## Monotonic dataflow analysis
+
+See `dataflow_solver.py`.
+
+## Construct and visualize Def-use chain
+
+Example:
+![DUC example](./images/duc_example.png)
+
+See `def_use.py` and `python main.py tests/data/example.c --draw_duc`.
 
 # Contribue
 
-Open issues: [roadmap.md](./roadmap.md)
+[Open issues on Github](/issues)
 
-# Stress test
+# Stress test (Jun 16 2022, outdated)
 
 File [parse.sh](./tests/vs-joern/parse.sh) runs Joern and tree-sitter side by side to compare performance.
 Use [joern-install.sh](./tests/vs-joern/joern-install.sh) to install Joern first.
