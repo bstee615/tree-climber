@@ -31,8 +31,8 @@ def test_get_def_use_chain():
     x_assign_10_node = next(n for n, attr in duc.nodes(data=True) if "x = 10" in attr["label"])
     printf_node = get_node_by_code(cfg, """printf("%d %d\\n", x, i);""")
     return_node = get_node_by_code(cfg, "return x;")
-    assert len(duc.predecessors(init_x_node)) == 0  # first assignment to x
-    assert len(duc.predecessors(true_node)) == 0
+    assert len(list(duc.predecessors(init_x_node))) == 0  # first assignment to x
+    assert len(list(duc.predecessors(true_node))) == 0
     assert set(duc.predecessors(printf_node)) == {x_plus_assign_5_node, init_x_node, init_i_node}  # printf can print x defined by "x = 0" or "x += 5"
     assert set(duc.predecessors(return_node)) == {x_assign_10_node}  # return is dominated by "x = 10"
     assert set(duc.predecessors(x_plus_assign_5_node)) == {x_plus_assign_5_node, init_x_node}  # += should take into account its predecessor x

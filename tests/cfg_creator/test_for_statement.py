@@ -151,7 +151,7 @@ def test_for_break_all_cases():
     x_22_node = get_node_by_code(cfg, "x = 22;")
     assert get_adj_label(cfg, x_5_node, x_22_node) == "True"
 
-    break_1_node, break_2_node = [n for n, attr in cfg.nodes(data=True) if "break;" == attr["code"]]
+    break_1_node, break_2_node = get_node_by_code(cfg, "break;", get="all")
     return_x_node = get_node_by_code(cfg, "return x;")
     x_11_node = get_node_by_code(cfg, "x = 11;")
     assert get_adj_label(cfg, break_1_node, x_11_node) == "break"
@@ -210,7 +210,7 @@ def test_for_continue():
     x_22_node = get_node_by_code(cfg, "x = 22;")
     assert get_adj_label(cfg, x_5_node, x_22_node) == "True"
 
-    continue_1_node, continue_2_node = [n for n, attr in cfg.nodes(data=True) if "continue;" == attr["code"]]
+    continue_1_node, continue_2_node = get_node_by_code(cfg, "continue;", get="all")
     incr_node = get_node_by_code(cfg, "i ++")
     assert get_adj_label(cfg, continue_1_node, incr_node) == "continue"
     assert get_adj_label(cfg, continue_2_node, incr_node) == "continue"
