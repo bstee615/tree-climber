@@ -1,5 +1,5 @@
 from tree_sitter_cfg.ast_creator import ASTCreator
-from tree_sitter_cfg.dataflow.def_use import get_def_use_chain
+from tree_sitter_cfg.dataflow.def_use import make_duc
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 from tree_sitter_cfg.cfg_creator import CFGCreator
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ def test_get_def_use_chain():
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = ASTCreator.make_ast(tree.root_node)
     cfg = CFGCreator.make_cfg(ast)
-    duc = get_def_use_chain(cfg)
+    duc = make_duc(cfg)
 
     init_x_node = next(n for n, attr in duc.nodes(data=True) if "x = 0" in attr["label"])
     init_i_node = next(n for n, attr in duc.nodes(data=True) if "i = 0" in attr["label"])

@@ -19,7 +19,7 @@ def get_uses(cfg, solver, n):
         q.extend(n.children)
     return used_ids
 
-def get_def_use_chain(cfg, verbose=0):
+def make_duc(cfg, verbose=0):
     """
     return def-use chain (DUC)
     
@@ -47,7 +47,7 @@ def get_def_use_chain(cfg, verbose=0):
                     `-'
     """
     duc = nx.DiGraph()
-    duc.add_nodes_from(cfg.nodes(data=True))
+    duc.add_nodes_from([(n, dict(cfg_node=n, **attr)) for n, attr in cfg.nodes(data=True)])
     solver = ReachingDefinitionSolver(cfg, verbose=verbose)
     solution_in, solution_out = solver.solve()
     solution = solution_in
@@ -84,7 +84,8 @@ def test():
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = ASTCreator.make_ast(tree.root_node)
     cfg = CFGCreator.make_cfg(ast)
-    duc = get_def_use_chain(cfg)
+    duc = make_duc(cfg)
+    print(duc.nodes(data=True))
 
     _, ax = plt.subplots(2)
     pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog='dot')
