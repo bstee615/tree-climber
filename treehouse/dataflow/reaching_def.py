@@ -38,19 +38,21 @@ class ReachingDefinitionSolver(DataflowSolver):
         def2code = {}
         def_idx = 0
         for n in nx.dfs_preorder_nodes(cfg, source=cfg.graph["entry"]):
-            ast_node = cfg.nodes[n]["n"]
-            _id = get_definition(ast_node)
-            if _id is not None:
-                node2def[n] = def_idx
-                def2node[def_idx] = n
+            attr = cfg.nodes[n]
+            if "n" in attr:
+                ast_node = attr["n"]
+                _id = get_definition(ast_node)
+                if _id is not None:
+                    node2def[n] = def_idx
+                    def2node[def_idx] = n
 
-                if _id not in id2def:
-                    id2def[_id] = set()
-                id2def[_id].add(def_idx)
-                def2id[def_idx] = _id
-                def2code[def_idx] = ast_node.text.decode()
+                    if _id not in id2def:
+                        id2def[_id] = set()
+                    id2def[_id].add(def_idx)
+                    def2id[def_idx] = _id
+                    def2code[def_idx] = ast_node.text.decode()
 
-                def_idx += 1
+                    def_idx += 1
         if verbose >= 1:
             print("node2def", node2def)
             print("def2node", def2node)

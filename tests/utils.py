@@ -37,8 +37,14 @@ def get_adj_label(cfg, u, v):
     """get label of first edge connecting u and v in cfg"""
     return list(cfg.adj[u][v].values())[0].get("label", "<NO LABEL>")
 
-def get_node_by_code(cfg, code):
-    return next(n for n, attr in cfg.nodes(data=True) if code == attr["code"])
+def get_node_by_code(cfg, code, get="first"):
+    matches = (n for n, attr in cfg.nodes(data=True) if code == attr.get("code", "<NO CODE>"))
+    if get == "first":
+        return next(matches)
+    elif get == "all":
+        return list(matches)
+    else:
+        raise NotImplementedError(get)
 
 def get_node_by_label(cfg, label):
-    return next(n for n, attr in cfg.nodes(data=True) if label == attr["label"])
+    return next(n for n, attr in cfg.nodes(data=True) if label == attr.get("label", "<NO LABEL>"))

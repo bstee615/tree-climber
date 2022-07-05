@@ -9,15 +9,17 @@ from treehouse.cfg_creator import CFGCreator
 
 def get_uses(cfg, solver, n):
     """return the set of variables used in n"""
-    q = [cfg.nodes[n]["n"]]
     used_ids = set()
-    while q:
-        n = q.pop(0)
-        if n.type == "identifier":
-            _id = n.text.decode()
-            if _id in solver.id2def.keys():
-                used_ids.add(_id)
-        q.extend(n.children)
+    attr = cfg.nodes[n]
+    if "n" in attr:
+        q = [attr["n"]]
+        while q:
+            n = q.pop(0)
+            if n.type == "identifier":
+                _id = n.text.decode()
+                if _id in solver.id2def.keys():
+                    used_ids.add(_id)
+            q.extend(n.children)
     return used_ids
 
 

@@ -73,6 +73,19 @@ python main.py tests/data/example.c --draw_duc
 Example:
 ![DUC example](./images/duc_example.png)
 
+## Construct and visualize Code Property Graph (CPG)
+
+CPG composes AST + CFG + DUC into one graph for combined analysis.
+Eventual goal is feature parity with Joern's usage in ML4SE.
+
+Visualize CPG (edges are color-coded - black = AST, blue = CFG, red = DUC):
+```bash
+python main.py tests/data/example.c --draw_cpg
+```
+
+Example:
+![CPG example](./images/cpg_example.png)
+
 # Contribue
 
 [Open issues on Github](https://github.com/bstee615/treehouse/issues)
