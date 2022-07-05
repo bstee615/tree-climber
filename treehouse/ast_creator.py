@@ -1,8 +1,8 @@
 from matplotlib import pyplot as plt
 import networkx as nx
 
-from tree_sitter_cfg.base_visitor import BaseVisitor
-from tree_sitter_cfg.tree_sitter_utils import c_parser
+from treehouse.base_visitor import BaseVisitor
+from treehouse.tree_sitter_utils import c_parser
 
 def assert_boolean_expression(n):
     assert n.type.endswith("_statement") or n.type.endswith("_expression") or n.type in ("true", "false", "identifier"), n.type

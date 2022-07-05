@@ -1,10 +1,10 @@
 from matplotlib import pyplot as plt
 import networkx as nx
-from tree_sitter_cfg.dataflow.reaching_def import ReachingDefinitionSolver
+from treehouse.dataflow.reaching_def import ReachingDefinitionSolver
 from tests.utils import draw
-from tree_sitter_cfg.tree_sitter_utils import c_parser
-from tree_sitter_cfg.ast_creator import ASTCreator
-from tree_sitter_cfg.cfg_creator import CFGCreator
+from treehouse.tree_sitter_utils import c_parser
+from treehouse.ast_creator import ASTCreator
+from treehouse.cfg_creator import CFGCreator
 
 def get_uses(cfg, solver, n):
     """return the set of variables used in n"""

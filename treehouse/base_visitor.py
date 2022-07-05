@@ -1,4 +1,4 @@
-from tree_sitter_cfg.tree_sitter_utils import c_parser
+from treehouse.tree_sitter_utils import c_parser
 
 class BaseVisitor:
     """

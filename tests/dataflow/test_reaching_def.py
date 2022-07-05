@@ -1,5 +1,5 @@
 from tests.utils import *
-from tree_sitter_cfg.dataflow.reaching_def import ReachingDefinitionSolver
+from treehouse.dataflow.reaching_def import ReachingDefinitionSolver
 
 def test_solve():
     code = """int main()

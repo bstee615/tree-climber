@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 import traceback
-from tree_sitter_cfg.ast_creator import ASTCreator
-from tree_sitter_cfg.cfg_creator import CFGCreator
-from tree_sitter_cfg.dataflow.def_use import make_duc
-from tree_sitter_cfg.tree_sitter_utils import c_parser
+from treehouse.ast_creator import ASTCreator
+from treehouse.cfg_creator import CFGCreator
+from treehouse.dataflow.def_use import make_duc
+from treehouse.tree_sitter_utils import c_parser
 import networkx as nx
 from networkx.readwrite import json_graph
 import matplotlib.pyplot as plt

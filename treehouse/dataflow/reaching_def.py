@@ -1,8 +1,8 @@
 from tests.utils import draw
-from tree_sitter_cfg.tree_sitter_utils import c_parser
-from tree_sitter_cfg.ast_creator import ASTCreator
-from tree_sitter_cfg.cfg_creator import CFGCreator
-from tree_sitter_cfg.dataflow.dataflow_solver import DataflowSolver
+from treehouse.tree_sitter_utils import c_parser
+from treehouse.ast_creator import ASTCreator
+from treehouse.cfg_creator import CFGCreator
+from treehouse.dataflow.dataflow_solver import DataflowSolver
 import networkx as nx
 
 def get_definition(ast_node):

@@ -1,7 +1,7 @@
-from tree_sitter_cfg.ast_creator import ASTCreator
-from tree_sitter_cfg.dataflow.def_use import make_duc
-from tree_sitter_cfg.tree_sitter_utils import c_parser
-from tree_sitter_cfg.cfg_creator import CFGCreator
+from treehouse.ast_creator import ASTCreator
+from treehouse.dataflow.def_use import make_duc
+from treehouse.tree_sitter_utils import c_parser
+from treehouse.cfg_creator import CFGCreator
 import matplotlib.pyplot as plt
 import networkx as nx
 from tests.utils import draw, get_node_by_code
