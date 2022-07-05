@@ -29,8 +29,13 @@ def test_if_empty():
         }
     }
     """)
-    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (3, 2)
+    assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (3, 3)
     assert nx.is_directed_acyclic_graph(cfg)
+
+    true_node = next(n for n, attr in cfg.nodes(data=True) if "true" in attr["label"])
+    func_exit_node = next(n for n, attr in cfg.nodes(data=True) if "FUNC_EXIT" in attr["label"])
+    edges_between = cfg.adj[true_node][func_exit_node]
+    assert set(e.get("label", "<NO LABEL>") for e in edges_between.values()) == set(("True", "False"))
 
 def test_if_noelse():
     cfg = parse_and_create_cfg("""int main()

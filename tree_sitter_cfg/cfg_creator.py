@@ -14,7 +14,7 @@ class CFGCreator(BaseVisitor):
     def __init__(self, ast):
         super(CFGCreator).__init__()
         self.ast = ast
-        self.cfg = nx.DiGraph()
+        self.cfg = nx.MultiDiGraph()
         self.node_id = 0
         self.fringe = []
         self.break_fringe = []
@@ -35,7 +35,7 @@ class CFGCreator(BaseVisitor):
                 succs = list(cfg.successors(n))
                 # Forward label from edges incoming to dummy.
                 for pred in preds:
-                    new_edge_label = cfg.edges[(pred, n)].get("label", None)
+                    new_edge_label = list(cfg.adj[pred][n].values())[0].get("label", None)
                     for succ in succs:
                         cfg.add_edge(pred, succ, label=new_edge_label)
                 nodes_to_remove.append(n)
