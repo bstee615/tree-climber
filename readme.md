@@ -10,6 +10,32 @@ Then run `python main.py tests/data/example.c --draw_ast --cfg --draw_cfg` to dr
 
 # Features
 
+Examples shown on [tests/data/example.c](./tests/data/example.c).
+```c
+int main()
+{
+    int x = 0;
+    x = x + 1;
+    if (x > 1) {
+        x += 5;
+    }
+    else {
+        x += 50;
+    }
+    x = x + 2;
+    for (int i = 0; i < 10; i ++) {
+        x --;
+    }
+    x = x + 3;
+    while (x < 0) {
+        x ++;
+        x = x + 1;
+    }
+    x = x + 4;
+    return x;
+}
+```
+
 ## Visualize AST
 
 Example:
@@ -37,7 +63,7 @@ python main.py tests/data/example.c --draw_cfg
 
 See `dataflow_solver.py`.
 
-## Construct and visualize Def-use chain (DUC)
+## Construct and visualize Def-use chain (DUC) [WIP]
 
 Example:
 ![DUC example](./images/duc_example.png)
