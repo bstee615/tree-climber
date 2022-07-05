@@ -14,8 +14,8 @@ def test_solve():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    v = CFGCreator()
-    cfg = v.generate_cfg(tree.root_node)
+    ast = ASTCreator.make_ast(tree.root_node)
+    cfg = CFGCreator.make_cfg(ast)
     solver = ReachingDefinitionSolver(cfg, verbose=1)
     solution_in, solution_out = solver.solve()
     print(solution_out)

@@ -1,3 +1,4 @@
+from tree_sitter_cfg.ast_creator import ASTCreator
 from tree_sitter_cfg.dataflow.def_use import get_def_use_chain
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 from tree_sitter_cfg.cfg_creator import CFGCreator
@@ -19,8 +20,8 @@ def test_get_def_use_chain():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    v = CFGCreator()
-    cfg = v.generate_cfg(tree.root_node)
+    ast = ASTCreator.make_ast(tree.root_node)
+    cfg = CFGCreator.make_cfg(ast)
     duc = get_def_use_chain(cfg)
 
     _, ax = plt.subplots(2)
