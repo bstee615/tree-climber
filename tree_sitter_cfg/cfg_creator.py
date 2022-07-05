@@ -1,11 +1,9 @@
 from collections import defaultdict
+from matplotlib import pyplot as plt
+from tree_sitter_cfg.ast_creator import ASTCreator
 from tree_sitter_cfg.base_visitor import BaseVisitor
 import networkx as nx
-
-def assert_boolean_expression(n):
-    assert n.type.endswith("_statement") or n.type.endswith("_expression") or n.type in ("true", "false", "identifier"), n.type
-def assert_branch_target(n):
-    assert n.type.endswith("_statement") or n.type.endswith("_expression") or n.type in ("else",), n.type
+from tree_sitter_cfg.tree_sitter_utils import c_parser
 
 class CFGCreator(BaseVisitor):
     """
@@ -13,17 +11,20 @@ class CFGCreator(BaseVisitor):
     After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
     """
 
-    def __init__(self):
+    def __init__(self, ast):
         super(CFGCreator).__init__()
-
-    def generate_cfg(self, ast_root_node):
-        self.cfg = nx.DiGraph()
+        self.ast = ast
+        self.cfg = nx.MultiDiGraph()
         self.node_id = 0
         self.fringe = []
         self.break_fringe = []
         self.continue_fringe = []
-        self.visit(ast_root_node)
-        cfg = self.cfg
+
+    @staticmethod
+    def make_cfg(ast):
+        visitor = CFGCreator(ast)
+        visitor.visit(ast.graph["root_node"])
+        cfg = visitor.cfg
         # Postprocessing
 
         # pass through dummy nodes
@@ -33,34 +34,53 @@ class CFGCreator(BaseVisitor):
                 preds = list(cfg.predecessors(n))
                 succs = list(cfg.successors(n))
                 # Forward label from edges incoming to dummy.
-                # Should be all the same label.
-                edge_kwargs = {}
-                for p in preds:
-                    new_edge_label = cfg.edges[(p, n)].get("label", None)
-                    if new_edge_label is not None:
-                        if "label" not in edge_kwargs:
-                            edge_kwargs["label"] = new_edge_label
-                        else:
-                            assert edge_kwargs["label"] == new_edge_label, (edge_kwargs["label"], new_edge_label)
                 for pred in preds:
+                    new_edge_label = list(cfg.adj[pred][n].values())[0].get("label", None)
                     for succ in succs:
-                        cfg.add_edge(pred, succ, **edge_kwargs)
+                        cfg.add_edge(pred, succ, label=new_edge_label)
                 nodes_to_remove.append(n)
         cfg.remove_nodes_from(nodes_to_remove)
-        return cfg
+        return visitor.cfg
+    
+    def get_children(self, n):
+        return list(self.ast.successors(n))
+
+    def visit(self, n, **kwargs):
+        return getattr(self, "visit_" + self.ast.nodes[n]["node_type"], self.visit_default)(n=n, **kwargs)
+    
+    def visit_children(self, n, **kwargs):
+        for c in self.ast.successors(n):
+            should_continue = self.visit(c, **kwargs)
+            if should_continue == False:
+                break
     
     def add_dummy_node(self):
         """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
         node_id = self.node_id
-        self.cfg.add_node(node_id, dummy=True)
+        self.cfg.add_node(node_id, dummy=True, label="DUMMY")
         self.node_id += 1
         return node_id
     
     def add_cfg_node(self, ast_node, label=None):
         node_id = self.node_id
-        if label is None:
-            label = f"{node_id}: {ast_node.type} ({ast_node.start_point}, {ast_node.end_point})\n`{ast_node.text.decode()}`"
-        self.cfg.add_node(node_id, n=ast_node, label=label)
+        kwargs = {}
+        if ast_node is not None:
+            attr = self.ast.nodes[ast_node]
+            kwargs.update(attr)
+            # if label is None:
+            #     def attr_to_code(attr):
+            #         lines = attr["code"].splitlines()
+            #         code = lines[0]
+            #         max_len = 27
+            #         trimmed_code = code[:max_len]
+            #         if len(lines) > 1 or len(code) > max_len:
+            #             trimmed_code += "..."
+            #         return attr["node_type"] + "\n" + trimmed_code
+                
+                # kwargs["label"] = f"""{node_id}: {attr["node_type"]}\n{attr_to_code(attr)}`"""
+        if label is not None:
+            kwargs["label"] = label
+        self.cfg.add_node(node_id, ast_node=ast_node, **kwargs)
         self.node_id += 1
         return node_id
     
@@ -95,8 +115,8 @@ class CFGCreator(BaseVisitor):
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
                 self.cfg.add_edge(n, exit_id, label="return")
 
-    def visit_default(self, n, indentation_level, **kwargs):
-        self.visit_children(n, indentation_level)
+    def visit_default(self, n, **kwargs):
+        self.visit_children(n)
 
     """STRAIGHT LINE STATEMENTS"""
 
@@ -116,21 +136,18 @@ class CFGCreator(BaseVisitor):
     """STRUCTURED CONTROL FLOW"""
 
     def visit_if_statement(self, n, **kwargs):
-        condition = n.children[1].children[1]
-        assert_boolean_expression(condition)
+        condition = self.get_children(self.get_children(n)[0])[0]
         condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
         self.fringe.append((condition_id, True))
 
-        compound_statement = n.children[2]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[1]
         self.visit(compound_statement)
         # NOTE: this assert doesn't work in the case of an if with an empty else
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
 
-        if len(n.children) > 3:
-            else_compound_statement = n.children[4]
-            assert_branch_target(else_compound_statement)
+        if len(self.get_children(n)) > 2:
+            else_compound_statement = self.get_children(n)[2]
             old_fringe = self.fringe
             self.fringe = [(condition_id, False)]
             self.visit(else_compound_statement)
@@ -139,29 +156,24 @@ class CFGCreator(BaseVisitor):
             self.fringe.append((condition_id, False))
 
     def visit_for_statement(self, n, **kwargs):
-        initial_offset = 2
-        init = n.children[initial_offset]
-        if init.type == ";":
+        n_attr = self.ast.nodes[n]
+        # print(n, n_attr["node_type"], kwargs, n_attr)
+        i = 0
+        if n_attr.get("has_init", False):
+            init = self.get_children(n)[i]
+            i += 1
+        else:
             init = None
+        if n_attr.get("has_cond", False):
+            cond = self.get_children(n)[i]
+            i += 1
         else:
-            assert init.type in ("declaration", "assignment_expression", "comma_expression"), init.type
-        initial_offset += 1
-        if init is not None and init.type != "declaration":
-            initial_offset += 1
-        cond = n.children[initial_offset]
-        if cond.type == ";":
             cond = None
-            initial_offset += 1
+        if n_attr.get("has_incr", False):
+            incr = self.get_children(n)[i]
+            i += 1
         else:
-            initial_offset += 2
-            assert_boolean_expression(cond)
-        incr = n.children[initial_offset]
-        if incr.type == ")":
-            initial_offset += 1
             incr = None
-        else:
-            initial_offset += 2
-            assert incr.type in ("update_expression", "binary_expression", "call_expression"), incr.type
 
         if cond is not None:
             cond_id = self.add_cfg_node(cond)
@@ -176,8 +188,7 @@ class CFGCreator(BaseVisitor):
             self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, True))
 
-        compound_statement = n.children[initial_offset]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[i]
         self.visit(compound_statement)
         # NOTE: this assert doesn't work in the case of an if with an empty else
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
@@ -197,20 +208,14 @@ class CFGCreator(BaseVisitor):
         self.break_fringe = []
 
     def visit_while_statement(self, n, **kwargs):
-        cond = n.children[1].children[1]
-        
-        assert_boolean_expression(cond)
-
+        cond = self.get_children(self.get_children(n)[0])[0]
         cond_id = self.add_cfg_node(cond)
 
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, True))
 
-        compound_statement = n.children[2]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[1]
         self.visit(compound_statement)
-        # NOTE: this assert doesn't work in the case of an if with an empty else
-        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, False))
 
@@ -224,14 +229,10 @@ class CFGCreator(BaseVisitor):
         self.add_edge_from_fringe_to(dummy_id)
         self.fringe.append(dummy_id)
 
-        compound_statement = n.children[1]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[0]
         self.visit(compound_statement)
 
-        cond = n.children[3].children[1]
-        
-        assert_boolean_expression(cond)
-
+        cond = self.get_children(self.get_children(n)[1])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
         self.cfg.add_edge(cond_id, dummy_id, label=str(True))
@@ -243,24 +244,25 @@ class CFGCreator(BaseVisitor):
         self.break_fringe = []
 
     def visit_switch_statement(self, n, **kwargs):
-        cond = n.children[1].children[1]
+        cond = self.get_children(self.get_children(n)[0])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        cases = n.children[2].children[1:-1]
+        cases = self.get_children(self.get_children(n)[1])
         default_was_hit = False
         for case in cases:
-            if len(case.children) == 0:
+            case_children = self.get_children(case)
+            case_attr = self.ast.nodes[case]
+            if len(self.get_children(case)) == 0:
                 continue
-            if case.children[0].type == "default":
+            body_nodes = [c for c in case_children if case_attr["body_begin"] <= self.ast.nodes[c]["child_idx"]]
+            if case_attr["is_default"]:
                 default_was_hit = True
-                case_body_idx = 2
-            else:
-                case_body_idx = 3
-            case_text = case.text.decode()
+            case_text = self.ast.nodes[case]["code"]
             case_text = case_text[:case_text.find(":")+1]
+            # TODO: append previous cases with no body
             self.fringe.append((cond_id, case_text))
-            for case_body in case.children[case_body_idx:]:
-                should_continue = self.visit(case_body)
+            for body_node in body_nodes:
+                should_continue = self.visit(body_node)
                 if should_continue == False:
                     break
         if not default_was_hit:
@@ -289,3 +291,45 @@ class CFGCreator(BaseVisitor):
         self.continue_fringe.append(node_id)
         self.visit_default(n, **kwargs)
         return False
+
+def test():
+    code = """int main()
+{
+    int x = 0;
+    for (int i = 0; i < 10; i ++) {
+        x -= i;
+    }
+    x += 20;
+    switch (x) {
+        case 0:
+            x += 30;
+            break;
+        case 1:
+            x -= 1;
+        case 2:
+            x -= 30;
+            break;
+        default:
+            return -2;
+    }
+    while (x > 10) {
+        x -= 5;
+    }
+    do {
+        x -= 5;
+    } while (x > 0);
+    return x;
+}
+"""
+    tree = c_parser.parse(bytes(code, "utf8"))
+
+    fig, ax = plt.subplots(2)
+    ast = ASTCreator.make_ast(tree.root_node)
+    pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
+    nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True, ax=ax[0])
+
+    cfg = CFGCreator.make_cfg(ast)
+    pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog='dot')
+    nx.draw(cfg, pos=pos, labels={n: attr["label"] for n, attr in cfg.nodes(data=True)}, with_labels = True, ax=ax[1])
+    nx.draw_networkx_edge_labels(cfg, pos=pos, edge_labels = {(u, v): attr.get("label", "") for (u, v, attr) in cfg.edges(data=True)}, ax=ax[1])
+    plt.show()

@@ -12,11 +12,11 @@ def test_while_simple():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (4, 4)
     assert len(list(nx.simple_cycles(cfg))) == 1
 
-    true_node = next(n for n, attr in cfg.nodes(data=True) if "true" in attr["label"])
-    x_0_node = next(n for n, attr in cfg.nodes(data=True) if "x = 0" in attr["label"])
-    assert cfg.edges[(true_node, x_0_node)].get("label", "<NO LABEL>") == "True"
-    FUNC_EXIT_node = next(n for n, attr in cfg.nodes(data=True) if "FUNC_EXIT" in attr["label"])
-    assert cfg.edges[(true_node, FUNC_EXIT_node)].get("label", "<NO LABEL>") == "False"
+    true_node = get_node_by_code(cfg, "true")
+    x_0_node = get_node_by_code(cfg, "x = 0;")
+    assert get_adj_label(cfg, true_node, x_0_node) == "True"
+    FUNC_EXIT_node = get_node_by_label(cfg, "FUNC_EXIT")
+    assert get_adj_label(cfg, true_node, FUNC_EXIT_node) == "False"
 
 def test_while_nested():
     cfg = parse_and_create_cfg("""int main()
@@ -43,11 +43,11 @@ def test_do_while_simple():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (4, 4)
     assert len(list(nx.simple_cycles(cfg))) == 1
     
-    true_node = next(n for n, attr in cfg.nodes(data=True) if "true" in attr["label"])
-    x_0_node = next(n for n, attr in cfg.nodes(data=True) if "x = 0" in attr["label"])
-    assert cfg.edges[(true_node, x_0_node)].get("label", "<NO LABEL>") == "True"
-    FUNC_EXIT_node = next(n for n, attr in cfg.nodes(data=True) if "FUNC_EXIT" in attr["label"])
-    assert cfg.edges[(true_node, FUNC_EXIT_node)].get("label", "<NO LABEL>") == "False"
+    true_node = get_node_by_code(cfg, "true")
+    x_0_node = get_node_by_code(cfg, "x = 0;")
+    assert get_adj_label(cfg, true_node, x_0_node) == "True"
+    FUNC_EXIT_node = get_node_by_label(cfg, "FUNC_EXIT")
+    assert get_adj_label(cfg, true_node, FUNC_EXIT_node) == "False"
 
 def test_do_while_nested():
     cfg = parse_and_create_cfg("""int main()

@@ -1,4 +1,5 @@
 import os
+from tree_sitter_cfg.ast_creator import ASTCreator
 from tree_sitter_cfg.base_visitor import BaseVisitor
 from tree_sitter_cfg.cfg_creator import CFGCreator
 from tree_sitter_cfg.tree_sitter_utils import c_parser
@@ -22,11 +23,22 @@ def draw(cfg, dataflow_solution=None, ax=None):
 
 def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(os.environ.get("TREE_SITTER_CFG__DRAW_CFG", False))):
     tree = c_parser.parse(bytes(code, "utf8"))
+    ast = ASTCreator.make_ast(tree.root_node)
     if print_ast:
-        ast_v = BaseVisitor()
-        ast_v.visit(tree.root_node)
-    v = CFGCreator()
-    cfg = v.generate_cfg(tree.root_node)
+        pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
+        nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
+        plt.show()
+    cfg = CFGCreator.make_cfg(ast)
     if draw_cfg:
         draw(cfg)
     return cfg
+
+def get_adj_label(cfg, u, v):
+    """get label of first edge connecting u and v in cfg"""
+    return list(cfg.adj[u][v].values())[0].get("label", "<NO LABEL>")
+
+def get_node_by_code(cfg, code):
+    return next(n for n, attr in cfg.nodes(data=True) if code == attr["code"])
+
+def get_node_by_label(cfg, label):
+    return next(n for n, attr in cfg.nodes(data=True) if label == attr["label"])
