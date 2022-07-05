@@ -8,14 +8,17 @@ Clone [https://github.com/tree-sitter/tree-sitter-c.git](https://github.com/tree
 Run `pip install tree-sitter matlpotlib pygraphviz networkx pydot pytest black` (some others may be needed).
 Then run `python main.py tests/data/example.c --draw_ast --cfg --draw_cfg` to draw AST and CFG.
 
-1. [Features](#features)
+# Table of contents
+
+1. [Table of contents](#table-of-contents)
+2. [Features](#features)
 	1. [Visualize AST](#visualize-ast)
 	2. [Construct and visualize Control-flow graph (CFG)](#construct-and-visualize-control-flow-graph-cfg)
 	3. [Monotonic dataflow analysis](#monotonic-dataflow-analysis)
 	4. [Construct and visualize Def-use chain (DUC)](#construct-and-visualize-def-use-chain-duc)
 	5. [Construct and visualize Code Property Graph (CPG)](#construct-and-visualize-code-property-graph-cpg)
-2. [Contribute](#contribute)
-3. [Stress test (Jun 16 2022, outdated)](#stress-test-jun-16-2022-outdated)
+3. [Contribute](#contribute)
+4. [Stress test (Jun 16 2022, outdated)](#stress-test-jun-16-2022-outdated)
 
 # Features
 
