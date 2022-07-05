@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import traceback
-from tree_sitter_cfg.base_visitor import BaseVisitor
+from tree_sitter_cfg.ast_creator import ASTCreator
 from tree_sitter_cfg.cfg_creator import CFGCreator
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 import networkx as nx
@@ -24,9 +24,9 @@ def draw_cfg(cfg, entry=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="filename to parse")
-    parser.add_argument("--print_ast", action="store_true", help="print AST")
+    parser.add_argument("--draw_ast", action="store_true", help="print AST")
     parser.add_argument("--cfg", action="store_true", help="create CFG")
-    parser.add_argument("--draw", action="store_true", help="draw CFG")
+    parser.add_argument("--draw_cfg", action="store_true", help="draw CFG")
     parser.add_argument("--each_function", action="store_true", help="draw each function's CFG as a separate plot")
     parser.add_argument("--file", action="store_true", help="write CFG to file")
     args = parser.parse_args()
@@ -44,14 +44,15 @@ if __name__ == "__main__":
             with open(filename, "rb") as f:
                 tree = c_parser.parse(f.read())
             
-            if args.print_ast:
-                v = BaseVisitor()
-                v.visit(tree.root_node)
+            ast = ASTCreator.make_ast(tree.root_node)
+            if args.draw_ast:
+                pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
+                nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
+                plt.show()
 
             if args.cfg:
-                v = CFGCreator()
-                cfg = v.generate_cfg(tree.root_node)
-                if args.draw:
+                cfg = CFGCreator.make_cfg(ast)
+                if args.draw_cfg:
                     if args.each_function:
                         funcs = [n for n, attr in cfg.nodes(data=True) if attr["label"] == "FUNC_ENTRY"]
                         for func_entry in funcs:
