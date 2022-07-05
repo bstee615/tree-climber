@@ -75,7 +75,7 @@ Example:
 
 # Contribue
 
-[Open issues on Github](/issues)
+[Open issues on Github](https://github.com/bstee615/treehouse/issues)
 
 # Stress test (Jun 16 2022, outdated)
 
