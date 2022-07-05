@@ -38,18 +38,15 @@ int main()
 
 ## Visualize AST
 
-Example:
-![CFG example](./images/ast_example.png)
-
 Visualize AST without concrete tokens included in tree-sitter:
 ```bash
 python main.py tests/data/example.c --draw_ast
 ```
 
-## Construct and visualize Control-flow graph (CFG)
-
 Example:
-![CFG example](./images/cfg_example.png)
+![AST example](./images/ast_example.png)
+
+## Construct and visualize Control-flow graph (CFG)
 
 Convert tree-sitter AST to CFG for C programs.
 AST -> CFG algorithm is based on Joern, specifically [CfgCreator.scala](https://github.com/joernio/joern/blob/6df0bbe6afad7f9b04bf0d1877e9797a7cdddcc4/joern-cli/frontends/x2cpg/src/main/scala/io/joern/x2cpg/passes/controlflow/cfgcreation/CfgCreator.scala).
@@ -59,19 +56,22 @@ Visualize CFG:
 python main.py tests/data/example.c --draw_cfg
 ```
 
+Example:
+![CFG example](./images/cfg_example.png)
+
 ## Monotonic dataflow analysis
 
 See `dataflow_solver.py`.
 
-## Construct and visualize Def-use chain (DUC) [WIP]
-
-Example:
-![DUC example](./images/duc_example.png)
+## Construct and visualize Def-use chain (DUC)
 
 Visualize DUC:
 ```bash
 python main.py tests/data/example.c --draw_duc
 ```
+
+Example:
+![DUC example](./images/duc_example.png)
 
 # Contribue
 
