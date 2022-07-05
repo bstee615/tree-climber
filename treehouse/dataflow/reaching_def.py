@@ -9,12 +9,15 @@ def get_definition(ast_node):
     identifier = None
     if ast_node.type == "init_declarator":
         identifier = ast_node.children[0].text.decode()
-        # rhs = ast_node.children[2].text
+    elif ast_node.type == "declaration":
+        identifier = ast_node.children[1].children[0].text.decode()
+    elif ast_node.type == "assignment_expression":
+        identifier = ast_node.children[0].text.decode()
+    elif ast_node.type == "update_expression":
+        identifier = ast_node.children[0].text.decode()
     elif ast_node.type == "expression_statement":
         assignment = ast_node.children[0]
-        if assignment.type == "assignment_expression":
-            identifier = assignment.children[0].text.decode()
-            # rhs = assignment.children[2].text
+        return get_definition(assignment)
     return identifier
 
 class ReachingDefinitionSolver(DataflowSolver):
