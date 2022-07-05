@@ -10,6 +10,7 @@ class DataflowSolver:
     - an operator ⌈⌉ (used to combine incoming information from multiple predecessors),
     - for each CFG node n, a dataflow function fn : D → D (that defines the effect of executing n). 
     """
+
     def __init__(self, cfg, verbose):
         self.cfg = cfg
         self.verbose = verbose
@@ -18,18 +19,18 @@ class DataflowSolver:
         _in = {}
         out = {}
         for n in self.cfg.nodes():
-            out[n] = set() # can optimize by OUT[n] = GEN[n];
+            out[n] = set()  # can optimize by OUT[n] = GEN[n];
 
         q = list(self.cfg.nodes())
         i = 0
         while q:
             n = q.pop(0)
-            
+
             # TODO: generalize to backward problems
             _in[n] = set()
             for pred in self.cfg.predecessors(n):
                 _in[n] |= out[pred]
-            
+
             # TODO: generalize to backward problems
             new_out_n = self.gen(n).union(_in[n].difference(self.kill(n)))
 
@@ -43,5 +44,5 @@ class DataflowSolver:
                 for succ in self.cfg.successors(n):
                     q.append(succ)
             i += 1
-        
+
         return _in, out

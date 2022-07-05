@@ -5,6 +5,7 @@ from treehouse.cfg_creator import CFGCreator
 from treehouse.dataflow.dataflow_solver import DataflowSolver
 import networkx as nx
 
+
 def get_definition(ast_node):
     identifier = None
     if ast_node.type == "init_declarator":
@@ -19,6 +20,7 @@ def get_definition(ast_node):
         assignment = ast_node.children[0]
         return get_definition(assignment)
     return identifier
+
 
 class ReachingDefinitionSolver(DataflowSolver):
     """
@@ -82,6 +84,7 @@ class ReachingDefinitionSolver(DataflowSolver):
         else:
             return set()
 
+
 def test():
     code = """int main()
     {
@@ -99,5 +102,11 @@ def test():
     cfg = CFGCreator.make_cfg(ast)
     solver = ReachingDefinitionSolver(cfg, verbose=1)
     solution_in, solution_out = solver.solve()
-    draw(cfg, {n: sorted(set(map(solver.def2code.__getitem__, b))) for n, b in solution_out.items()})
+    draw(
+        cfg,
+        {
+            n: sorted(set(map(solver.def2code.__getitem__, b)))
+            for n, b in solution_out.items()
+        },
+    )
     print(solution_out)

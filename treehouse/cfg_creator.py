@@ -5,6 +5,7 @@ from treehouse.base_visitor import BaseVisitor
 import networkx as nx
 from treehouse.tree_sitter_utils import c_parser
 
+
 class CFGCreator(BaseVisitor):
     """
     AST visitor which creates a CFG.
@@ -35,32 +36,36 @@ class CFGCreator(BaseVisitor):
                 succs = list(cfg.successors(n))
                 # Forward label from edges incoming to dummy.
                 for pred in preds:
-                    new_edge_label = list(cfg.adj[pred][n].values())[0].get("label", None)
+                    new_edge_label = list(cfg.adj[pred][n].values())[0].get(
+                        "label", None
+                    )
                     for succ in succs:
                         cfg.add_edge(pred, succ, label=new_edge_label)
                 nodes_to_remove.append(n)
         cfg.remove_nodes_from(nodes_to_remove)
         return visitor.cfg
-    
+
     def get_children(self, n):
         return list(self.ast.successors(n))
 
     def visit(self, n, **kwargs):
-        return getattr(self, "visit_" + self.ast.nodes[n]["node_type"], self.visit_default)(n=n, **kwargs)
-    
+        return getattr(
+            self, "visit_" + self.ast.nodes[n]["node_type"], self.visit_default
+        )(n=n, **kwargs)
+
     def visit_children(self, n, **kwargs):
         for c in self.ast.successors(n):
             should_continue = self.visit(c, **kwargs)
             if should_continue == False:
                 break
-    
+
     def add_dummy_node(self):
         """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
         node_id = self.node_id
         self.cfg.add_node(node_id, dummy=True, label="DUMMY")
         self.node_id += 1
         return node_id
-    
+
     def add_cfg_node(self, ast_node, label=None):
         node_id = self.node_id
         kwargs = {}
@@ -76,14 +81,14 @@ class CFGCreator(BaseVisitor):
             #         if len(lines) > 1 or len(code) > max_len:
             #             trimmed_code += "..."
             #         return attr["node_type"] + "\n" + trimmed_code
-                
-                # kwargs["label"] = f"""{node_id}: {attr["node_type"]}\n{attr_to_code(attr)}`"""
+
+            # kwargs["label"] = f"""{node_id}: {attr["node_type"]}\n{attr_to_code(attr)}`"""
         if label is not None:
             kwargs["label"] = label
         self.cfg.add_node(node_id, ast_node=ast_node, **kwargs)
         self.node_id += 1
         return node_id
-    
+
     def add_edge_from_fringe_to(self, node_id):
         # Assign edges with labels
         fringe_by_type = defaultdict(list)
@@ -98,7 +103,7 @@ class CFGCreator(BaseVisitor):
                 kwargs["label"] = str(edge_type)
             self.cfg.add_edges_from(zip(fringe, [node_id] * len(self.fringe)), **kwargs)
         self.fringe = []
-    
+
     """
     VISITOR RULES
     """
@@ -196,11 +201,17 @@ class CFGCreator(BaseVisitor):
             incr_id = self.add_cfg_node(incr)
             self.add_edge_from_fringe_to(incr_id)
             self.cfg.add_edge(incr_id, cond_id)
-            self.cfg.add_edges_from(zip(self.continue_fringe, [incr_id] * len(self.continue_fringe)), label="continue")
+            self.cfg.add_edges_from(
+                zip(self.continue_fringe, [incr_id] * len(self.continue_fringe)),
+                label="continue",
+            )
             self.continue_fringe = []
         else:
             self.add_edge_from_fringe_to(cond_id)
-            self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)), label="continue")
+            self.cfg.add_edges_from(
+                zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)),
+                label="continue",
+            )
             self.continue_fringe = []
         self.fringe.append((cond_id, False))
 
@@ -219,7 +230,10 @@ class CFGCreator(BaseVisitor):
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, False))
 
-        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)), label="continue")
+        self.cfg.add_edges_from(
+            zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)),
+            label="continue",
+        )
         self.continue_fringe = []
         self.fringe += [(n, "break") for n in self.break_fringe]
         self.break_fringe = []
@@ -238,7 +252,10 @@ class CFGCreator(BaseVisitor):
         self.cfg.add_edge(cond_id, dummy_id, label=str(True))
         self.fringe.append((cond_id, False))
 
-        self.cfg.add_edges_from(zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)), label="continue")
+        self.cfg.add_edges_from(
+            zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)),
+            label="continue",
+        )
         self.continue_fringe = []
         self.fringe += [(n, "break") for n in self.break_fringe]
         self.break_fringe = []
@@ -254,11 +271,15 @@ class CFGCreator(BaseVisitor):
             case_attr = self.ast.nodes[case]
             if len(self.get_children(case)) == 0:
                 continue
-            body_nodes = [c for c in case_children if case_attr["body_begin"] <= self.ast.nodes[c]["child_idx"]]
+            body_nodes = [
+                c
+                for c in case_children
+                if case_attr["body_begin"] <= self.ast.nodes[c]["child_idx"]
+            ]
             if case_attr["is_default"]:
                 default_was_hit = True
             case_text = self.ast.nodes[case]["code"]
-            case_text = case_text[:case_text.find(":")+1]
+            case_text = case_text[: case_text.find(":") + 1]
             # TODO: append previous cases with no body
             self.fringe.append((cond_id, case_text))
             for body_node in body_nodes:
@@ -291,6 +312,7 @@ class CFGCreator(BaseVisitor):
         self.continue_fringe.append(node_id)
         self.visit_default(n, **kwargs)
         return False
+
 
 def test():
     code = """int main()
@@ -325,11 +347,30 @@ def test():
 
     fig, ax = plt.subplots(2)
     ast = ASTCreator.make_ast(tree.root_node)
-    pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
-    nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True, ax=ax[0])
+    pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
+    nx.draw(
+        ast,
+        pos=pos,
+        labels={n: attr["label"] for n, attr in ast.nodes(data=True)},
+        with_labels=True,
+        ax=ax[0],
+    )
 
     cfg = CFGCreator.make_cfg(ast)
-    pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog='dot')
-    nx.draw(cfg, pos=pos, labels={n: attr["label"] for n, attr in cfg.nodes(data=True)}, with_labels = True, ax=ax[1])
-    nx.draw_networkx_edge_labels(cfg, pos=pos, edge_labels = {(u, v): attr.get("label", "") for (u, v, attr) in cfg.edges(data=True)}, ax=ax[1])
+    pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog="dot")
+    nx.draw(
+        cfg,
+        pos=pos,
+        labels={n: attr["label"] for n, attr in cfg.nodes(data=True)},
+        with_labels=True,
+        ax=ax[1],
+    )
+    nx.draw_networkx_edge_labels(
+        cfg,
+        pos=pos,
+        edge_labels={
+            (u, v): attr.get("label", "") for (u, v, attr) in cfg.edges(data=True)
+        },
+        ax=ax[1],
+    )
     plt.show()
