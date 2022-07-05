@@ -1,5 +1,13 @@
 {
     "python.formatting.provider": "black",
     "editor.formatOnSave": true,
-    "editor.formatOnPaste": true
+    "editor.formatOnPaste": true,
+    "markdown.extension.toc.orderedList": true,
+    "markdown.extension.toc.omittedFromToc": {
+        "README.md": [
+            "# treehouse",
+            "# Try it out",
+            "Stress test (Jun 16 2022, outdated)"
+        ]
+    }
 }
