@@ -5,11 +5,6 @@ from tree_sitter_cfg.base_visitor import BaseVisitor
 import networkx as nx
 from tree_sitter_cfg.tree_sitter_utils import c_parser
 
-def assert_boolean_expression(n):
-    assert n.type.endswith("_statement") or n.type.endswith("_expression") or n.type in ("true", "false", "identifier"), n.type
-def assert_branch_target(n):
-    assert n.type.endswith("_statement") or n.type.endswith("_expression") or n.type in ("else",), n.type
-
 class CFGCreator(BaseVisitor):
     """
     AST visitor which creates a CFG.
@@ -141,23 +136,20 @@ class CFGCreator(BaseVisitor):
     """STRUCTURED CONTROL FLOW"""
 
     def visit_if_statement(self, n, **kwargs):
-        condition = self.get_children(self.get_children(n)[1])[1]
-        assert_boolean_expression(condition)
+        condition = self.get_children(self.get_children(n)[0])[0]
         condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
-        self.fringe.append(condition_id)
+        self.fringe.append((condition_id, True))
 
-        compound_statement = self.get_children(n)[2]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[1]
         self.visit(compound_statement)
         # NOTE: this assert doesn't work in the case of an if with an empty else
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
 
-        if len(self.get_children(n)) > 3:
-            else_compound_statement = self.get_children(n)[4]
-            assert_branch_target(else_compound_statement)
+        if len(self.get_children(n)) > 2:
+            else_compound_statement = self.get_children(n)[2]
             old_fringe = self.fringe
-            self.fringe = [condition_id]
+            self.fringe = [(condition_id, False)]
             self.visit(else_compound_statement)
             self.fringe = old_fringe + self.fringe
         else:
