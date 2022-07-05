@@ -53,19 +53,20 @@ def make_duc(cfg, verbose=0):
     solution = solution_in
     for n in cfg.nodes():
         incoming_defs = solution[n]
-        if any(incoming_defs):
+        if len(incoming_defs) > 0:
             use_node = n
 
             def_ids = set(map(solver.def2id.__getitem__, incoming_defs))
             used_ids = get_uses(cfg, solver, use_node)
             used_def_ids = def_ids & used_ids
-            if any(used_def_ids):
+            if len(used_def_ids) > 0:
                 used_defs = set.union(*map(solver.id2def.__getitem__, used_def_ids))
                 used_incoming_defs = used_defs & incoming_defs
                 
                 def_nodes = set(map(solver.def2node.__getitem__, used_incoming_defs))
                 for def_node in def_nodes:
                     duc.add_edge(def_node, use_node, label=str(solver.def2id[solver.node2def[def_node]]))
+    # TODO remove FUNC_ENTRY and FUNC_EXIT
     return duc
 
 def test():
