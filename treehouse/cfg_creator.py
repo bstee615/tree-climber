@@ -80,7 +80,9 @@ class CFGCreator(BaseVisitor):
                 # kwargs["label"] = f"""{node_id}: {attr["node_type"]}\n{attr_to_code(attr)}`"""
         if label is not None:
             kwargs["label"] = label
-        self.cfg.add_node(node_id, ast_node=ast_node, **kwargs)
+        if ast_node is not None:
+            kwargs["ast_node"] = ast_node
+        self.cfg.add_node(node_id, **kwargs)
         self.node_id += 1
         return node_id
     
@@ -104,11 +106,11 @@ class CFGCreator(BaseVisitor):
     """
 
     def visit_function_definition(self, n, **kwargs):
-        entry_id = self.add_cfg_node(n, "FUNC_ENTRY")
+        entry_id = self.add_cfg_node(None, "FUNC_ENTRY")
         self.cfg.graph["entry"] = entry_id
         self.fringe.append(entry_id)
         self.visit_children(n, **kwargs)
-        exit_id = self.add_cfg_node(n, "FUNC_EXIT")
+        exit_id = self.add_cfg_node(None, "FUNC_EXIT")
         self.add_edge_from_fringe_to(exit_id)
         for n in nx.descendants(self.cfg, entry_id):
             attr = self.cfg.nodes[n]

@@ -4,6 +4,7 @@ import traceback
 from treehouse.ast_creator import ASTCreator
 from treehouse.cfg_creator import CFGCreator
 from treehouse.dataflow.def_use import make_duc
+from treehouse.export.cpg import make_cpg
 from treehouse.tree_sitter_utils import c_parser
 import networkx as nx
 from networkx.readwrite import json_graph
@@ -28,6 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("--draw_ast", action="store_true", help="draw AST (Abstract Syntax Tree)")
     parser.add_argument("--draw_cfg", action="store_true", help="draw CFG (Control-Flow Graph)")
     parser.add_argument("--draw_duc", action="store_true", help="draw DUC (Def-Use Chain)")
+    parser.add_argument("--draw_cpg", action="store_true", help="draw CPG (Code Property Graph)")
     parser.add_argument("--each_function", action="store_true", help="draw each function's CFG as a separate plot")
     parser.add_argument("--write_cfg", action="store_true", help="write CFG to file")
     args = parser.parse_args()
@@ -67,11 +69,25 @@ if __name__ == "__main__":
                     json.dump(json_graph.node_link_data(cfg, attrs=None), of, indent=2)
             print("successfully parsed", filename)
 
+            duc = make_duc(cfg)
             if args.draw_duc:
-                duc = make_duc(cfg)
                 pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog='dot')
                 nx.draw(duc, pos=pos, labels={n: attr["label"] for n, attr in duc.nodes(data=True)}, with_labels = True)
                 nx.draw_networkx_edge_labels(duc, pos=pos, edge_labels={(u, v): attr.get("label", "") for u, v, attr in duc.edges(data=True)})
+                plt.show()
+            
+            if args.draw_cpg:
+                cpg = make_cpg(ast, cfg, duc)
+                pos = nx.nx_pydot.graphviz_layout(cpg, prog="dot")
+                nx.draw(cpg, pos=pos)
+                nx.draw_networkx_labels(cpg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in cpg.nodes(data=True)})
+                for graph_type, color in {
+                    "AST": "black",
+                    "CFG": "blue",
+                    "DUC": "red",
+                }.items():
+                    nx.draw_networkx_edges(cpg, pos=pos, edge_color=color, edgelist=[(u, v) for u, v, k, attr in cpg.edges(keys=True, data=True) if attr["graph_type"] == graph_type])
+                nx.draw_networkx_edge_labels(cpg, pos=pos, edge_labels={(u, v): attr.get("label", "") for u, v, k, attr in cpg.edges(keys=True, data=True)})
                 plt.show()
         except Exception:
             print("could not parse", filename)
