@@ -1,5 +1,10 @@
+from matplotlib import pyplot as plt
 import networkx as nx
 from tree_sitter_cfg.dataflow.reaching_def import ReachingDefinitionSolver
+from tests.utils import draw
+from tree_sitter_cfg.tree_sitter_utils import c_parser
+from tree_sitter_cfg.ast_creator import ASTCreator
+from tree_sitter_cfg.cfg_creator import CFGCreator
 
 def get_uses(cfg, solver, n):
     """return the set of variables used in n"""
@@ -14,7 +19,7 @@ def get_uses(cfg, solver, n):
         q.extend(n.children)
     return used_ids
 
-def get_def_use_chain(cfg):
+def get_def_use_chain(cfg, verbose=0):
     """
     return def-use chain (DUC)
     
@@ -27,23 +32,23 @@ def get_def_use_chain(cfg):
                           /  ;
               _.--.__    /   ;
  (`._    _.-""       "--'    |
- <_  `-""                     \
+ <_  `-""                     |
   <`-                          :
    (__   <__.                  ;
      `-.   '-.__.      _.'    /
-        \      `-.__,-'    _,'
+        |      `-.__,-'    _,'
          `._    ,    /__,-'
-            ""._\__,'< <____
+            ""._|__,'< <____
                  | |  `----.`.
-                 | |        \ `.
-                 ; |___      \-``
-                 \   --<
+                 | |        | `.
+                 ; |___      |-``
+                 |   --<
                   `.`.<
                     `-'
     """
     duc = nx.DiGraph()
     duc.add_nodes_from(cfg.nodes(data=True))
-    solver = ReachingDefinitionSolver(cfg, verbose=1)
+    solver = ReachingDefinitionSolver(cfg, verbose=verbose)
     solution_in, solution_out = solver.solve()
     solution = solution_in
     for n in cfg.nodes():
@@ -54,7 +59,6 @@ def get_def_use_chain(cfg):
             def_ids = set(map(solver.def2id.__getitem__, incoming_defs))
             used_ids = get_uses(cfg, solver, use_node)
             used_def_ids = def_ids & used_ids
-            print(f"{use_node=} {def_ids=} {used_ids=} {used_def_ids=}")
             if any(used_def_ids):
                 used_defs = set.union(*map(solver.id2def.__getitem__, used_def_ids))
                 used_incoming_defs = used_defs & incoming_defs
@@ -63,3 +67,27 @@ def get_def_use_chain(cfg):
                 for def_node in def_nodes:
                     duc.add_edge(def_node, use_node, label=str(solver.def2id[solver.node2def[def_node]]))
     return duc
+
+def test():
+    code = """int main()
+    {
+        int i = 0;
+        int x = 0;
+        for (; true; ) {
+            x += 5;
+        }
+        printf("%d %d\\n", x, i);
+        x = 10;
+        return x;
+    }
+    """
+    tree = c_parser.parse(bytes(code, "utf8"))
+    ast = ASTCreator.make_ast(tree.root_node)
+    cfg = CFGCreator.make_cfg(ast)
+    duc = get_def_use_chain(cfg)
+
+    _, ax = plt.subplots(2)
+    pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog='dot')
+    nx.draw(duc, pos=pos, labels={n: attr["label"] for n, attr in duc.nodes(data=True)}, with_labels = True, ax=ax[0])
+    nx.draw_networkx_edge_labels(duc, pos=pos, edge_labels={(u, v): attr.get("label", "") for u, v, attr in duc.edges(data=True)}, ax=ax[0])
+    draw(cfg, ax=ax[1])

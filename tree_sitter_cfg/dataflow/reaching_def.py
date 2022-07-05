@@ -1,3 +1,7 @@
+from tests.utils import draw
+from tree_sitter_cfg.tree_sitter_utils import c_parser
+from tree_sitter_cfg.ast_creator import ASTCreator
+from tree_sitter_cfg.cfg_creator import CFGCreator
 from tree_sitter_cfg.dataflow.dataflow_solver import DataflowSolver
 import networkx as nx
 
@@ -19,7 +23,7 @@ class ReachingDefinitionSolver(DataflowSolver):
     https://en.wikipedia.org/wiki/Reaching_definition
     """
 
-    def __init__(self, cfg, verbose):
+    def __init__(self, cfg, verbose=0):
         super().__init__(cfg, verbose)
 
         node2def = {}
@@ -31,7 +35,6 @@ class ReachingDefinitionSolver(DataflowSolver):
         for n in nx.dfs_preorder_nodes(cfg, source=cfg.graph["entry"]):
             ast_node = cfg.nodes[n]["n"]
             _id = get_definition(ast_node)
-            print(n, _id)
             if _id is not None:
                 node2def[n] = def_idx
                 def2node[def_idx] = n
@@ -75,3 +78,23 @@ class ReachingDefinitionSolver(DataflowSolver):
                     return self.id2def[i]
         else:
             return set()
+
+def test():
+    code = """int main()
+    {
+        int x = 0;
+        if (true) {
+            x += 5;
+        }
+        printf("%d\\n", x);
+        x = 10;
+        return x;
+    }
+    """
+    tree = c_parser.parse(bytes(code, "utf8"))
+    ast = ASTCreator.make_ast(tree.root_node)
+    cfg = CFGCreator.make_cfg(ast)
+    solver = ReachingDefinitionSolver(cfg, verbose=1)
+    solution_in, solution_out = solver.solve()
+    draw(cfg, {n: sorted(set(map(solver.def2code.__getitem__, b))) for n, b in solution_out.items()})
+    print(solution_out)

@@ -4,7 +4,7 @@ from tree_sitter_cfg.tree_sitter_utils import c_parser
 from tree_sitter_cfg.cfg_creator import CFGCreator
 import matplotlib.pyplot as plt
 import networkx as nx
-from tests.utils import draw
+from tests.utils import draw, get_node_by_code
 
 def test_get_def_use_chain():
     code = """int main()
@@ -24,19 +24,13 @@ def test_get_def_use_chain():
     cfg = CFGCreator.make_cfg(ast)
     duc = get_def_use_chain(cfg)
 
-    _, ax = plt.subplots(2)
-    pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog='dot')
-    nx.draw(duc, pos=pos, labels={n: attr["label"] for n, attr in duc.nodes(data=True)}, with_labels = True, ax=ax[0])
-    nx.draw_networkx_edge_labels(duc, pos=pos, edge_labels={(u, v): attr.get("label", "") for u, v, attr in duc.edges(data=True)}, ax=ax[0])
-    draw(cfg, ax=ax[1])
-
     init_x_node = next(n for n, attr in duc.nodes(data=True) if "x = 0" in attr["label"])
     init_i_node = next(n for n, attr in duc.nodes(data=True) if "i = 0" in attr["label"])
     true_node = next(n for n, attr in duc.nodes(data=True) if "true" in attr["label"])
     x_plus_assign_5_node = next(n for n, attr in duc.nodes(data=True) if "x += 5" in attr["label"])
     x_assign_10_node = next(n for n, attr in duc.nodes(data=True) if "x = 10" in attr["label"])
-    printf_node = next(n for n, attr in duc.nodes(data=True) if "printf" in attr["label"])
-    return_node = next(n for n, attr in duc.nodes(data=True) if "return" in attr["label"])
+    printf_node = get_node_by_code(cfg, """printf("%d %d\\n", x, i);""")
+    return_node = get_node_by_code(cfg, "return x;")
     assert not any(set(duc.predecessors(init_x_node)))  # first assignment to x
     assert not any(set(duc.predecessors(true_node)))
     assert set(duc.predecessors(printf_node)) == {x_plus_assign_5_node, init_x_node, init_i_node}  # printf can print x defined by "x = 0" or "x += 5"
