@@ -39,18 +39,10 @@ class CFGCreator(BaseVisitor):
                 preds = list(cfg.predecessors(n))
                 succs = list(cfg.successors(n))
                 # Forward label from edges incoming to dummy.
-                # Should be all the same label.
-                edge_kwargs = {}
-                for p in preds:
-                    new_edge_label = cfg.edges[(p, n)].get("label", None)
-                    if new_edge_label is not None:
-                        if "label" not in edge_kwargs:
-                            edge_kwargs["label"] = new_edge_label
-                        else:
-                            assert edge_kwargs["label"] == new_edge_label, (edge_kwargs["label"], new_edge_label)
                 for pred in preds:
+                    new_edge_label = cfg.edges[(pred, n)].get("label", None)
                     for succ in succs:
-                        cfg.add_edge(pred, succ, **edge_kwargs)
+                        cfg.add_edge(pred, succ, label=new_edge_label)
                 nodes_to_remove.append(n)
         cfg.remove_nodes_from(nodes_to_remove)
         return visitor.cfg
@@ -70,7 +62,7 @@ class CFGCreator(BaseVisitor):
     def add_dummy_node(self):
         """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
         node_id = self.node_id
-        self.cfg.add_node(node_id, dummy=True)
+        self.cfg.add_node(node_id, dummy=True, label="DUMMY")
         self.node_id += 1
         return node_id
     
@@ -245,14 +237,10 @@ class CFGCreator(BaseVisitor):
         self.add_edge_from_fringe_to(dummy_id)
         self.fringe.append(dummy_id)
 
-        compound_statement = self.get_children(n)[1]
-        assert_branch_target(compound_statement)
+        compound_statement = self.get_children(n)[0]
         self.visit(compound_statement)
 
-        cond = self.get_children(self.get_children(n)[3])[1]
-        
-        assert_boolean_expression(cond)
-
+        cond = self.get_children(self.get_children(n)[1])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
         self.cfg.add_edge(cond_id, dummy_id, label=str(True))
@@ -335,9 +323,9 @@ def test():
     while (x > 10) {
         x -= 5;
     }
-    //do {
-    //    x -= 5;
-    //} while (x > 0);
+    do {
+        x -= 5;
+    } while (x > 0);
     return x;
 }
 """
