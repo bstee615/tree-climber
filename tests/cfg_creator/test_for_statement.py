@@ -12,11 +12,11 @@ def test_for_simple():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (6, 6)
     assert len(list(nx.simple_cycles(cfg))) == 1
 
-    cond_node = next(n for n, attr in cfg.nodes(data=True) if "i < 10" in attr["label"])
-    x_0_node = next(n for n, attr in cfg.nodes(data=True) if "x = 0" in attr["label"])
-    assert cfg.edges[(cond_node, x_0_node)].get("label", "<NO LABEL>") == "True"
-    FUNC_EXIT_node = next(n for n, attr in cfg.nodes(data=True) if "FUNC_EXIT" in attr["label"])
-    assert cfg.edges[(cond_node, FUNC_EXIT_node)].get("label", "<NO LABEL>") == "False"
+    cond_node = get_node_by_code(cfg, "i < 10")
+    x_0_node = get_node_by_code(cfg, "x = 0;")
+    assert get_adj_label(cfg, cond_node, x_0_node) == "True"
+    FUNC_EXIT_node = get_node_by_label(cfg, "FUNC_EXIT")
+    assert get_adj_label(cfg, cond_node, FUNC_EXIT_node) == "False"
 
 def test_for_nocompound():
     cfg = parse_and_create_cfg("""int main()
@@ -144,20 +144,20 @@ def test_for_break_all_cases():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (16, 18)
     assert nx.is_directed_acyclic_graph(cfg)
     
-    cond_node = next(n for n, attr in cfg.nodes(data=True) if "i < 10" in attr["label"])
-    x_5_node = next(n for n, attr in cfg.nodes(data=True) if "x > 5" in attr["label"])
-    assert cfg.edges[(cond_node, x_5_node)].get("label", "<NO LABEL>") == "True"
+    cond_node = get_node_by_code(cfg, "i < 10")
+    x_5_node = get_node_by_code(cfg, "x > 5")
+    assert get_adj_label(cfg, cond_node, x_5_node) == "True"
 
-    x_22_node = next(n for n, attr in cfg.nodes(data=True) if "x = 22" in attr["label"])
-    assert cfg.edges[(x_5_node, x_22_node)].get("label", "<NO LABEL>") == "True"
+    x_22_node = get_node_by_code(cfg, "x = 22;")
+    assert get_adj_label(cfg, x_5_node, x_22_node) == "True"
 
-    break_1_node, break_2_node = [n for n, attr in cfg.nodes(data=True) if "break" in attr["label"]]
-    return_x_node = next(n for n, attr in cfg.nodes(data=True) if "return x" in attr["label"])
-    x_11_node = next(n for n, attr in cfg.nodes(data=True) if "x = 11" in attr["label"])
-    assert cfg.edges[(break_1_node, x_11_node)].get("label", "<NO LABEL>") == "break"
+    break_1_node, break_2_node = [n for n, attr in cfg.nodes(data=True) if "break;" == attr["code"]]
+    return_x_node = get_node_by_code(cfg, "return x;")
+    x_11_node = get_node_by_code(cfg, "x = 11;")
+    assert get_adj_label(cfg, break_1_node, x_11_node) == "break"
     assert (break_1_node, return_x_node) not in cfg.edges
     assert (break_1_node, cond_node) not in cfg.edges
-    assert cfg.edges[(break_2_node, x_11_node)].get("label", "<NO LABEL>") == "break"
+    assert get_adj_label(cfg, break_2_node, x_11_node) == "break"
     assert (break_2_node, return_x_node) not in cfg.edges
     assert (break_2_node, cond_node) not in cfg.edges
 
@@ -203,14 +203,14 @@ def test_for_continue():
     assert (cfg.number_of_nodes(), cfg.number_of_edges()) == (13, 15)
     assert len(list(nx.simple_cycles(cfg))) == 3
     
-    cond_node = next(n for n, attr in cfg.nodes(data=True) if "i < 10" in attr["label"])
-    x_5_node = next(n for n, attr in cfg.nodes(data=True) if "x > 5" in attr["label"])
-    assert cfg.edges[(cond_node, x_5_node)].get("label", "<NO LABEL>") == "True"
+    cond_node = get_node_by_code(cfg, "i < 10")
+    x_5_node = get_node_by_code(cfg, "x > 5")
+    assert get_adj_label(cfg, cond_node, x_5_node) == "True"
 
-    x_22_node = next(n for n, attr in cfg.nodes(data=True) if "x = 22" in attr["label"])
-    assert cfg.edges[(x_5_node, x_22_node)].get("label", "<NO LABEL>") == "True"
+    x_22_node = get_node_by_code(cfg, "x = 22;")
+    assert get_adj_label(cfg, x_5_node, x_22_node) == "True"
 
-    continue_1_node, continue_2_node = [n for n, attr in cfg.nodes(data=True) if "continue" in attr["label"]]
-    incr_node = next(n for n, attr in cfg.nodes(data=True) if "i ++" in attr["label"])
-    assert cfg.edges[(continue_1_node, incr_node)].get("label", "<NO LABEL>") == "continue"
-    assert cfg.edges[(continue_2_node, incr_node)].get("label", "<NO LABEL>") == "continue"
+    continue_1_node, continue_2_node = [n for n, attr in cfg.nodes(data=True) if "continue;" == attr["code"]]
+    incr_node = get_node_by_code(cfg, "i ++")
+    assert get_adj_label(cfg, continue_1_node, incr_node) == "continue"
+    assert get_adj_label(cfg, continue_2_node, incr_node) == "continue"
