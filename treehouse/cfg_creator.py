@@ -20,6 +20,8 @@ class CFGCreator(BaseVisitor):
         self.fringe = []
         self.break_fringe = []
         self.continue_fringe = []
+        self.gotos = {}
+        self.labels = {}
 
     @staticmethod
     def make_cfg(ast):
@@ -43,6 +45,7 @@ class CFGCreator(BaseVisitor):
                         cfg.add_edge(pred, succ, label=new_edge_label)
                 nodes_to_remove.append(n)
         cfg.remove_nodes_from(nodes_to_remove)
+
         return visitor.cfg
 
     def get_children(self, n):
@@ -66,28 +69,18 @@ class CFGCreator(BaseVisitor):
         self.node_id += 1
         return node_id
 
-    def add_cfg_node(self, ast_node, label=None):
+    def add_cfg_node(self, ast_node, label=None, **kwargs):
         node_id = self.node_id
-        kwargs = {}
+        ast_kwargs = {}
         if ast_node is not None:
             attr = self.ast.nodes[ast_node]
-            kwargs.update(attr)
-            # if label is None:
-            #     def attr_to_code(attr):
-            #         lines = attr["code"].splitlines()
-            #         code = lines[0]
-            #         max_len = 27
-            #         trimmed_code = code[:max_len]
-            #         if len(lines) > 1 or len(code) > max_len:
-            #             trimmed_code += "..."
-            #         return attr["node_type"] + "\n" + trimmed_code
-
-            # kwargs["label"] = f"""{node_id}: {attr["node_type"]}\n{attr_to_code(attr)}`"""
+            ast_kwargs.update(attr)
         if label is not None:
-            kwargs["label"] = label
+            ast_kwargs["label"] = label
         if ast_node is not None:
-            kwargs["ast_node"] = ast_node
-        self.cfg.add_node(node_id, **kwargs)
+            ast_kwargs["ast_node"] = ast_node
+        ast_kwargs.update(kwargs)
+        self.cfg.add_node(node_id, **ast_kwargs)
         self.node_id += 1
         return node_id
 
@@ -117,6 +110,9 @@ class CFGCreator(BaseVisitor):
         self.visit_children(n, **kwargs)
         exit_id = self.add_cfg_node(None, "FUNC_EXIT")
         self.add_edge_from_fringe_to(exit_id)
+        # paste goto edges
+        for label in self.gotos:
+            self.cfg.add_edge(self.gotos[label], self.labels[label], label="goto")
         for n in nx.descendants(self.cfg, entry_id):
             attr = self.cfg.nodes[n]
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
@@ -314,6 +310,25 @@ class CFGCreator(BaseVisitor):
         self.continue_fringe.append(node_id)
         self.visit_default(n, **kwargs)
         return False
+
+    def visit_goto_statement(self, n, **kwargs):
+        node_id = self.add_cfg_node(n)
+        self.add_edge_from_fringe_to(node_id)
+        statement_identifier_attr = self.ast.nodes[self.get_children(n)[0]]
+        assert statement_identifier_attr["node_type"] == "statement_identifier"
+        self.gotos[statement_identifier_attr["code"]] = node_id
+        self.visit_default(n, **kwargs)
+
+    def visit_labeled_statement(self, n, **kwargs):
+        code = self.ast.nodes[n]["code"]
+        code = code[:code.find(":")+1]
+        node_id = self.add_cfg_node(n, code=code)
+        self.add_edge_from_fringe_to(node_id)
+        statement_identifier_attr = self.ast.nodes[self.get_children(n)[0]]
+        assert statement_identifier_attr["node_type"] == "statement_identifier"
+        self.labels[statement_identifier_attr["code"]] = node_id
+        self.fringe.append(node_id)
+        self.visit_default(n, **kwargs)
 
 
 def test():
