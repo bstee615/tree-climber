@@ -134,10 +134,6 @@ class CFGCreator(BaseVisitor):
         self.enter_statement(n)
         self.visit_default(n, **kwargs)
 
-    def visit_init_declarator(self, n, **kwargs):
-        self.enter_statement(n)
-        self.visit_default(n, **kwargs)
-
     def visit_declaration(self, n, **kwargs):
         self.enter_statement(n)
         self.visit_default(n, **kwargs)
