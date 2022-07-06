@@ -39,7 +39,7 @@ class ReachingDefinitionSolver(DataflowSolver):
         def2id = {}
         def2code = {}
         def_idx = 0
-        for n in nx.dfs_preorder_nodes(cfg, source=cfg.graph["entry"]):
+        for n in cfg.nodes():
             attr = cfg.nodes[n]
             if "n" in attr:
                 ast_node = attr["n"]
