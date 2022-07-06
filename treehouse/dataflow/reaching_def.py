@@ -10,8 +10,10 @@ def get_definition(ast_node):
     identifier = None
     if ast_node.type == "init_declarator":
         identifier = ast_node.children[0].text.decode()
+    elif ast_node.type == "identifier":
+        identifier = ast_node.text.decode()
     elif ast_node.type == "declaration":
-        identifier = ast_node.children[1].children[0].text.decode()
+        return get_definition(ast_node.children[1])
     elif ast_node.type == "assignment_expression":
         identifier = ast_node.children[0].text.decode()
     elif ast_node.type == "update_expression":
