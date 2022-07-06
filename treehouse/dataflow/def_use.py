@@ -91,8 +91,13 @@ def test():
     {
         int i = 0;
         int x = 0;
+        end:
+        x -= 3;
         for (; true; ) {
             x += 5;
+            if (x < 0) {
+                goto end;
+            }
         }
         printf("%d %d\\n", x, i);
         x = 10;
