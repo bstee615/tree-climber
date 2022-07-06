@@ -136,6 +136,10 @@ class CFGCreator(BaseVisitor):
         self.enter_statement(n)
         self.visit_default(n, **kwargs)
 
+    def visit_declaration(self, n, **kwargs):
+        self.enter_statement(n)
+        self.visit_default(n, **kwargs)
+
     """STRUCTURED CONTROL FLOW"""
 
     def visit_if_statement(self, n, **kwargs):
