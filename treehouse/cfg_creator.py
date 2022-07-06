@@ -106,6 +106,7 @@ class CFGCreator(BaseVisitor):
     def visit_function_definition(self, n, **kwargs):
         entry_id = self.add_cfg_node(None, "FUNC_ENTRY")
         self.cfg.graph["entry"] = entry_id
+        self.add_edge_from_fringe_to(entry_id)
         self.fringe.append(entry_id)
         self.visit_children(n, **kwargs)
         exit_id = self.add_cfg_node(None, "FUNC_EXIT")
@@ -117,6 +118,7 @@ class CFGCreator(BaseVisitor):
             attr = self.cfg.nodes[n]
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
                 self.cfg.add_edge(n, exit_id, label="return")
+        self.fringe.append(exit_id)
 
     def visit_default(self, n, **kwargs):
         self.visit_children(n)
@@ -336,7 +338,13 @@ class CFGCreator(BaseVisitor):
 
 
 def test():
-    code = """int main()
+    code = """int a = 30;
+
+struct foo {
+    int z;
+};
+
+int main()
 {
     int x = 0;
     for (int i = 0; i < 10; i ++) {
@@ -350,7 +358,7 @@ def test():
         case 1:
             x -= 1;
         case 2:
-            x -= 30;
+            x -= a;
             break;
         default:
             return -2;
@@ -363,6 +371,8 @@ def test():
     } while (x > 0);
     return x;
 }
+
+struct foo;
 """
     tree = c_parser.parse(bytes(code, "utf8"))
 
