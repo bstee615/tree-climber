@@ -23,6 +23,22 @@ def draw_cfg(cfg, entry=None):
         plt.title(cfg.nodes[entry]["n"].text)
     plt.show()
 
+def detect_bugs(cpg):
+    # detect npd bug with reaching definition
+    ast = nx.edge_subgraph(cpg, [(u, v, k) for u, v, k, attr in cpg.edges(data=True, keys=True) if attr["graph_type"] == "AST"])
+    duc = nx.edge_subgraph(cpg, [(u, v, k) for u, v, k, attr in cpg.edges(data=True, keys=True) if attr["graph_type"] == "DUC"])
+    null_assignment = [n for n, attr in cpg.nodes(data=True) if attr.get("node_type", "<NO TYPE>") in ("expression_statement", "init_declarator") and any(ast.nodes[m].get("node_type", "<NO TYPE>") == "null" for m in nx.descendants(ast, n))]
+    for ass in null_assignment:
+        for usage in duc.adj[ass]:
+            usage_attr = cpg.nodes[usage]
+            call_expr = next((ch for ch in ast.adj[usage] if cpg.nodes[ch]["node_type"] == "call_expression"), None)
+            if call_expr is None:
+                continue
+            id_expr = next(ch for ch in ast.adj[call_expr] if cpg.nodes[ch]["node_type"] == "identifier")
+            id_expr_attr = cpg.nodes[id_expr]
+            if id_expr_attr["code"] == "printf":
+                print(f"""possible npd of {next(attr["label"] for u, v, k, attr in duc.edges(data=True, keys=True) if u == ass and v == usage)} at line {id_expr_attr["start"][0]+1} column {id_expr_attr["start"][1]+1}: {usage_attr["code"]}""")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="filename to parse")
@@ -76,8 +92,8 @@ if __name__ == "__main__":
                 nx.draw_networkx_edge_labels(duc, pos=pos, edge_labels={(u, v): attr.get("label", "") for u, v, attr in duc.edges(data=True)})
                 plt.show()
             
+            cpg = make_cpg(ast, cfg, duc)
             if args.draw_cpg:
-                cpg = make_cpg(ast, cfg, duc)
                 pos = nx.nx_pydot.graphviz_layout(cpg, prog="dot")
                 nx.draw(cpg, pos=pos)
                 nx.draw_networkx_labels(cpg, pos=pos, labels={n: attr.get("label", "<NO LABEL>") for n, attr in cpg.nodes(data=True)})
@@ -89,6 +105,8 @@ if __name__ == "__main__":
                     nx.draw_networkx_edges(cpg, pos=pos, edge_color=color, edgelist=[(u, v) for u, v, k, attr in cpg.edges(keys=True, data=True) if attr["graph_type"] == graph_type])
                 nx.draw_networkx_edge_labels(cpg, pos=pos, edge_labels={(u, v): attr.get("label", "") for u, v, k, attr in cpg.edges(keys=True, data=True)})
                 plt.show()
+            
+            detect_bugs(cpg)
         except Exception:
             print("could not parse", filename)
             traceback.print_exc()
