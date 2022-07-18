@@ -55,7 +55,7 @@ class ASTCreator(BaseVisitor):
 
     def visit_for_statement(self, n, **kwargs):
         children = n.children
-        self.check_ast_error_children(n)
+        check_ast_error_in_children(n)
         children = [c for c in children if c.type != "comment"]
         i = 0
         while children[i].type != "(":
@@ -94,7 +94,7 @@ class ASTCreator(BaseVisitor):
 
     def visit_case_statement(self, n, **kwargs):
         children = n.children
-        self.check_ast_error_children(n)
+        check_ast_error_in_children(n)
         label_end = 0
         while children[label_end].type != ":":
             label_end += 1
