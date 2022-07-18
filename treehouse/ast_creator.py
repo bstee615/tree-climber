@@ -1,3 +1,4 @@
+from ast import Index
 from matplotlib import pyplot as plt
 import networkx as nx
 
@@ -9,7 +10,7 @@ def assert_boolean_expression(n):
     assert (
         n.type.endswith("_statement")
         or n.type.endswith("_expression")
-        or n.type in ("true", "false", "identifier")  # TODO: handle ERROR (most often shows up as comma_expression in for loop onditioanl)
+        or n.type in ("true", "false", "identifier", "number_literal")  # TODO: handle ERROR (most often shows up as comma_expression in for loop onditioanl)
     ), (n, n.type, n.text.decode())
 
 
@@ -52,7 +53,7 @@ class ASTCreator(BaseVisitor):
             has_init = False
             i += 1
         else:
-            assert children[i].type in ("assignment_expression", "comma_expression", "update_expression", "number_literal", "call_expression"), (children[i], children[i].type)
+            assert children[i].type.endswith("_expression") or children[i].type in ("number_literal", "identifier"), (children[i], children[i].type)
             has_init = True
             i += 1
             assert children[i].type == ";"
@@ -65,19 +66,12 @@ class ASTCreator(BaseVisitor):
             has_cond = True
             i += 1
         # pointing at semicolon
-        assert children[i].type == ";"
+        assert children[i].type == ";", (children[i], children[i].type, children[i].text.decode())
         i += 1
         if children[i].type == ")":
             has_incr = False
         else:
-            assert children[i].type in (
-                "comma_expression",
-                "assignment_expression",
-                "update_expression",
-                "binary_expression",
-                "call_expression",
-                "conditional_expression",
-            ), (children[i], children[i].type)
+            assert children[i].type.endswith("_expression") or children[i].type in ("number_literal", "identifier"), (children[i], children[i].type)
             has_incr = True
         self.visit_default(
             n, has_init=has_init, has_cond=has_cond, has_incr=has_incr, **kwargs
@@ -103,11 +97,14 @@ class ASTCreator(BaseVisitor):
 
             def attr_to_label(node_type, code):
                 lines = code.splitlines()
-                code = lines[0]
-                max_len = 27
-                trimmed_code = code[:max_len]
-                if len(lines) > 1 or len(code) > max_len:
-                    trimmed_code += "..."
+                if len(lines) > 0:
+                    code = lines[0]
+                    max_len = 27
+                    trimmed_code = code[:max_len]
+                    if len(lines) > 1 or len(code) > max_len:
+                        trimmed_code += "..."
+                else:
+                    trimmed_code = code
                 return node_type + "\n" + trimmed_code
 
             self.ast.add_node(
