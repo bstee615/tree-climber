@@ -9,8 +9,8 @@ def assert_boolean_expression(n):
     assert (
         n.type.endswith("_statement")
         or n.type.endswith("_expression")
-        or n.type in ("true", "false", "identifier")
-    ), n.type
+        or n.type in ("true", "false", "identifier")  # TODO: handle ERROR (most often shows up as comma_expression in for loop onditioanl)
+    ), (n, n.type, n.text.decode())
 
 
 def assert_branch_target(n):
@@ -18,7 +18,7 @@ def assert_branch_target(n):
         n.type.endswith("_statement")
         or n.type.endswith("_expression")
         or n.type in ("else",)
-    ), n.type
+    ), (n, n.type)
 
 
 class ASTCreator(BaseVisitor):
@@ -40,6 +40,7 @@ class ASTCreator(BaseVisitor):
 
     def visit_for_statement(self, n, **kwargs):
         children = n.children
+        children = [c for c in children if c.type != "comment"]
         i = 0
         while children[i].type != "(":
             i += 1
@@ -51,7 +52,7 @@ class ASTCreator(BaseVisitor):
             has_init = False
             i += 1
         else:
-            assert children[i].type in ("assignment_expression", "comma_expression")
+            assert children[i].type in ("assignment_expression", "comma_expression", "update_expression", "number_literal", "call_expression"), (children[i], children[i].type)
             has_init = True
             i += 1
             assert children[i].type == ";"
@@ -70,10 +71,13 @@ class ASTCreator(BaseVisitor):
             has_incr = False
         else:
             assert children[i].type in (
+                "comma_expression",
+                "assignment_expression",
                 "update_expression",
                 "binary_expression",
                 "call_expression",
-            )
+                "conditional_expression",
+            ), (children[i], children[i].type)
             has_incr = True
         self.visit_default(
             n, has_init=has_init, has_cond=has_cond, has_incr=has_incr, **kwargs
