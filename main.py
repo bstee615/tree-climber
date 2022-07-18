@@ -10,7 +10,7 @@ import networkx as nx
 from networkx.readwrite import json_graph
 import matplotlib.pyplot as plt
 import argparse
-import os
+from networkx.drawing.nx_agraph import write_dot
 
 def draw_cfg(cfg, entry=None):
     if cfg.number_of_nodes() > 1000 or cfg.number_of_edges() > 1000:
@@ -43,11 +43,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="filename to parse")
     parser.add_argument("--draw_ast", action="store_true", help="draw AST (Abstract Syntax Tree)")
+    parser.add_argument("--write_ast", type=str, help="write AST (Abstract Syntax Tree) to DOT")
     parser.add_argument("--draw_cfg", action="store_true", help="draw CFG (Control-Flow Graph)")
+    parser.add_argument("--write_cfg", type=str, help="write CFG (Control-Flow Graph) to DOT")
+    parser.add_argument("--write_cfg_json", action="store_true", help="write CFG to file")
     parser.add_argument("--draw_duc", action="store_true", help="draw DUC (Def-Use Chain)")
     parser.add_argument("--draw_cpg", action="store_true", help="draw CPG (Code Property Graph)")
     parser.add_argument("--each_function", action="store_true", help="draw each function's CFG as a separate plot")
-    parser.add_argument("--write_cfg", action="store_true", help="write CFG to file")
     args = parser.parse_args()
 
     args.filename = Path(args.filename)
@@ -68,6 +70,8 @@ if __name__ == "__main__":
                 pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
                 nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
                 plt.show()
+            if args.write_ast is not None:
+                write_dot(ast, args.write_ast)
 
             cfg = CFGCreator.make_cfg(ast)
             if args.draw_cfg:
@@ -78,7 +82,9 @@ if __name__ == "__main__":
                         draw_cfg(func_cfg, entry=func_entry)
                 else:
                     draw_cfg(cfg)
-            if args.write_cfg:
+            if args.write_cfg is not None:
+                write_dot(cfg, args.write_cfg)
+            if args.write_cfg_json:
                 for n in cfg.nodes():
                     del cfg.nodes[n]["n"]
                 with open(str(filename) + ".graph.json", "w") as of:
