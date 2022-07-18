@@ -95,7 +95,7 @@ class ASTCreator(BaseVisitor):
         self.node_id += 1
         if parent_id is None:
             self.ast.graph["root_node"] = my_id
-        if n.is_named:
+        if n.is_named and n.type != "comment":
 
             def attr_to_label(node_type, code):
                 lines = code.splitlines()
