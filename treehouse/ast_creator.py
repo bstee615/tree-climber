@@ -20,6 +20,15 @@ def assert_branch_target(n):
         or n.type.endswith("_expression")
         or n.type in ("else",)
     ), (n, n.type)
+    
+
+def check_ast_error_in_children(n):
+    if any(c.type == "ERROR" for c in n.children):
+        raise AstErrorException()
+
+
+class AstErrorException(Exception):
+    pass
 
 
 class ASTCreator(BaseVisitor):
@@ -39,8 +48,14 @@ class ASTCreator(BaseVisitor):
         visitor.visit(root_node, parent_id=None)
         return visitor.ast
 
+    def visit(self, n, **kwargs):
+        if n.type == "ERROR":
+            raise AstErrorException()
+        super().visit(n, **kwargs)
+
     def visit_for_statement(self, n, **kwargs):
         children = n.children
+        self.check_ast_error_children(n)
         children = [c for c in children if c.type != "comment"]
         i = 0
         while children[i].type != "(":
@@ -79,6 +94,7 @@ class ASTCreator(BaseVisitor):
 
     def visit_case_statement(self, n, **kwargs):
         children = n.children
+        self.check_ast_error_children(n)
         label_end = 0
         while children[label_end].type != ":":
             label_end += 1
