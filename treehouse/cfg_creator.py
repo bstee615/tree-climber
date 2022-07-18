@@ -270,6 +270,10 @@ class CFGCreator(BaseVisitor):
         cases = self.get_children(self.get_children(n)[1])
         default_was_hit = False
         for case in cases:
+            while self.ast.nodes[case]["node_type"] != "case_statement":
+                if self.ast.nodes[case]["node_type"] == "labeled_statement":
+                    self.add_label_node(case)
+                    case = self.get_children(case)[1]
             case_children = self.get_children(case)
             case_attr = self.ast.nodes[case]
             if len(self.get_children(case)) == 0:
@@ -324,7 +328,7 @@ class CFGCreator(BaseVisitor):
         self.gotos[statement_identifier_attr["code"]] = node_id
         self.visit_default(n, **kwargs)
 
-    def visit_labeled_statement(self, n, **kwargs):
+    def add_label_node(self, n):
         code = self.ast.nodes[n]["code"]
         code = code[:code.find(":")+1]
         node_id = self.add_cfg_node(n, code=code)
@@ -333,6 +337,9 @@ class CFGCreator(BaseVisitor):
         assert statement_identifier_attr["node_type"] == "statement_identifier"
         self.labels[statement_identifier_attr["code"]] = node_id
         self.fringe.append(node_id)
+
+    def visit_labeled_statement(self, n, **kwargs):
+        self.add_label_node(n)
         self.visit_default(n, **kwargs)
 
 
