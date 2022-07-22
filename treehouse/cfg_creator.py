@@ -274,6 +274,8 @@ class CFGCreator(BaseVisitor):
                 if self.ast.nodes[case]["node_type"] == "labeled_statement":
                     self.add_label_node(case)
                     case = self.get_children(case)[1]
+                else:
+                    raise NotImplementedError(self.ast.nodes[case]["node_type"])
             case_children = self.get_children(case)
             case_attr = self.ast.nodes[case]
             if len(self.get_children(case)) == 0:
