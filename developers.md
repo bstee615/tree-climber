@@ -6,7 +6,7 @@ To setup my dev environment:
 
 ```
 export PYTHONPATH="$PWD:$PYTHONPATH"
-python -m treehouse tests/data/example.c --draw_ast --draw_cfg --draw_duc
+python -m treeclimber tests/data/example.c --draw_ast --draw_cfg --draw_duc
 ```
 
 ## Distribution
@@ -36,20 +36,20 @@ pushd "$tmpdir"
 python -m virtualenv testvenv
 source testvenv/bin/activate
 pip install $rootdir
-python -m treehouse $rootdir/tests/data/example.c --draw_ast --draw_cfg --draw_duc
+python -m treeclimber $rootdir/tests/data/example.c --draw_ast --draw_cfg --draw_duc
 popd
 rm -rf "$tmpdir"
 ```
 
 Expected output:
 ```
-/tmp/tmp.8gF7npirpv ~/code/treehouse
+/tmp/tmp.8gF7npirpv ~/code/treeclimber
 created virtual environment CPython3.10.7.final.0-64 in 116ms
   creator CPython3Posix(dest=/tmp/tmp.8gF7npirpv/testvenv, clear=False, no_vcs_ignore=False, global=False)
   seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/home/benjis/.local/share/virtualenv)
     added seed packages: pip==22.2.2, setuptools==65.3.0, wheel==0.37.1
   activators BashActivator,CShellActivator,FishActivator,NushellActivator,PowerShellActivator,PythonActivator
-Processing /home/benjis/code/treehouse
+Processing /home/benjis/code/treeclimber
   Installing build dependencies ... done
   Getting requirements to build wheel ... done
   Preparing metadata (pyproject.toml) ... done
@@ -87,14 +87,14 @@ Collecting smmap<6,>=3.0.1
   Using cached smmap-5.0.0-py3-none-any.whl (24 kB)
 Collecting six>=1.5
   Using cached six-1.16.0-py2.py3-none-any.whl (11 kB)
-Building wheels for collected packages: treehouse
-  Building wheel for treehouse (pyproject.toml) ... done
-  Created wheel for treehouse: filename=treehouse-0.0.2-py3-none-any.whl size=17567 sha256=e8ae863d0adc686e3d341b6a74c833c5bcf5e8ddd7090324baac3c698dd30073
+Building wheels for collected packages: treeclimber
+  Building wheel for treeclimber (pyproject.toml) ... done
+  Created wheel for treeclimber: filename=treeclimber-0.0.2-py3-none-any.whl size=17567 sha256=e8ae863d0adc686e3d341b6a74c833c5bcf5e8ddd7090324baac3c698dd30073
   Stored in directory: /tmp/pip-ephem-wheel-cache-7zaviu7b/wheels/ed/02/b3/ae0519f966dc654260892ca550440ddd53f4d4ef08e2a51297
-Successfully built treehouse
-Installing collected packages: tree-sitter, smmap, six, pyparsing, pygraphviz, pillow, numpy, networkx, kiwisolver, fonttools, cycler, python-dateutil, packaging, gitdb, contourpy, matplotlib, gitpython, treehouse
-Successfully installed contourpy-1.0.5 cycler-0.11.0 fonttools-4.37.3 gitdb-4.0.9 gitpython-3.1.27 kiwisolver-1.4.4 matplotlib-3.6.0 networkx-2.8.6 numpy-1.23.3 packaging-21.3 pillow-9.2.0 pygraphviz-1.10 pyparsing-3.0.9 python-dateutil-2.8.2 six-1.16.0 smmap-5.0.0 tree-sitter-0.20.1 treehouse-0.0.2
-parsing 1 files [PosixPath('/home/benjis/code/treehouse/tests/data/example.c')]
-successfully parsed /home/benjis/code/treehouse/tests/data/example.c
-~/code/treehouse
+Successfully built treeclimber
+Installing collected packages: tree-sitter, smmap, six, pyparsing, pygraphviz, pillow, numpy, networkx, kiwisolver, fonttools, cycler, python-dateutil, packaging, gitdb, contourpy, matplotlib, gitpython, treeclimber
+Successfully installed contourpy-1.0.5 cycler-0.11.0 fonttools-4.37.3 gitdb-4.0.9 gitpython-3.1.27 kiwisolver-1.4.4 matplotlib-3.6.0 networkx-2.8.6 numpy-1.23.3 packaging-21.3 pillow-9.2.0 pygraphviz-1.10 pyparsing-3.0.9 python-dateutil-2.8.2 six-1.16.0 smmap-5.0.0 tree-sitter-0.20.1 treeclimber-0.0.2
+parsing 1 files [PosixPath('/home/benjis/code/treeclimber/tests/data/example.c')]
+successfully parsed /home/benjis/code/treeclimber/tests/data/example.c
+~/code/treeclimber
 ```

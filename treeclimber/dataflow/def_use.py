@@ -1,6 +1,6 @@
 
 import networkx as nx
-from treehouse.dataflow.reaching_def import ReachingDefinitionSolver
+from treeclimber.dataflow.reaching_def import ReachingDefinitionSolver
 
 
 def get_uses(cfg, solver, n):

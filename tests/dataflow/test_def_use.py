@@ -1,7 +1,7 @@
-from treehouse.ast_creator import ASTCreator
-from treehouse.dataflow.def_use import make_duc
-from treehouse.tree_sitter_utils import c_parser
-from treehouse.cfg_creator import CFGCreator
+from treeclimber.ast_creator import ASTCreator
+from treeclimber.dataflow.def_use import make_duc
+from treeclimber.tree_sitter_utils import c_parser
+from treeclimber.cfg_creator import CFGCreator
 from tests.utils import *
 import pytest
 

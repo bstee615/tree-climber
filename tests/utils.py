@@ -1,9 +1,9 @@
 import os
-from treehouse.ast_creator import ASTCreator
-from treehouse.base_visitor import BaseVisitor
-from treehouse.cfg_creator import CFGCreator
-from treehouse.config import DRAW_CFG
-from treehouse.tree_sitter_utils import c_parser
+from treeclimber.ast_creator import ASTCreator
+from treeclimber.base_visitor import BaseVisitor
+from treeclimber.cfg_creator import CFGCreator
+from treeclimber.config import DRAW_CFG
+from treeclimber.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
 

@@ -1,5 +1,5 @@
 from tests.utils import *
-from treehouse.dataflow.reaching_def import ReachingDefinitionSolver
+from treeclimber.dataflow.reaching_def import ReachingDefinitionSolver
 import pytest
 
 

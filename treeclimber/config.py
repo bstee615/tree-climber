@@ -4,6 +4,6 @@ Global configuration
 
 import os
 
-TREEHOUSE_DATAROOT = os.path.expanduser("~/.treehouse/")
-TREE_SITTER_LIB_PREFIX = os.environ.get("treehouse__TREE_SITTER_LIB_PREFIX", os.path.join(TREEHOUSE_DATAROOT, "lib"))
-DRAW_CFG = os.environ.get("treehouse__DRAW_CFG", False)
+treeclimber_DATAROOT = os.path.expanduser("~/.treeclimber/")
+TREE_SITTER_LIB_PREFIX = os.environ.get("treeclimber__TREE_SITTER_LIB_PREFIX", os.path.join(treeclimber_DATAROOT, "lib"))
+DRAW_CFG = os.environ.get("treeclimber__DRAW_CFG", False)

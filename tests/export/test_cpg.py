@@ -1,12 +1,12 @@
 from tests.utils import *
 
 from matplotlib import pyplot as plt
-from treehouse.globals import example_c
-from treehouse.ast_creator import ASTCreator
-from treehouse.dataflow.def_use import make_duc
-from treehouse.export.cpg import make_cpg
-from treehouse.tree_sitter_utils import c_parser
-from treehouse.cfg_creator import CFGCreator
+from treeclimber.globals import example_c
+from treeclimber.ast_creator import ASTCreator
+from treeclimber.dataflow.def_use import make_duc
+from treeclimber.export.cpg import make_cpg
+from treeclimber.tree_sitter_utils import c_parser
+from treeclimber.cfg_creator import CFGCreator
 import pytest
 
 

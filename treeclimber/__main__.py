@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 import traceback
-from treehouse.ast_creator import ASTCreator
-from treehouse.cfg_creator import CFGCreator
-from treehouse.dataflow.def_use import make_duc
-from treehouse.export.cpg import make_cpg
-from treehouse.tree_sitter_utils import c_parser
+from treeclimber.ast_creator import ASTCreator
+from treeclimber.cfg_creator import CFGCreator
+from treeclimber.dataflow.def_use import make_duc
+from treeclimber.export.cpg import make_cpg
+from treeclimber.tree_sitter_utils import c_parser
 import networkx as nx
 from networkx.readwrite import json_graph
 import matplotlib.pyplot as plt

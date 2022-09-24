@@ -1,7 +1,7 @@
-from treehouse.tree_sitter_utils import c_parser
-from treehouse.ast_creator import ASTCreator
-from treehouse.cfg_creator import CFGCreator
-from treehouse.dataflow.dataflow_solver import DataflowSolver
+from treeclimber.tree_sitter_utils import c_parser
+from treeclimber.ast_creator import ASTCreator
+from treeclimber.cfg_creator import CFGCreator
+from treeclimber.dataflow.dataflow_solver import DataflowSolver
 import networkx as nx
 
 
