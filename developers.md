@@ -13,6 +13,12 @@ python -m treehouse tests/data/example.c --draw_ast --draw_cfg --draw_duc
 
 To publish to PyPi, I used Hatchling, following the official Guide: https://packaging.python.org/en/latest/tutorials/packaging-projects/
 
+Install dependencies:
+
+```
+pip install twine build
+```
+
 To publish a new TestPyPi build:
 
 ```

@@ -5,7 +5,13 @@ Currently supports only C.
 
 # Try it out
 
-Run from source:
+Install from pip:
+
+```bash
+pip install treehouse
+```
+
+or run from source:
 
 ```bash
 # install deps
