@@ -1,5 +1,7 @@
 # Distribution guide for devs
 
+To publish to PyPi, I used Hatchling, following the official Guide: https://packaging.python.org/en/latest/tutorials/packaging-projects/
+
 To publish a new TestPyPi build:
 
 ```
