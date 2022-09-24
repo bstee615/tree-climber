@@ -17,6 +17,8 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+keywords = [ "program-analysis", "tree-sitter", "cfg", "dfg", "pdg", "cpg" ]
+dependencies = [ "matplotlib", "tree-sitter", "networkx", "GitPython", "pygraphviz" ]
 
 [project.urls]
 "Homepage" = "https://github.com/bstee615/treehouse"
