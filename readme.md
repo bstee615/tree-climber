@@ -7,10 +7,9 @@ Currently supports only C.
 
 ```bash
 # install deps
-git clone https://github.com/tree-sitter/tree-sitter-c.git lib/tree-sitter-c
 pip install -r requirements.txt
 # run on a test program :)
-python main.py tests/data/example.c --draw_ast --draw_cfg --draw_duc
+python treehouse tests/data/example.c --draw_ast --draw_cfg --draw_duc
 ```
 
 For Fedora 36:
