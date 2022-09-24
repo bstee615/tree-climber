@@ -1,12 +1,24 @@
 # treehouse
 
 Program analysis tools built on [tree-sitter](https://github.com/tree-sitter/tree-sitter).
+Currently supports only C.
 
 # Try it out
 
-`git clone git clone https://github.com/tree-sitter/tree-sitter-c.git lib/tree-sitter-c` to grab tree-sitter library for C.
-Run `pip install tree-sitter matlpotlib pygraphviz networkx pydot pytest black` (some others may be needed).
-Then run `python main.py tests/data/example.c --draw_ast --cfg --draw_cfg` to draw AST and CFG.
+```bash
+# install deps
+git clone https://github.com/tree-sitter/tree-sitter-c.git lib/tree-sitter-c
+pip install -r requirements.txt
+# run on a test program :)
+python main.py tests/data/example.c --draw_ast --draw_cfg --draw_duc
+```
+
+For Fedora 36:
+```
+sudo dnf install graphviz-devel python3-tkinter
+```
+
+Feel free to open a PR with other platform-specific instructions.
 
 # Table of contents
 
