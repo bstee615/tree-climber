@@ -5,6 +5,8 @@ Currently supports only C.
 
 # Try it out
 
+Run from source:
+
 ```bash
 # install deps
 pip install -r requirements.txt
@@ -18,6 +20,8 @@ sudo dnf install graphviz-devel python3-tkinter
 ```
 
 Feel free to open a PR with other platform-specific instructions.
+
+See [developers.md](./developers.md) for developer setup instructions.
 
 # Table of contents
 
