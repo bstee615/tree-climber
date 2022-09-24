@@ -5,3 +5,4 @@ pydot
 pygraphviz
 pytest
 black
+GitPython
