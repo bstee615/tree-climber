@@ -4,7 +4,7 @@ Program analysis tools built on [tree-sitter](https://github.com/tree-sitter/tre
 
 # Try it out
 
-Clone [https://github.com/tree-sitter/tree-sitter-c.git](https://github.com/tree-sitter/tree-sitter-c.git) in the project root.
+`git clone git clone https://github.com/tree-sitter/tree-sitter-c.git lib/tree-sitter-c` to grab tree-sitter library for C.
 Run `pip install tree-sitter matlpotlib pygraphviz networkx pydot pytest black` (some others may be needed).
 Then run `python main.py tests/data/example.c --draw_ast --cfg --draw_cfg` to draw AST and CFG.
 
