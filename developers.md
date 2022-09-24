@@ -26,6 +26,13 @@ python -m build
 python -m twine upload --repository testpypi dist/*
 ```
 
+To publish a new PyPi build:
+
+```
+python -m build
+python -m twine upload dist/*
+```
+
 To test the pip install locally:
 
 ```
