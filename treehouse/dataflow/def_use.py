@@ -1,10 +1,6 @@
-from matplotlib import pyplot as plt
+
 import networkx as nx
 from treehouse.dataflow.reaching_def import ReachingDefinitionSolver
-from tests.utils import draw
-from treehouse.tree_sitter_utils import c_parser
-from treehouse.ast_creator import ASTCreator
-from treehouse.cfg_creator import CFGCreator
 
 
 def get_uses(cfg, solver, n):
@@ -25,30 +21,30 @@ def get_uses(cfg, solver, n):
 
 def make_duc(cfg, verbose=0):
     """
-    return def-use chain (DUC)
-    
-        https://textart.io/art/tag/duck/1
-                                       ___
-                               ,-""   `.
-                             ,'  _   e )`-._
-                            /  ,' `-._<.===-'
-                           /  /
-                          /  ;
-              _.--.__    /   ;
- (`._    _.-""       "--'    |
- <_  `-""                     |
-  <`-                          :
-   (__   <__.                  ;
-     `-.   '-.__.      _.'    /
-        |      `-.__,-'    _,'
-         `._    ,    /__,-'
-            ""._|__,'< <____
-                 | |  `----.`.
-                 | |        | `.
-                 ; |___      |-``
-                 |   --<
-                  `.`.<
-                    `-'
+       return def-use chain (DUC)
+
+           https://textart.io/art/tag/duck/1
+                                          ___
+                                  ,-""   `.
+                                ,'  _   e )`-._
+                               /  ,' `-._<.===-'
+                              /  /
+                             /  ;
+                 _.--.__    /   ;
+    (`._    _.-""       "--'    |
+    <_  `-""                     |
+     <`-                          :
+      (__   <__.                  ;
+        `-.   '-.__.      _.'    /
+           |      `-.__,-'    _,'
+            `._    ,    /__,-'
+               ""._|__,'< <____
+                    | |  `----.`.
+                    | |        | `.
+                    ; |___      |-``
+                    |   --<
+                     `.`.<
+                       `-'
     """
     duc = nx.DiGraph()
     duc.add_nodes_from(
@@ -84,47 +80,3 @@ def make_duc(cfg, verbose=0):
         ]
     )
     return duc
-
-
-def test():
-    code = """int main()
-    {
-        int i = 0;
-        int x = 0;
-        end:
-        x -= 3;
-        for (; true; ) {
-            x += 5;
-            if (x < 0) {
-                goto end;
-            }
-        }
-        printf("%d %d\\n", x, i);
-        x = 10;
-        return x;
-    }
-    """
-    tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
-    duc = make_duc(cfg)
-    print(duc.nodes(data=True))
-
-    _, ax = plt.subplots(2)
-    pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog="dot")
-    nx.draw(
-        duc,
-        pos=pos,
-        labels={n: attr["label"] for n, attr in duc.nodes(data=True)},
-        with_labels=True,
-        ax=ax[0],
-    )
-    nx.draw_networkx_edge_labels(
-        duc,
-        pos=pos,
-        edge_labels={
-            (u, v): attr.get("label", "") for u, v, attr in duc.edges(data=True)
-        },
-        ax=ax[0],
-    )
-    draw(cfg, ax=ax[1])
