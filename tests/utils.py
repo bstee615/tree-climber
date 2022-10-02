@@ -1,9 +1,9 @@
 import os
-from treeclimber.ast_creator import ASTCreator
-from treeclimber.base_visitor import BaseVisitor
-from treeclimber.cfg_creator import CFGCreator
-from treeclimber.config import DRAW_CFG
-from treeclimber.tree_sitter_utils import c_parser
+from tree_climber.ast_creator import ASTCreator
+from tree_climber.base_visitor import BaseVisitor
+from tree_climber.cfg_creator import CFGCreator
+from tree_climber.config import DRAW_CFG
+from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
 

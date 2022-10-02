@@ -2,7 +2,7 @@ from turtle import clone
 from tree_sitter import Language, Parser
 import os
 
-from treeclimber.config import TREE_SITTER_LIB_PREFIX
+from tree_climber.config import TREE_SITTER_LIB_PREFIX
 from git import Repo
 
 languages = ["c"]

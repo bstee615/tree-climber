@@ -1,7 +1,7 @@
-from treeclimber.ast_creator import ASTCreator
-from treeclimber.dataflow.def_use import make_duc
-from treeclimber.tree_sitter_utils import c_parser
-from treeclimber.cfg_creator import CFGCreator
+from tree_climber.ast_creator import ASTCreator
+from tree_climber.dataflow.def_use import make_duc
+from tree_climber.tree_sitter_utils import c_parser
+from tree_climber.cfg_creator import CFGCreator
 from tests.utils import *
 import pytest
 

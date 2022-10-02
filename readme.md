@@ -1,4 +1,4 @@
-# treeclimber
+# tree-climber
 
 Program analysis tools built on [tree-sitter](https://github.com/tree-sitter/tree-sitter).
 Currently supports only C.
@@ -8,7 +8,7 @@ Currently supports only C.
 Install from pip:
 
 ```bash
-pip install treeclimber
+pip install tree_climber
 ```
 
 or run from source:
@@ -17,7 +17,7 @@ or run from source:
 # install deps
 pip install -r requirements.txt
 # run on a test program :)
-python treeclimber tests/data/example.c --draw_ast --draw_cfg --draw_duc
+python tree_climber tests/data/example.c --draw_ast --draw_cfg --draw_duc
 ```
 
 For Fedora 36:
@@ -119,7 +119,7 @@ Example:
 
 # Contribute
 
-[Open issues on Github](https://github.com/bstee615/treeclimber/issues)
+[Open issues on Github](https://github.com/bstee615/tree-climber/issues)
 
 # Stress test (Jun 16 2022, outdated)
 

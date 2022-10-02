@@ -2,8 +2,8 @@ from ast import Index
 from matplotlib import pyplot as plt
 import networkx as nx
 
-from treeclimber.base_visitor import BaseVisitor
-from treeclimber.tree_sitter_utils import c_parser
+from tree_climber.base_visitor import BaseVisitor
+from tree_climber.tree_sitter_utils import c_parser
 
 
 def assert_boolean_expression(n):

@@ -1,9 +1,9 @@
 from collections import defaultdict
 from matplotlib import pyplot as plt
-from treeclimber.ast_creator import ASTCreator
-from treeclimber.base_visitor import BaseVisitor
+from tree_climber.ast_creator import ASTCreator
+from tree_climber.base_visitor import BaseVisitor
 import networkx as nx
-from treeclimber.tree_sitter_utils import c_parser
+from tree_climber.tree_sitter_utils import c_parser
 
 
 class CFGCreator(BaseVisitor):
