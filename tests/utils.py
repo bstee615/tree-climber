@@ -1,8 +1,9 @@
 import os
-from treehouse.ast_creator import ASTCreator
-from treehouse.base_visitor import BaseVisitor
-from treehouse.cfg_creator import CFGCreator
-from treehouse.tree_sitter_utils import c_parser
+from tree_climber.ast_creator import ASTCreator
+from tree_climber.base_visitor import BaseVisitor
+from tree_climber.cfg_creator import CFGCreator
+from tree_climber.config import DRAW_CFG
+from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -21,7 +22,7 @@ def draw(cfg, dataflow_solution=None, ax=None):
     plt.show()
 
 
-def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(os.environ.get("treehouse__DRAW_CFG", False))):
+def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(DRAW_CFG)):
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = ASTCreator.make_ast(tree.root_node)
     if print_ast:

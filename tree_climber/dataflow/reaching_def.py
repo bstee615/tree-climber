@@ -1,8 +1,7 @@
-from tests.utils import draw
-from treehouse.tree_sitter_utils import c_parser
-from treehouse.ast_creator import ASTCreator
-from treehouse.cfg_creator import CFGCreator
-from treehouse.dataflow.dataflow_solver import DataflowSolver
+from tree_climber.tree_sitter_utils import c_parser
+from tree_climber.ast_creator import ASTCreator
+from tree_climber.cfg_creator import CFGCreator
+from tree_climber.dataflow.dataflow_solver import DataflowSolver
 import networkx as nx
 
 
@@ -87,30 +86,3 @@ class ReachingDefinitionSolver(DataflowSolver):
                     return self.id2def[i]
         else:
             return set()
-
-
-def test():
-    code = """int main()
-    {
-        int x = 0;
-        if (true) {
-            x += 5;
-        }
-        printf("%d\\n", x);
-        x = 10;
-        return x;
-    }
-    """
-    tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
-    solver = ReachingDefinitionSolver(cfg, verbose=1)
-    solution_in, solution_out = solver.solve()
-    draw(
-        cfg,
-        {
-            n: sorted(set(map(solver.def2code.__getitem__, b)))
-            for n, b in solution_out.items()
-        },
-    )
-    print(solution_out)

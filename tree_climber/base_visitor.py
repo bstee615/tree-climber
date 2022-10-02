@@ -1,4 +1,4 @@
-from treehouse.tree_sitter_utils import c_parser
+from tree_climber.tree_sitter_utils import c_parser
 
 
 class BaseVisitor:

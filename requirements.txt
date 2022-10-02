@@ -1,0 +1,8 @@
+tree-sitter>=0.20
+matplotlib
+networkx>=2.5
+pydot
+pygraphviz
+pytest
+black
+GitPython

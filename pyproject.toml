@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tree-climber"
+version = "0.0.1"
+authors = [
+  { name="Benjamin Steenhoek", email="benjaminjsteenhoek@gmail.com" },
+]
+description = "Program analysis tools built on tree-sitter."
+readme = "readme.md"
+license = { file="LICENSE" }
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = [ "program-analysis", "tree-sitter", "cfg", "dfg", "pdg", "cpg" ]
+dependencies = [ "matplotlib", "tree-sitter", "networkx", "GitPython", "pygraphviz" ]
+
+[project.urls]
+"Homepage" = "https://github.com/bstee615/tree-climber"
+"Bug Tracker" = "https://github.com/bstee615/tree-climber/issues"

@@ -5,7 +5,7 @@
     "markdown.extension.toc.orderedList": true,
     "markdown.extension.toc.omittedFromToc": {
         "README.md": [
-            "# treehouse",
+            "# tree-climber",
             "# Try it out",
             "# Table of contents",
             "# Stress test (Jun 16 2022, outdated)"

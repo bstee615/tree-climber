@@ -1,12 +1,33 @@
-# treehouse
+# tree-climber
 
 Program analysis tools built on [tree-sitter](https://github.com/tree-sitter/tree-sitter).
+Currently supports only C.
 
 # Try it out
 
-Clone [https://github.com/tree-sitter/tree-sitter-c.git](https://github.com/tree-sitter/tree-sitter-c.git) in the project root.
-Run `pip install tree-sitter matlpotlib pygraphviz networkx pydot pytest black` (some others may be needed).
-Then run `python main.py tests/data/example.c --draw_ast --cfg --draw_cfg` to draw AST and CFG.
+Install from pip:
+
+```bash
+pip install tree_climber
+```
+
+or run from source:
+
+```bash
+# install deps
+pip install -r requirements.txt
+# run on a test program :)
+python tree_climber tests/data/example.c --draw_ast --draw_cfg --draw_duc
+```
+
+For Fedora 36:
+```
+sudo dnf install graphviz-devel python3-tkinter
+```
+
+Feel free to open a PR with other platform-specific instructions.
+
+See [developers.md](./developers.md) for developer setup instructions.
 
 # Table of contents
 
@@ -98,7 +119,7 @@ Example:
 
 # Contribute
 
-[Open issues on Github](https://github.com/bstee615/treehouse/issues)
+[Open issues on Github](https://github.com/bstee615/tree-climber/issues)
 
 # Stress test (Jun 16 2022, outdated)
 
