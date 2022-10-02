@@ -105,3 +105,18 @@ parsing 1 files [PosixPath('/home/benjis/code/tree_climber/tests/data/example.c'
 successfully parsed /home/benjis/code/tree_climber/tests/data/example.c
 ~/code/tree_climber
 ```
+
+To test the install from PyPi:
+
+```
+# <from root>
+rootdir="$(pwd)"
+tmpdir="$(mktemp -d)"
+pushd "$tmpdir"
+python -m virtualenv testvenv
+source testvenv/bin/activate
+pip install tree-climber==0.0.1
+python -m tree_climber $rootdir/tests/data/example.c --draw_ast --draw_cfg --draw_duc
+popd
+rm -rf "$tmpdir"
+```
