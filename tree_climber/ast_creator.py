@@ -36,19 +36,20 @@ class ASTCreator(BaseVisitor):
     After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
     """
 
-    def __init__(self):
+    def __init__(self, strict):
         super(ASTCreator).__init__()
         self.ast = nx.DiGraph()
         self.node_id = 0
+        self.strict = strict
 
     @staticmethod
-    def make_ast(root_node):
-        visitor = ASTCreator()
+    def make_ast(root_node, strict=True):
+        visitor = ASTCreator(strict=strict)
         visitor.visit(root_node, parent_id=None)
         return visitor.ast
 
     def visit(self, n, **kwargs):
-        if n.type == "ERROR":
+        if n.type == "ERROR" and self.strict:
             raise AstErrorException()
         super().visit(n, **kwargs)
 

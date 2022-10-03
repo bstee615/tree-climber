@@ -111,6 +111,11 @@ if __name__ == "__main__":
         action="store_true",
         help="draw each function's CFG as a separate plot",
     )
+    parser.add_argument(
+        "--continue_on_error",
+        action="store_true",
+        help="continue if a file errors out",
+    )
     args = parser.parse_args()
 
     args.filename = Path(args.filename)
@@ -126,7 +131,7 @@ if __name__ == "__main__":
             with open(filename, "rb") as f:
                 tree = c_parser.parse(f.read())
 
-            ast = ASTCreator.make_ast(tree.root_node)
+            ast = ASTCreator.make_ast(tree.root_node, strict=not args.continue_on_error)
             if args.draw_ast:
                 pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
                 nx.draw(
@@ -226,5 +231,6 @@ if __name__ == "__main__":
             detect_bugs(cpg)
         except Exception:
             print("could not parse", filename)
-            traceback.print_exc()
-            raise
+            print(traceback.format_exc())
+            if not args.continue_on_error:
+                raise
