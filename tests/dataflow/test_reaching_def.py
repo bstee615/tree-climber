@@ -16,7 +16,7 @@ def test_solve():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
+    ast = get_ast(tree.root_node)
     cfg = CFGCreator.make_cfg(ast)
     solver = ReachingDefinitionSolver(cfg)
     solution_in, solution_out = solver.solve()
@@ -38,7 +38,7 @@ def test_debug():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
+    ast = get_ast(tree.root_node)
     cfg = CFGCreator.make_cfg(ast)
     solver = ReachingDefinitionSolver(cfg, verbose=1)
     solution_in, solution_out = solver.solve()

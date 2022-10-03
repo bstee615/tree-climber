@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import traceback
-from tree_climber.ast_creator import ASTCreator
+from tree_climber.tree_sitter_utils import get_ast
 from tree_climber.cfg_creator import CFGCreator
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.export.cpg import make_cpg
@@ -131,7 +131,7 @@ if __name__ == "__main__":
             with open(filename, "rb") as f:
                 tree = c_parser.parse(f.read())
 
-            ast = ASTCreator.make_ast(tree.root_node, strict=not args.continue_on_error)
+            ast = get_ast(tree.root_node, strict=not args.continue_on_error)
             if args.draw_ast:
                 pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
                 nx.draw(

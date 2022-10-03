@@ -1,13 +1,11 @@
 from collections import defaultdict
 import warnings
 from matplotlib import pyplot as plt
-from tree_climber.ast_creator import ASTCreator
-from tree_climber.base_visitor import BaseVisitor
 import networkx as nx
-from tree_climber.tree_sitter_utils import c_parser
+from tree_climber.tree_sitter_utils import c_parser, get_ast
 
 
-class CFGCreator(BaseVisitor):
+class CFGCreator:
     """
     AST visitor which creates a CFG.
     After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
@@ -23,6 +21,9 @@ class CFGCreator(BaseVisitor):
         self.continue_fringe = []
         self.gotos = {}
         self.labels = {}
+
+    def get_type(self, n):
+        return self.ast.nodes[n]["type"]
 
     @staticmethod
     def make_cfg(ast):
@@ -54,7 +55,7 @@ class CFGCreator(BaseVisitor):
 
     def visit(self, n, **kwargs):
         return getattr(
-            self, "visit_" + self.ast.nodes[n]["node_type"], self.visit_default
+            self, "visit_" + self.get_type(n), self.visit_default
         )(n=n, **kwargs)
 
     def visit_children(self, n, **kwargs):
@@ -165,20 +166,54 @@ class CFGCreator(BaseVisitor):
             self.fringe.append((condition_id, False))
 
     def visit_for_statement(self, n, **kwargs):
-        n_attr = self.ast.nodes[n]
-        # print(n, n_attr["node_type"], kwargs, n_attr)
+        # get metadata
+        children = self.ast.successors(n)
+        children = [c for c in children if self.get_type(c) != "comment"]
+        child_types = [self.get_type(c) for c in children]
         i = 0
-        if n_attr.get("has_init", False):
+        while self.get_type(children[i]) != "(":
+            i += 1
+        i += 1
+        if self.get_type(children[i]) == "declaration":
+            has_init = True
+            i += 1
+        elif self.get_type(children[i]) == ";":
+            has_init = False
+            i += 1
+        else:
+            assert self.get_type(children[i]).endswith("_expression") or self.get_type(children[i]) in ("number_literal", "identifier"), (children[i], self.get_type(children[i]))
+            has_init = True
+            i += 1
+            assert self.get_type(children[i]) == ";"
+            i += 1
+        # pointing after semicolon
+        if self.get_type(children[i]) == ";":
+            has_cond = False
+        else:
+            # assert_boolean_expression(children[i])
+            has_cond = True
+            i += 1
+        # pointing at semicolon
+        assert self.get_type(children[i]) == ";", (children[i], child_types, children[i].text.decode())
+        i += 1
+        if self.get_type(children[i]) == ")":
+            has_incr = False
+        else:
+            assert self.get_type(children[i]).endswith("_expression") or self.get_type(children[i]) in ("number_literal", "identifier"), (children[i], child_types)
+            has_incr = True
+
+        i = 0
+        if has_init:
             init = self.get_children(n)[i]
             i += 1
         else:
             init = None
-        if n_attr.get("has_cond", False):
+        if has_cond:
             cond = self.get_children(n)[i]
             i += 1
         else:
             cond = None
-        if n_attr.get("has_incr", False):
+        if has_incr:
             incr = self.get_children(n)[i]
             i += 1
         else:
@@ -223,7 +258,7 @@ class CFGCreator(BaseVisitor):
         self.break_fringe = []
 
     def visit_while_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[0])[0]
+        cond = self.get_children(self.get_children(n)[1])[0]
         cond_id = self.add_cfg_node(cond)
 
         self.add_edge_from_fringe_to(cond_id)
@@ -265,30 +300,40 @@ class CFGCreator(BaseVisitor):
         self.break_fringe = []
 
     def visit_switch_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[0])[0]
+        # print("DEBUG", [self.get_type(c) for c in self.get_children(n)])
+        cond = self.get_children(self.get_children(n)[1])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        cases = self.get_children(self.get_children(n)[1])
+        cases = self.get_children(self.get_children(n)[2])
         default_was_hit = False
         for case in cases:
-            while self.ast.nodes[case]["node_type"] != "case_statement":
-                if self.ast.nodes[case]["node_type"] == "labeled_statement":
+            if not self.ast.nodes[case]["is_named"]:
+                continue
+            while self.get_type(case) != "case_statement":
+                if self.get_type(case) == "labeled_statement":
                     self.add_label_node(case)
                     case = self.get_children(case)[1]
                 else:
-                    raise NotImplementedError(self.ast.nodes[case]["node_type"])
+                    raise NotImplementedError(self.get_type(case))
             case_children = self.get_children(case)
-            case_attr = self.ast.nodes[case]
+            
+            label_end = 0
+            while self.get_type(case_children[label_end]) != ":":
+                label_end += 1
+            label_end -= 1
+            body_begin = label_end + 2
+            is_default = any(c for c in case_children if self.ast.nodes[c]["text"] == "default")
+
             if len(self.get_children(case)) == 0:
                 continue
             body_nodes = [
                 c
                 for c in case_children
-                if case_attr["body_begin"] <= self.ast.nodes[c]["child_idx"]
+                if body_begin <= self.ast.nodes[c]["idx"]
             ]
-            if case_attr["is_default"]:
+            if is_default:
                 default_was_hit = True
-            case_text = self.ast.nodes[case]["code"]
+            case_text = self.ast.nodes[case]["text"]
             case_text = case_text[: case_text.find(":") + 1]
             # TODO: append previous cases with no body
             self.fringe.append((cond_id, case_text))
@@ -326,8 +371,9 @@ class CFGCreator(BaseVisitor):
     def visit_goto_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
-        statement_identifier_attr = self.ast.nodes[self.get_children(n)[0]]
-        assert statement_identifier_attr["node_type"] == "statement_identifier"
+        statement_identifier = self.get_children(n)[0]
+        statement_identifier_attr = self.ast.nodes[statement_identifier]
+        assert self.get_type(statement_identifier) == "statement_identifier"
         self.gotos[statement_identifier_attr["code"]] = node_id
         self.visit_default(n, **kwargs)
 
@@ -336,8 +382,9 @@ class CFGCreator(BaseVisitor):
         code = code[:code.find(":")+1]
         node_id = self.add_cfg_node(n, code=code)
         self.add_edge_from_fringe_to(node_id)
-        statement_identifier_attr = self.ast.nodes[self.get_children(n)[0]]
-        assert statement_identifier_attr["node_type"] == "statement_identifier"
+        statement_identifier = self.ast.nodes[statement_identifier]
+        statement_identifier_attr = self.ast.nodes[statement_identifier]
+        assert self.get_type(statement_identifier) == "statement_identifier"
         self.labels[statement_identifier_attr["code"]] = node_id
         self.fringe.append(node_id)
 
@@ -386,7 +433,7 @@ struct foo;
     tree = c_parser.parse(bytes(code, "utf8"))
 
     fig, ax = plt.subplots(2)
-    ast = ASTCreator.make_ast(tree.root_node)
+    ast = get_ast(tree.root_node)
     pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
     nx.draw(
         ast,
