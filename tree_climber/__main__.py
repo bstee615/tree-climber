@@ -8,78 +8,77 @@ from tree_climber.export.cpg import make_cpg
 from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 from networkx.readwrite import json_graph
-import matplotlib.pyplot as plt
+from tree_climber.drawing_utils import draw_ast, draw_cfg, draw_duc, draw_cpg
+from tree_climber.bug_detection import detect_null_pointer_dereference
 import argparse
 from networkx.drawing.nx_agraph import write_dot
 
 
-def draw_cfg(cfg, entry=None):
-    if cfg.number_of_nodes() > 1000 or cfg.number_of_edges() > 1000:
-        print("fuck man I'm not drawing that!")
-        return
-    pos = nx.spring_layout(cfg, seed=0)
-    nx.draw(cfg, pos=pos)
-    nx.draw_networkx_labels(
-        cfg,
-        pos=pos,
-        labels={n: attr.get("label", "<NO LABEL>") for n, attr in cfg.nodes(data=True)},
+def process_file(filename, args):
+    compute_ast = (
+        args.draw_ast
+        or args.write_ast
+        or args.draw_cfg
+        or args.draw_duc
+        or args.draw_cpg
     )
-    if entry is not None:
-        plt.title(cfg.nodes[entry]["n"].text)
-    plt.show()
+    compute_cfg = args.draw_cfg or args.draw_duc or args.draw_cpg
+    compute_duc = args.draw_duc or args.draw_cpg
+    compute_cpg = args.draw_cpg or args.detect_bug
 
+    try:
+        with open(filename, "rb") as f:
+            tree = c_parser.parse(f.read())
 
-def detect_bugs(cpg):
-    # detect npd bug with reaching definition
-    ast = nx.edge_subgraph(
-        cpg,
-        [
-            (u, v, k)
-            for u, v, k, attr in cpg.edges(data=True, keys=True)
-            if attr["graph_type"] == "AST"
-        ],
-    )
-    duc = nx.edge_subgraph(
-        cpg,
-        [
-            (u, v, k)
-            for u, v, k, attr in cpg.edges(data=True, keys=True)
-            if attr["graph_type"] == "DUC"
-        ],
-    )
-    null_assignment = [
-        n
-        for n, attr in cpg.nodes(data=True)
-        if attr.get("node_type", "<NO TYPE>")
-        in ("expression_statement", "init_declarator")
-        and any(
-            ast.nodes[m].get("node_type", "<NO TYPE>") == "null"
-            for m in nx.descendants(ast, n)
-        )
-    ]
-    for ass in null_assignment:
-        for usage in duc.adj[ass]:
-            usage_attr = cpg.nodes[usage]
-            call_expr = next(
-                (
-                    ch
-                    for ch in ast.adj[usage]
-                    if cpg.nodes[ch]["node_type"] == "call_expression"
-                ),
-                None,
-            )
-            if call_expr is None:
-                continue
-            id_expr = next(
-                ch
-                for ch in ast.adj[call_expr]
-                if cpg.nodes[ch]["node_type"] == "identifier"
-            )
-            id_expr_attr = cpg.nodes[id_expr]
-            if id_expr_attr["code"] == "printf":
-                print(
-                    f"""possible npd of {next(attr["label"] for u, v, k, attr in duc.edges(data=True, keys=True) if u == ass and v == usage)} at line {id_expr_attr["start"][0]+1} column {id_expr_attr["start"][1]+1}: {usage_attr["code"]}"""
-                )
+        if compute_ast:
+            ast = make_ast(tree.root_node)
+            if args.draw_ast:
+                draw_ast(ast)
+            if args.write_ast is not None:
+                write_dot(ast, args.write_ast)
+
+        if compute_cfg:
+            cfg = make_cfg(ast)
+            if args.draw_cfg:
+                if args.each_function:
+                    funcs = [
+                        n
+                        for n, attr in cfg.nodes(data=True)
+                        if attr["label"] == "FUNC_ENTRY"
+                    ]
+                    for func_entry in funcs:
+                        func_cfg = nx.subgraph(
+                            cfg, nx.descendants(cfg, func_entry) | {func_entry}
+                        )
+                        draw_cfg(func_cfg, entry=func_entry)
+                else:
+                    draw_cfg(cfg)
+            if args.write_cfg is not None:
+                write_dot(cfg, args.write_cfg)
+            if args.write_cfg_json:
+                for n in cfg.nodes():
+                    del cfg.nodes[n]["n"]
+                with open(str(filename) + ".graph.json", "w") as of:
+                    json.dump(json_graph.node_link_data(cfg, attrs=None), of, indent=2)
+            print("successfully parsed", filename)
+
+        if compute_duc:
+            duc = make_duc(ast, cfg)
+            if args.draw_duc:
+                draw_duc(duc)
+
+        if compute_cpg:
+            cpg = make_cpg(ast, cfg, duc)
+            if args.draw_cpg:
+                draw_cpg(cpg)
+
+        if args.detect_bugs:
+            detect_null_pointer_dereference(cpg)
+    except Exception:
+        print("could not parse", filename)
+        print(traceback.format_exc())
+        if not args.continue_on_error:
+            raise
 
 
 def main():
@@ -107,6 +106,9 @@ def main():
         "--draw_cpg", action="store_true", help="draw CPG (Code Property Graph)"
     )
     parser.add_argument(
+        "--detect_bugs", action="store_true", help="detect bugs based on CPG"
+    )
+    parser.add_argument(
         "--each_function",
         action="store_true",
         help="draw each function's CFG as a separate plot",
@@ -127,113 +129,8 @@ def main():
         raise FileNotFoundError(args.filename)
     print("parsing", len(filenames), "files", filenames[:5])
     for filename in filenames:
-        try:
-            with open(filename, "rb") as f:
-                tree = c_parser.parse(f.read())
+        process_file(filename, args)
 
-            ast = make_ast(tree.root_node, strict=not args.continue_on_error)
-            if args.draw_ast:
-                pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
-                nx.draw(
-                    ast,
-                    pos=pos,
-                    labels={n: attr["label"] for n, attr in ast.nodes(data=True)},
-                    with_labels=True,
-                )
-                plt.show()
-            if args.write_ast is not None:
-                write_dot(ast, args.write_ast)
-
-            cfg = make_cfg(ast)
-            if args.draw_cfg:
-                if args.each_function:
-                    funcs = [
-                        n
-                        for n, attr in cfg.nodes(data=True)
-                        if attr["label"] == "FUNC_ENTRY"
-                    ]
-                    for func_entry in funcs:
-                        func_cfg = nx.subgraph(
-                            cfg, nx.descendants(cfg, func_entry) | {func_entry}
-                        )
-                        draw_cfg(func_cfg, entry=func_entry)
-                else:
-                    draw_cfg(cfg)
-            if args.write_cfg is not None:
-                write_dot(cfg, args.write_cfg)
-            if args.write_cfg_json:
-                for n in cfg.nodes():
-                    del cfg.nodes[n]["n"]
-                with open(str(filename) + ".graph.json", "w") as of:
-                    json.dump(json_graph.node_link_data(cfg, attrs=None), of, indent=2)
-            print("successfully parsed", filename)
-
-            duc = make_duc(cfg)
-            if args.draw_duc:
-                pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog="dot")
-                nx.draw(
-                    duc,
-                    pos=pos,
-                    labels={n: attr["label"] for n, attr in duc.nodes(data=True)},
-                    with_labels=True,
-                )
-                nx.draw_networkx_edge_labels(
-                    duc,
-                    pos=pos,
-                    edge_labels={
-                        (u, v): attr.get("label", "")
-                        for u, v, attr in duc.edges(data=True)
-                    },
-                )
-                plt.show()
-
-            cpg = make_cpg(ast, cfg, duc)
-            if args.draw_cpg:
-                for (n,d) in cpg.nodes(data=True):
-                    for k in list(d.keys()):
-                        if k != "label":
-                            del d[k]
-                pos = nx.nx_pydot.graphviz_layout(cpg, prog="dot")
-                nx.draw(cpg, pos=pos)
-                nx.draw_networkx_labels(
-                    cpg,
-                    pos=pos,
-                    labels={
-                        n: attr.get("label", "<NO LABEL>")
-                        for n, attr in cpg.nodes(data=True)
-                    },
-                )
-                for graph_type, color in {
-                    "AST": "black",
-                    "CFG": "blue",
-                    "DUC": "red",
-                }.items():
-                    nx.draw_networkx_edges(
-                        cpg,
-                        pos=pos,
-                        edge_color=color,
-                        edgelist=[
-                            (u, v)
-                            for u, v, k, attr in cpg.edges(keys=True, data=True)
-                            if attr["graph_type"] == graph_type
-                        ],
-                    )
-                nx.draw_networkx_edge_labels(
-                    cpg,
-                    pos=pos,
-                    edge_labels={
-                        (u, v): attr.get("label", "")
-                        for u, v, k, attr in cpg.edges(keys=True, data=True)
-                    },
-                )
-                plt.show()
-
-            detect_bugs(cpg)
-        except Exception:
-            print("could not parse", filename)
-            print(traceback.format_exc())
-            if not args.continue_on_error:
-                raise
 
 if __name__ == "__main__":
     main()
