@@ -1,5 +1,6 @@
 import networkx as nx
 from matplotlib import pyplot as plt
+import warnings
 
 from tree_climber.base_visitor import BaseVisitor
 from tree_climber.tree_sitter_utils import c_parser
@@ -51,6 +52,9 @@ class ASTCreator(BaseVisitor):
     def visit(self, n, **kwargs):
         if n.type == "ERROR" and self.strict:
             raise AstErrorException()
+        else:
+            warnings.warn("encountered ERROR in AST")
+
         super().visit(n, **kwargs)
 
     def visit_for_statement(self, n, **kwargs):

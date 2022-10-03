@@ -1,4 +1,5 @@
 from collections import defaultdict
+import warnings
 from matplotlib import pyplot as plt
 from tree_climber.ast_creator import ASTCreator
 from tree_climber.base_visitor import BaseVisitor
@@ -116,7 +117,7 @@ class CFGCreator(BaseVisitor):
             try:
                 self.cfg.add_edge(self.gotos[label], self.labels[label], label="goto")
             except KeyError:
-                print("WARNING: missing goto target. Skipping.", f"label={label}", f"gotos={self.gotos}")
+                warnings.warn("missing goto target. Skipping.", f"label={label}", f"gotos={self.gotos}")
         for n in nx.descendants(self.cfg, entry_id):
             attr = self.cfg.nodes[n]
             if attr.get("n", None) is not None and attr["n"].type == "return_statement":
