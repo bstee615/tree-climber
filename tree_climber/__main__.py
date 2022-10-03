@@ -184,6 +184,10 @@ if __name__ == "__main__":
 
             cpg = make_cpg(ast, cfg, duc)
             if args.draw_cpg:
+                for (n,d) in cpg.nodes(data=True):
+                    for k in list(d.keys()):
+                        if k != "label":
+                            del d[k]
                 pos = nx.nx_pydot.graphviz_layout(cpg, prog="dot")
                 nx.draw(cpg, pos=pos)
                 nx.draw_networkx_labels(
