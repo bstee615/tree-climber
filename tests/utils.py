@@ -1,5 +1,5 @@
-from tree_climber.tree_sitter_utils import get_ast
-from tree_climber.cfg_creator import CFGCreator
+from tree_climber.tree_sitter_utils import make_ast
+from tree_climber.cfg_creator import make_cfg
 from tree_climber.config import DRAW_CFG
 from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
@@ -32,12 +32,12 @@ def draw(cfg, dataflow_solution=None, ax=None):
 
 def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(DRAW_CFG)):
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = get_ast(tree.root_node)
+    ast = make_ast(tree.root_node)
     if print_ast:
         pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
         nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
         plt.show()
-    cfg = CFGCreator.make_cfg(ast)
+    cfg = make_cfg(ast)
     if draw_cfg:
         draw(cfg)
     return cfg

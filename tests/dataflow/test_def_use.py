@@ -1,7 +1,7 @@
-from tree_climber.tree_sitter_utils import get_ast
+from tree_climber.tree_sitter_utils import make_ast
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.tree_sitter_utils import c_parser
-from tree_climber.cfg_creator import CFGCreator
+from tree_climber.cfg_creator import make_cfg
 from tests.utils import *
 import pytest
 
@@ -27,8 +27,8 @@ def test_get_def_use_chain():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = get_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
+    ast = make_ast(tree.root_node)
+    cfg = make_cfg(ast)
     duc = make_duc(cfg)
 
     init_x_node = get_node_by_code(duc, "int x = 0;")
@@ -104,8 +104,8 @@ def test_debug():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = get_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
+    ast = make_ast(tree.root_node)
+    cfg = make_cfg(ast)
     duc = make_duc(cfg)
     print(duc.nodes(data=True))
 
