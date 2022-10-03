@@ -40,6 +40,7 @@ def test_get_def_use_chain():
     x_assign_10_node = get_node_by_code(duc, "x = 10;")
     printf_node = get_node_by_code(cfg, """printf("%d %d\\n", x, i);""")
     return_node = get_node_by_code(cfg, "return x;")
+    breakpoint()
     assert len(list(duc.predecessors(init_x_node))) == 0  # first assignment to x
     assert len(list(duc.predecessors(true_node))) == 0
     assert set(duc.predecessors(printf_node)) == {
