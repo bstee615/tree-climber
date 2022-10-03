@@ -1,6 +1,5 @@
-from ast import Index
-from matplotlib import pyplot as plt
 import networkx as nx
+from matplotlib import pyplot as plt
 
 from tree_climber.base_visitor import BaseVisitor
 from tree_climber.tree_sitter_utils import c_parser
