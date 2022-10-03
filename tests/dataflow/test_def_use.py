@@ -29,7 +29,7 @@ def test_get_def_use_chain():
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = make_ast(tree.root_node)
     cfg = make_cfg(ast)
-    duc = make_duc(cfg)
+    duc = make_duc(ast, cfg)
 
     init_x_node = get_node_by_code(duc, "int x = 0;")
     init_i_node = get_node_by_code(duc, "int i = 0;")
@@ -40,7 +40,6 @@ def test_get_def_use_chain():
     x_assign_10_node = get_node_by_code(duc, "x = 10;")
     printf_node = get_node_by_code(cfg, """printf("%d %d\\n", x, i);""")
     return_node = get_node_by_code(cfg, "return x;")
-    breakpoint()
     assert len(list(duc.predecessors(init_x_node))) == 0  # first assignment to x
     assert len(list(duc.predecessors(true_node))) == 0
     assert set(duc.predecessors(printf_node)) == {
@@ -91,12 +90,10 @@ def test_debug():
     {
         int i = 0;
         int x = 0;
-        end:
         x -= 3;
         for (; true; ) {
             x += 5;
             if (x < 0) {
-                goto end;
             }
         }
         printf("%d %d\\n", x, i);
@@ -107,7 +104,7 @@ def test_debug():
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = make_ast(tree.root_node)
     cfg = make_cfg(ast)
-    duc = make_duc(cfg)
+    duc = make_duc(ast, cfg)
     print(duc.nodes(data=True))
 
     _, ax = plt.subplots(2)

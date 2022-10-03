@@ -18,7 +18,7 @@ def test_solve():
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = make_ast(tree.root_node)
     cfg = make_cfg(ast)
-    solver = ReachingDefinitionSolver(cfg)
+    solver = ReachingDefinitionSolver(ast, cfg)
     solution_in, solution_out = solver.solve()
     assert solution_out[get_node_by_code(cfg, "return x;")] == {2}
     assert solution_out[get_node_by_code(cfg, """printf("%d\\n", x);""")] == {0, 1}
