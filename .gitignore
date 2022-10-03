@@ -177,3 +177,6 @@ joern/
 *.edges.json
 linux-5.18.4/
 workspace/
+
+# stress test data
+tests/data/linux-*
