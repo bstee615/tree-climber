@@ -2,17 +2,17 @@ from collections import defaultdict
 import warnings
 from matplotlib import pyplot as plt
 import networkx as nx
-from tree_climber.tree_sitter_utils import c_parser, get_ast
+from tree_climber.tree_sitter_utils import c_parser, make_ast
 
 
-class CFGCreator:
+class CFGVisitor:
     """
     AST visitor which creates a CFG.
     After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
     """
 
     def __init__(self, ast):
-        super(CFGCreator).__init__()
+        super(CFGVisitor).__init__()
         self.ast = ast
         self.cfg = nx.MultiDiGraph()
         self.node_id = 0
@@ -25,31 +25,6 @@ class CFGCreator:
 
     def get_type(self, n):
         return self.ast.nodes[n]["type"]
-
-    @staticmethod
-    def make_cfg(ast):
-        visitor = CFGCreator(ast)
-        visitor.visit(ast.graph["root_node"])
-        cfg = visitor.cfg
-        # Postprocessing
-
-        # pass through dummy nodes
-        nodes_to_remove = []
-        for n, attr in cfg.nodes(data=True):
-            if attr.get("dummy", False):
-                preds = list(cfg.predecessors(n))
-                succs = list(cfg.successors(n))
-                # Forward label from edges incoming to dummy.
-                for pred in preds:
-                    new_edge_label = list(cfg.adj[pred][n].values())[0].get(
-                        "label", None
-                    )
-                    for succ in succs:
-                        cfg.add_edge(pred, succ, label=new_edge_label)
-                nodes_to_remove.append(n)
-        cfg.remove_nodes_from(nodes_to_remove)
-
-        return visitor.cfg
 
     def get_children(self, n):
         return list(self.ast.successors(n))
@@ -399,6 +374,29 @@ class CFGCreator:
         self.add_label_node(n)
         self.visit_default(n, **kwargs)
 
+def make_cfg(ast):
+    visitor = CFGVisitor(ast)
+    visitor.visit(ast.graph["root_node"])
+    cfg = visitor.cfg
+    # Postprocessing
+
+    # pass through dummy nodes
+    nodes_to_remove = []
+    for n, attr in cfg.nodes(data=True):
+        if attr.get("dummy", False):
+            preds = list(cfg.predecessors(n))
+            succs = list(cfg.successors(n))
+            # Forward label from edges incoming to dummy.
+            for pred in preds:
+                new_edge_label = list(cfg.adj[pred][n].values())[0].get(
+                    "label", None
+                )
+                for succ in succs:
+                    cfg.add_edge(pred, succ, label=new_edge_label)
+            nodes_to_remove.append(n)
+    cfg.remove_nodes_from(nodes_to_remove)
+
+    return visitor.cfg
 
 def test():
     code = """int a = 30;
@@ -440,7 +438,7 @@ struct foo;
     tree = c_parser.parse(bytes(code, "utf8"))
 
     fig, ax = plt.subplots(2)
-    ast = get_ast(tree.root_node)
+    ast = make_ast(tree.root_node)
     pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
     nx.draw(
         ast,
@@ -450,7 +448,7 @@ struct foo;
         ax=ax[0],
     )
 
-    cfg = CFGCreator.make_cfg(ast)
+    cfg = make_cfg(ast)
     pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog="dot")
     nx.draw(
         cfg,

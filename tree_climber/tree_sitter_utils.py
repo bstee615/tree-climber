@@ -43,7 +43,7 @@ def attr_to_label(node_type, code):
         trimmed_code = code
     return node_type + "\n" + trimmed_code
 
-def get_ast(root):
+def make_ast(root):
     ast = nx.DiGraph()
     
     node_id = 0

@@ -2,11 +2,11 @@ from tests.utils import *
 
 from matplotlib import pyplot as plt
 from tree_climber.globals import example_c
-from tree_climber.tree_sitter_utils import get_ast
+from tree_climber.tree_sitter_utils import make_ast
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.export.cpg import make_cpg
 from tree_climber.tree_sitter_utils import c_parser
-from tree_climber.cfg_creator import CFGCreator
+from tree_climber.cfg_creator import make_cfg
 import pytest
 
 
@@ -14,8 +14,8 @@ import pytest
 def test_debug():
     code = example_c.read_text()
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = get_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
+    ast = make_ast(tree.root_node)
+    cfg = make_cfg(ast)
     duc = make_duc(cfg)
     cpg = make_cpg(ast, cfg, duc)
 

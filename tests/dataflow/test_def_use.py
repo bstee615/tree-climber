@@ -1,7 +1,7 @@
-from tree_climber.tree_sitter_utils import get_ast
+from tree_climber.tree_sitter_utils import make_ast
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.tree_sitter_utils import c_parser
-from tree_climber.cfg_creator import CFGCreator
+from tree_climber.cfg_creator import make_cfg
 from tests.utils import *
 import pytest
 
@@ -27,8 +27,8 @@ def test_get_def_use_chain():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = get_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
+    ast = make_ast(tree.root_node)
+    cfg = make_cfg(ast)
     duc = make_duc(cfg)
 
     init_x_node = get_node_by_code(duc, "int x = 0;")
@@ -40,6 +40,7 @@ def test_get_def_use_chain():
     x_assign_10_node = get_node_by_code(duc, "x = 10;")
     printf_node = get_node_by_code(cfg, """printf("%d %d\\n", x, i);""")
     return_node = get_node_by_code(cfg, "return x;")
+    breakpoint()
     assert len(list(duc.predecessors(init_x_node))) == 0  # first assignment to x
     assert len(list(duc.predecessors(true_node))) == 0
     assert set(duc.predecessors(printf_node)) == {
@@ -104,8 +105,8 @@ def test_debug():
     }
     """
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = get_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
+    ast = make_ast(tree.root_node)
+    cfg = make_cfg(ast)
     duc = make_duc(cfg)
     print(duc.nodes(data=True))
 
