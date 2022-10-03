@@ -82,7 +82,7 @@ def detect_bugs(cpg):
                 )
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="filename to parse")
     parser.add_argument(
@@ -234,3 +234,6 @@ if __name__ == "__main__":
             print(traceback.format_exc())
             if not args.continue_on_error:
                 raise
+
+if __name__ == "__main__":
+    main()
