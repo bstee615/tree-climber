@@ -17,7 +17,7 @@ or run from source:
 # install deps
 pip install -r requirements.txt
 # run on a test program :)
-python tree_climber tests/data/example.c --draw_ast --draw_cfg --draw_duc
+python -m tree_climber tests/data/example.c --draw_ast --draw_cfg --draw_duc
 ```
 
 For Fedora 36:
