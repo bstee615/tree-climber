@@ -16,6 +16,7 @@ class CFGCreator:
         self.ast = ast
         self.cfg = nx.MultiDiGraph()
         self.node_id = 0
+        self.returns = []
         self.fringe = []
         self.break_fringe = []
         self.continue_fringe = []
@@ -52,6 +53,10 @@ class CFGCreator:
 
     def get_children(self, n):
         return list(self.ast.successors(n))
+
+    def get_named_children(self, n):
+        is_named = nx.get_node_attributes(self.ast, "is_named")
+        return [c for c in self.ast.successors(n) if is_named[c]]
 
     def visit(self, n, **kwargs):
         return getattr(
@@ -119,10 +124,8 @@ class CFGCreator:
                 self.cfg.add_edge(self.gotos[label], self.labels[label], label="goto")
             except KeyError:
                 warnings.warn("missing goto target. Skipping.", f"label={label}", f"gotos={self.gotos}")
-        for n in nx.descendants(self.cfg, entry_id):
-            attr = self.cfg.nodes[n]
-            if attr.get("n", None) is not None and attr["n"].type == "return_statement":
-                self.cfg.add_edge(n, exit_id, label="return")
+        for n in self.returns:
+            self.cfg.add_edge(n, exit_id, label="return")
         self.fringe.append(exit_id)
 
     def visit_default(self, n, **kwargs):
@@ -146,18 +149,19 @@ class CFGCreator:
     """STRUCTURED CONTROL FLOW"""
 
     def visit_if_statement(self, n, **kwargs):
-        condition = self.get_children(self.get_children(n)[0])[0]
+        children = self.get_named_children(n)
+        condition = self.get_named_children(children[0])[0]
         condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
         self.fringe.append((condition_id, True))
 
-        compound_statement = self.get_children(n)[1]
+        compound_statement = children[1]
         self.visit(compound_statement)
         # NOTE: this assert doesn't work in the case of an if with an empty else
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
 
-        if len(self.get_children(n)) > 2:
-            else_compound_statement = self.get_children(n)[2]
+        if len(children) > 2:
+            else_compound_statement = children[2]
             old_fringe = self.fringe
             self.fringe = [(condition_id, False)]
             self.visit(else_compound_statement)
@@ -202,19 +206,20 @@ class CFGCreator:
             assert self.get_type(children[i]).endswith("_expression") or self.get_type(children[i]) in ("number_literal", "identifier"), (children[i], child_types)
             has_incr = True
 
+        named_children = self.get_named_children(n)
         i = 0
         if has_init:
-            init = self.get_children(n)[i]
+            init = named_children[i]
             i += 1
         else:
             init = None
         if has_cond:
-            cond = self.get_children(n)[i]
+            cond = named_children[i]
             i += 1
         else:
             cond = None
         if has_incr:
-            incr = self.get_children(n)[i]
+            incr = named_children[i]
             i += 1
         else:
             incr = None
@@ -232,7 +237,7 @@ class CFGCreator:
             self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, True))
 
-        compound_statement = self.get_children(n)[i]
+        compound_statement = named_children[i]
         self.visit(compound_statement)
         # NOTE: this assert doesn't work in the case of an if with an empty else
         # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
@@ -258,13 +263,14 @@ class CFGCreator:
         self.break_fringe = []
 
     def visit_while_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[1])[0]
+        named_children = self.get_named_children(n)
+        cond = self.get_named_children(named_children[0])[0]
         cond_id = self.add_cfg_node(cond)
 
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, True))
 
-        compound_statement = self.get_children(n)[1]
+        compound_statement = named_children[1]
         self.visit(compound_statement)
         self.add_edge_from_fringe_to(cond_id)
         self.fringe.append((cond_id, False))
@@ -282,10 +288,11 @@ class CFGCreator:
         self.add_edge_from_fringe_to(dummy_id)
         self.fringe.append(dummy_id)
 
-        compound_statement = self.get_children(n)[0]
+        named_children = self.get_named_children(n)
+        compound_statement = named_children[0]
         self.visit(compound_statement)
 
-        cond = self.get_children(self.get_children(n)[1])[0]
+        cond = self.get_named_children(named_children[1])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
         self.cfg.add_edge(cond_id, dummy_id, label=str(True))
@@ -300,28 +307,27 @@ class CFGCreator:
         self.break_fringe = []
 
     def visit_switch_statement(self, n, **kwargs):
-        # print("DEBUG", [self.get_type(c) for c in self.get_children(n)])
-        cond = self.get_children(self.get_children(n)[1])[0]
+        children = self.get_named_children(n)
+        cond = self.get_named_children(children[0])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        cases = self.get_children(self.get_children(n)[2])
+        cases = self.get_named_children(children[1])
         default_was_hit = False
         for case in cases:
-            if not self.ast.nodes[case]["is_named"]:
-                continue
             while self.get_type(case) != "case_statement":
                 if self.get_type(case) == "labeled_statement":
                     self.add_label_node(case)
-                    case = self.get_children(case)[1]
+                    case = self.get_named_children(case)
                 else:
                     raise NotImplementedError(self.get_type(case))
-            case_children = self.get_children(case)
             
+            case_children = self.get_children(case)
             label_end = 0
             while self.get_type(case_children[label_end]) != ":":
                 label_end += 1
             label_end -= 1
             body_begin = label_end + 2
+            # print([self.ast.nodes[c]["text"] for c in case_children], label_end, body_begin)
             is_default = any(c for c in case_children if self.ast.nodes[c]["text"] == "default")
 
             if len(self.get_children(case)) == 0:
@@ -352,6 +358,7 @@ class CFGCreator:
         self.visit_default(n, **kwargs)
         # This is meant to skip adding subsequent statements to the CFG.
         # TODO: consider how to handle this with goto statements.
+        self.returns.append(node_id)
         return False
 
     def visit_break_statement(self, n, **kwargs):
@@ -371,21 +378,21 @@ class CFGCreator:
     def visit_goto_statement(self, n, **kwargs):
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
-        statement_identifier = self.get_children(n)[0]
+        statement_identifier = self.get_named_children(n)[0]
         statement_identifier_attr = self.ast.nodes[statement_identifier]
         assert self.get_type(statement_identifier) == "statement_identifier"
-        self.gotos[statement_identifier_attr["code"]] = node_id
+        self.gotos[statement_identifier_attr["text"]] = node_id
         self.visit_default(n, **kwargs)
 
     def add_label_node(self, n):
-        code = self.ast.nodes[n]["code"]
+        code = self.ast.nodes[n]["text"]
         code = code[:code.find(":")+1]
-        node_id = self.add_cfg_node(n, code=code)
+        node_id = self.add_cfg_node(n, text=code)
         self.add_edge_from_fringe_to(node_id)
-        statement_identifier = self.ast.nodes[statement_identifier]
+        statement_identifier = self.get_named_children(n)[0]
         statement_identifier_attr = self.ast.nodes[statement_identifier]
         assert self.get_type(statement_identifier) == "statement_identifier"
-        self.labels[statement_identifier_attr["code"]] = node_id
+        self.labels[statement_identifier_attr["text"]] = node_id
         self.fringe.append(node_id)
 
     def visit_labeled_statement(self, n, **kwargs):

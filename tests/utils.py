@@ -1,4 +1,3 @@
-import os
 from tree_climber.tree_sitter_utils import get_ast
 from tree_climber.cfg_creator import CFGCreator
 from tree_climber.config import DRAW_CFG
@@ -48,7 +47,7 @@ def get_adj_label(cfg, u, v):
     return list(cfg.adj[u][v].values())[0].get("label", "<NO LABEL>")
 
 def get_node_by_code(cfg, code, get="first"):
-    matches = (n for n, attr in cfg.nodes(data=True) if code == attr.get("code", "<NO CODE>"))
+    matches = (n for n, attr in cfg.nodes(data=True) if code == attr.get("text", "<NO CODE>"))
     if get == "first":
         return next(matches)
     elif get == "all":

@@ -55,7 +55,7 @@ def get_ast(root):
         # extract node attributes
         attr = {k: getattr(v, k) for k in KEEP_KEYS}
         attr["text"] = attr["text"].decode()
-        attr["label"] = attr_to_label(attr["type"], attr["text"])
+        attr["label"] = attr_to_label(attr["type"], attr["text"].replace(":", ';'))
         attr["idx"] = child_idx
 
         # put in graph
