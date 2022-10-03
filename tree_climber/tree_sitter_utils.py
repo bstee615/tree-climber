@@ -3,6 +3,7 @@ import os
 
 from tree_climber.config import TREE_SITTER_LIB_PREFIX
 from git import Repo
+import networkx as nx
 
 languages = ["c"]
 language_dirs = []
@@ -25,3 +26,23 @@ Language.build_library(
 C_LANGUAGE = Language(lib_file, "c")
 c_parser = Parser()
 c_parser.set_language(C_LANGUAGE)
+
+KEEP_KEYS = ["text", "start_point", "start_byte", "end_point", "end_byte", "is_named", "has_error", "type",
+# "prev_sibling", "prev_named_sibling",
+]
+
+def get_ast(root):
+    ast = nx.DiGraph()
+    
+    node_id = 0
+    parent = None
+    q = [root]
+    while len(q) > 0:
+        v = q.pop(0)
+        ast.add_node(node_id, **{k: getattr(v, k) for k in KEEP_KEYS})
+        if parent is not None:
+            ast.add_edge(parent, node_id)
+        parent = node_id
+        node_id += 1
+        q.extend(v.children)
+    print(ast)
