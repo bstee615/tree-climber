@@ -23,8 +23,18 @@ class CFGVisitor:
         self.gotos = {}
         self.labels = {}
 
+    """
+    TRAVERSAL UTILITIES
+    """
+
+    def get_attr(self, n, attrname):
+        return self.ast.nodes[n][attrname]
+
     def get_type(self, n):
-        return self.ast.nodes[n]["type"]
+        return self.get_attr(n, "type")
+
+    def get_text(self, n):
+        return self.get_attr(n, "text")
 
     def get_children(self, n):
         return list(self.ast.successors(n))
@@ -33,16 +43,9 @@ class CFGVisitor:
         is_named = nx.get_node_attributes(self.ast, "is_named")
         return [c for c in self.ast.successors(n) if is_named[c]]
 
-    def visit(self, n, **kwargs):
-        return getattr(
-            self, "visit_" + self.get_type(n), self.visit_default
-        )(n=n, **kwargs)
-
-    def visit_children(self, n, **kwargs):
-        for c in self.ast.successors(n):
-            should_continue = self.visit(c, **kwargs)
-            if should_continue == False:
-                break
+    """
+    CFG ASSEMBLY UTILITIES
+    """
 
     def add_dummy_node(self):
         """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
@@ -84,6 +87,17 @@ class CFGVisitor:
     """
     VISITOR RULES
     """
+
+    def visit(self, n, **kwargs):
+        return getattr(
+            self, "visit_" + self.get_type(n), self.visit_default
+        )(n=n, **kwargs)
+
+    def visit_children(self, n, **kwargs):
+        for c in self.get_children(n):
+            should_continue = self.visit(c, **kwargs)
+            if should_continue == False:
+                break
 
     def visit_function_definition(self, n, **kwargs):
         entry_id = self.add_cfg_node(None, "FUNC_ENTRY")
@@ -146,7 +160,7 @@ class CFGVisitor:
 
     def visit_for_statement(self, n, **kwargs):
         # get metadata
-        children = self.ast.successors(n)
+        children = self.get_children(n)
         children = [c for c in children if self.get_type(c) != "comment"]
         child_types = [self.get_type(c) for c in children]
         i = 0
@@ -302,19 +316,18 @@ class CFGVisitor:
                 label_end += 1
             label_end -= 1
             body_begin = label_end + 2
-            # print([self.ast.nodes[c]["text"] for c in case_children], label_end, body_begin)
-            is_default = any(c for c in case_children if self.ast.nodes[c]["text"] == "default")
+            is_default = any(c for c in case_children if self.get_text(c) == "default")
 
             if len(self.get_children(case)) == 0:
                 continue
             body_nodes = [
                 c
                 for c in case_children
-                if body_begin <= self.ast.nodes[c]["idx"]
+                if body_begin <= self.get_attr(c, "idx")
             ]
             if is_default:
                 default_was_hit = True
-            case_text = self.ast.nodes[case]["text"]
+            case_text = self.get_text(case)
             case_text = case_text[: case_text.find(":") + 1]
             # TODO: append previous cases with no body
             self.fringe.append((cond_id, case_text))
@@ -354,20 +367,18 @@ class CFGVisitor:
         node_id = self.add_cfg_node(n)
         self.add_edge_from_fringe_to(node_id)
         statement_identifier = self.get_named_children(n)[0]
-        statement_identifier_attr = self.ast.nodes[statement_identifier]
         assert self.get_type(statement_identifier) == "statement_identifier"
-        self.gotos[statement_identifier_attr["text"]] = node_id
+        self.gotos[self.get_text(statement_identifier)] = node_id
         self.visit_default(n, **kwargs)
 
     def add_label_node(self, n):
-        code = self.ast.nodes[n]["text"]
+        code = self.get_text(n)
         code = code[:code.find(":")+1]
         node_id = self.add_cfg_node(n, text=code)
         self.add_edge_from_fringe_to(node_id)
         statement_identifier = self.get_named_children(n)[0]
-        statement_identifier_attr = self.ast.nodes[statement_identifier]
         assert self.get_type(statement_identifier) == "statement_identifier"
-        self.labels[statement_identifier_attr["text"]] = node_id
+        self.labels[self.get_text(statement_identifier)] = node_id
         self.fringe.append(node_id)
 
     def visit_labeled_statement(self, n, **kwargs):
