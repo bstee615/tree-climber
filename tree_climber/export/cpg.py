@@ -10,11 +10,19 @@ def make_cpg(ast, cfg, duc):
     ast = ast.copy()
     cfg = cfg.copy()
     duc = duc.copy()
-    nx.set_edge_attributes(ast, {(u, v): "AST" for u, v in ast.edges()}, "graph_type")
     nx.set_edge_attributes(
-        cfg, {(u, v, k): "CFG" for u, v, k in cfg.edges(keys=True)}, "graph_type"
+        ast, {(u, v): {"graph_type": "AST", "color": "black"} for u, v in ast.edges()}
     )
-    nx.set_edge_attributes(duc, {(u, v): "DUC" for u, v in duc.edges()}, "graph_type")
+    nx.set_edge_attributes(
+        cfg,
+        {
+            (u, v, k): {"graph_type": "CFG", "color": "green"}
+            for u, v, k in cfg.edges(keys=True)
+        },
+    )
+    nx.set_edge_attributes(
+        duc, {(u, v): {"graph_type": "DUC", "color": "red"} for u, v in duc.edges()}
+    )
     max_ast_node = max(ast.nodes())
     cfg = nx.relabel_nodes(
         cfg,
@@ -30,7 +38,10 @@ def make_cpg(ast, cfg, duc):
     cpg = nx.compose(cpg, cfg)
     cpg = nx.compose(cpg, nx.MultiDiGraph(duc))
 
-    labels = {n: {"label": l.replace(":", "_")} for n, l in nx.get_node_attributes(cpg, "label").items()}
+    labels = {
+        n: {"label": l.replace(":", "_")}
+        for n, l in nx.get_node_attributes(cpg, "label").items()
+    }
     nx.set_node_attributes(cpg, labels)
 
     return cpg

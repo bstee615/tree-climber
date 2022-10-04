@@ -6,20 +6,32 @@ KEEP_KEYS = ["text", "start_point", "start_byte", "end_point", "end_byte", "is_n
 # "prev_sibling", "prev_named_sibling",
 ]
 
-def attr_to_label(node_type, code):
+def attr_to_label(node_type, code, is_named):
     """
     return a label for a given node
     """
-    lines = code.splitlines()
-    if len(lines) > 0:
-        code = lines[0]
-        max_len = 27
-        trimmed_code = code[:max_len]
-        if len(lines) > 1 or len(code) > max_len:
-            trimmed_code += "..."
+    if is_named:
+        lines = code.splitlines()
+        if len(lines) > 0:
+            code = lines[0]
+            max_len = 27
+            trimmed_code = code[:max_len]
+            if len(lines) > 1 or len(code) > max_len:
+                trimmed_code += "..."
+        else:
+            trimmed_code = code
+        return node_type + "\n" + trimmed_code
     else:
-        trimmed_code = code
-    return node_type + "\n" + trimmed_code
+        return node_type
+
+
+def attr_to_color(is_named, is_root):
+    if is_root:
+        return "red"
+    elif is_named:
+        return "black"
+    else:
+        return "gray"
 
 
 def make_ast(root):
@@ -37,7 +49,8 @@ def make_ast(root):
         # extract node attributes
         attr = {k: getattr(v, k) for k in KEEP_KEYS}
         attr["text"] = attr["text"].decode()
-        attr["label"] = attr_to_label(attr["type"], attr["text"])
+        attr["label"] = attr_to_label(attr["type"], attr["text"], attr["is_named"])
+        attr["color"] = attr_to_color(attr["is_named"], ast_root is None)
         attr["idx"] = child_idx
 
         # put in graph

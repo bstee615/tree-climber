@@ -63,7 +63,9 @@ class CFGVisitor:
             ast_kwargs.update(attr)
         if label is not None:
             ast_kwargs["label"] = label
-        if ast_node is not None:
+        if ast_node is None:
+            ast_kwargs["color"] = "green"
+        else:
             ast_kwargs["ast_node"] = ast_node
         ast_kwargs.update(kwargs)
         self.cfg.add_node(node_id, **ast_kwargs)
