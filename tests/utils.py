@@ -1,4 +1,4 @@
-from tree_climber.tree_sitter_utils import make_ast
+from tree_climber.ast import make_ast
 from tree_climber.cfg_creator import make_cfg
 from tree_climber.config import DRAW_CFG
 from tree_climber.tree_sitter_utils import c_parser
