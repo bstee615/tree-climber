@@ -5,8 +5,14 @@ AST annotated with CFG, DUC edges.
 
 import networkx as nx
 
+from tree_climber.analysis_utils import get_method_definition, get_method_reference
+from tree_climber.nx_utils import subgraph
+
 
 def make_cpg(ast, cfg, duc):
+    """
+    Assemble the CPG.
+    """
     ast = ast.copy()
     cfg = cfg.copy()
     duc = duc.copy()
@@ -48,3 +54,47 @@ def make_cpg(ast, cfg, duc):
     # nx.set_node_attributes(cpg, labels)
 
     return cpg
+
+
+def stitch_cpg(cpgs):
+    """
+    Stitch together multiple CPGs.
+    """
+    combined_cpg = None
+    # merge into one big CPG
+    stitch_order = cpgs
+    running_offset = 0
+    for i in range(len(stitch_order)):
+        stitch_order[i] = nx.convert_node_labels_to_integers(
+            stitch_order[i], first_label=running_offset
+        )
+        running_offset += stitch_order[i].number_of_nodes()
+    combined_cpg = nx.compose_all(cpgs)
+
+    combined_ast = subgraph(combined_cpg, {"AST"})
+
+    method_refs = [
+        get_method_reference(n, typ, combined_ast)
+        for n, typ in combined_cpg.nodes(data="type")
+    ]
+    method_refs = [n for n in method_refs if n is not None]
+
+    method_defs = [
+        get_method_definition(n, typ, combined_ast)
+        for n, typ in combined_cpg.nodes(data="type")
+    ]
+    method_defs = [n for n in method_defs if n is not None]
+
+    call_graph_edges = []
+    methodname_to_defnode = {methodname: n for n, methodname in method_defs}
+    for methodnode, methodname in method_refs:
+        if methodname in methodname_to_defnode:
+            call_graph_edges.append((methodnode, methodname_to_defnode[methodname]))
+        else:
+            call_graph_edges.append(
+                (methodnode, methodname)
+            )  # TODO: handle it by adding a new well-defined placeholder node
+
+    combined_cpg.add_edges_from(call_graph_edges, graph_type="CALL", color="purple")
+
+    return combined_cpg

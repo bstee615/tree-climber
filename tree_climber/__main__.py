@@ -4,7 +4,7 @@ import traceback
 from tree_climber.ast import make_ast
 from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
-from tree_climber.export.cpg import make_cpg
+from tree_climber.export.cpg import make_cpg, stitch_cpg
 import networkx as nx
 from tree_climber.drawing_utils import draw_ast, draw_cfg, draw_duc, draw_cpg
 from tree_climber.bug_detection import detect_null_pointer_dereference
@@ -52,78 +52,6 @@ def process_file(filename, args):
             raise
 
     return cpg
-
-
-def subgraph(graph, edge_types):
-    """
-    Return a subgraph induced by the edge types.
-    """
-    return graph.edge_subgraph(
-        [
-            (u, v, k)
-            for u, v, k, attr in graph.edges(data=True, keys=True)
-            if attr["graph_type"] in edge_types
-        ]
-    )
-
-def get_method_reference(n, typ, ast):
-    """
-    Return a (n, <method name>) tuple if n is a method reference, otherwise None.
-    """
-    if typ == "call_expression":
-        return n, next(ast.nodes[s]["text"] for s in ast.successors(n) if ast.nodes[s]["type"] == "identifier")
-    elif typ == "function_declarator" and not any(
-        ast.nodes[a]["type"] == "function_definition"
-        for a in ast.predecessors(n)
-    ):
-        return n, next(ast.nodes[s]["text"] for s in ast.successors(n) if ast.nodes[s]["type"] == "identifier")
-
-def get_method_definition(n, typ, ast):
-    """
-    Return a (n, <method name>) tuple if n is a method definition, otherwise None.
-    """
-    if typ == "function_definition":
-        declarator = next(s for s in ast.successors(n) if ast.nodes[s]["type"] == "function_declarator")
-        return n, next(ast.nodes[s]["text"] for s in ast.successors(declarator) if ast.nodes[s]["type"] == "identifier")
-
-def stitch_cpg(cpgs):
-    """
-    Stitch together multiple CPGs.
-    """
-    combined_cpg = None
-    # merge into one big CPG
-    stitch_order = cpgs
-    running_offset = 0
-    for i in range(len(stitch_order)):
-        stitch_order[i] = nx.convert_node_labels_to_integers(
-            stitch_order[i], first_label=running_offset
-        )
-        running_offset += stitch_order[i].number_of_nodes()
-    combined_cpg = nx.compose_all(cpgs)
-
-    combined_ast = subgraph(combined_cpg, {"AST"})
-
-    method_refs = [
-        get_method_reference(n, typ, combined_ast) for n, typ in combined_cpg.nodes(data="type")
-    ]
-    method_refs = [n for n in method_refs if n is not None]
-
-    method_defs = [
-        get_method_definition(n, typ, combined_ast) for n, typ in combined_cpg.nodes(data="type")
-    ]
-    method_defs = [n for n in method_defs if n is not None]
-
-    call_graph_edges = []
-    methodname_to_defnode = {methodname: n for n, methodname in method_defs}
-    for methodnode, methodname in method_refs:
-        if methodname in methodname_to_defnode:
-            call_graph_edges.append((methodnode, methodname_to_defnode[methodname]))
-        else:
-            call_graph_edges.append((methodnode, methodname))  # TODO: handle it by adding a new well-defined placeholder node
-
-    combined_cpg.add_edges_from(call_graph_edges, graph_type="CALL", color="purple")
-
-    return combined_cpg
 
 
 def output_cpg(cpg, args):
@@ -175,7 +103,7 @@ def main():
     args = parser.parse_args()
 
     filenames = get_files(args)
-    
+
     cpgs = []
     for filename in filenames:
         file_cpg = process_file(filename, args)
@@ -183,6 +111,7 @@ def main():
     combined_cpg = stitch_cpg(cpgs)
 
     output_cpg(combined_cpg, args)
+
 
 def get_files(args):
     args.filename = Path(args.filename)
