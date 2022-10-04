@@ -92,9 +92,9 @@ class CFGVisitor:
     """
 
     def visit(self, n, **kwargs):
-        return getattr(
-            self, "visit_" + self.get_type(n), self.visit_default
-        )(n=n, **kwargs)
+        return getattr(self, "visit_" + self.get_type(n), self.visit_default)(
+            n=n, **kwargs
+        )
 
     def visit_children(self, n, **kwargs):
         for c in self.get_children(n):
@@ -114,7 +114,9 @@ class CFGVisitor:
             try:
                 self.cfg.add_edge(self.gotos[label], self.labels[label], label="goto")
             except KeyError:
-                warnings.warn("missing goto target. Skipping.", f"label={label}", f"gotos={self.gotos}")
+                warnings.warn(
+                    f"missing goto target. Skipping. label={label}, labels={self.labels}, gotos={self.gotos}"
+                )
         for n in self.returns:
             self.cfg.add_edge(n, exit_id, label="return")
         self.fringe.append(exit_id)
@@ -176,7 +178,12 @@ class CFGVisitor:
             has_init = False
             i += 1
         else:
-            assert self.get_type(children[i]).endswith("_expression") or self.get_type(children[i]) in ("number_literal", "identifier"), (children[i], self.get_type(children[i]))
+            assert self.get_type(children[i]).endswith("_expression") or self.get_type(
+                children[i]
+            ) in ("number_literal", "identifier"), (
+                children[i],
+                self.get_type(children[i]),
+            )
             has_init = True
             i += 1
             assert self.get_type(children[i]) == ";"
@@ -189,12 +196,18 @@ class CFGVisitor:
             has_cond = True
             i += 1
         # pointing at semicolon
-        assert self.get_type(children[i]) == ";", (children[i], child_types, children[i].text.decode())
+        assert self.get_type(children[i]) == ";", (
+            children[i],
+            child_types,
+            self.get_text(children[i]),
+        )
         i += 1
         if self.get_type(children[i]) == ")":
             has_incr = False
         else:
-            assert self.get_type(children[i]).endswith("_expression") or self.get_type(children[i]) in ("number_literal", "identifier"), (children[i], child_types)
+            assert self.get_type(children[i]).endswith("_expression") or self.get_type(
+                children[i]
+            ) in ("number_literal", "identifier"), (children[i], child_types)
             has_incr = True
 
         named_children = self.get_named_children(n)
@@ -302,37 +315,37 @@ class CFGVisitor:
         cond = self.get_named_children(children[0])[0]
         cond_id = self.add_cfg_node(cond)
         self.add_edge_from_fringe_to(cond_id)
-        cases = self.get_named_children(children[1])
+        compound_children = self.get_named_children(children[1])
         default_was_hit = False
-        for case in cases:
-            while self.get_type(case) != "case_statement":
-                if self.get_type(case) == "labeled_statement":
-                    self.add_label_node(case)
-                    case = self.get_named_children(case)
-                else:
-                    raise NotImplementedError(self.get_type(case))
-            
-            case_children = self.get_children(case)
-            label_end = 0
-            while self.get_type(case_children[label_end]) != ":":
-                label_end += 1
-            label_end -= 1
-            body_begin = label_end + 2
-            is_default = any(c for c in case_children if self.get_text(c) == "default")
+        case_bodies = []
+        for child in compound_children:
+            if self.get_type(child) == "case_statement":
+                case_children = self.get_children(child)
+                label_end = 0
+                while self.get_type(case_children[label_end]) != ":":
+                    label_end += 1
+                label_end -= 1
+                body_begin = label_end + 2
+                is_default = any(c for c in case_children if self.get_text(c) == "default")
 
-            if len(self.get_children(case)) == 0:
-                continue
-            body_nodes = [
-                c
-                for c in case_children
-                if body_begin <= self.get_attr(c, "idx")
-            ]
-            if is_default:
-                default_was_hit = True
-            case_text = self.get_text(case)
-            case_text = case_text[: case_text.find(":") + 1]
-            # TODO: append previous cases with no body
-            self.fringe.append((cond_id, case_text))
+                if len(self.get_children(child)) == 0:
+                    continue
+                body_nodes = [
+                    c for c in case_children if body_begin <= self.get_attr(c, "idx")
+                ]
+                if is_default:
+                    default_was_hit = True
+                case_text = self.get_text(child)
+                case_text = case_text[: case_text.find(":") + 1]
+                case_bodies.append(((cond_id, case_text), body_nodes))
+            else:
+                if len(case_bodies) > 0:
+                    warnings.warn(f"adding unknown node type {child} ({self.get_type(child)}): {self.get_text(child)} to previous case {case_bodies[-1]}")
+                    case_bodies[-1][1].append(child)
+                else:
+                    warnings.warn(f"skipped unknown node type {child} ({self.get_type(child)}): {self.get_text(child)} in switch {self.get_text(n)}")
+        for case, body_nodes in case_bodies:
+            self.fringe.append(case)
             for body_node in body_nodes:
                 should_continue = self.visit(body_node)
                 if should_continue == False:
@@ -375,7 +388,7 @@ class CFGVisitor:
 
     def add_label_node(self, n):
         code = self.get_text(n)
-        code = code[:code.find(":")+1]
+        code = code[: code.find(":") + 1]
         node_id = self.add_cfg_node(n, text=code)
         self.add_edge_from_fringe_to(node_id)
         statement_identifier = self.get_named_children(n)[0]
@@ -386,6 +399,7 @@ class CFGVisitor:
     def visit_labeled_statement(self, n, **kwargs):
         self.add_label_node(n)
         self.visit_default(n, **kwargs)
+
 
 def make_cfg(ast):
     visitor = CFGVisitor(ast)
@@ -401,15 +415,14 @@ def make_cfg(ast):
             succs = list(cfg.successors(n))
             # Forward label from edges incoming to dummy.
             for pred in preds:
-                new_edge_label = list(cfg.adj[pred][n].values())[0].get(
-                    "label", None
-                )
+                new_edge_label = list(cfg.adj[pred][n].values())[0].get("label", None)
                 for succ in succs:
                     cfg.add_edge(pred, succ, label=new_edge_label)
             nodes_to_remove.append(n)
     cfg.remove_nodes_from(nodes_to_remove)
 
     return visitor.cfg
+
 
 def test():
     code = """int a = 30;
