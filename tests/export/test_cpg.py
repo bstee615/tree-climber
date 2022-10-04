@@ -4,9 +4,8 @@ from matplotlib import pyplot as plt
 from tree_climber.globals import example_c
 from tree_climber.ast import make_ast
 from tree_climber.dataflow.def_use import make_duc
-from tree_climber.export.cpg import make_cpg
+from tree_climber.cpg import make_cpg
 from tree_climber.utils import c_parser
-from tree_climber.cfg import make_cfg
 import pytest
 
 

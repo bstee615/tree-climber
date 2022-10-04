@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from tree_climber.export.cpg import make_cpg
+from tree_climber.cpg import make_cpg
 import networkx as nx
 from tree_climber.utils import draw_cpg
 from tree_climber.bug_detection import detect_null_pointer_dereference
