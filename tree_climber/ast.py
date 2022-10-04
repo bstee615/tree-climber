@@ -11,7 +11,7 @@ def make_ast(filename):
     with open(filename, "rb") as f:
         tree = c_parser.parse(f.read())
     ast = make_ast_from_tree(tree)
-    ast.graph["file_name"] = filename
+    ast.graph["file_name"] = str(filename)
     ast.nodes[ast.graph["root_node"]]["label"] = f"filename: {filename}\n" + ast.nodes[ast.graph["root_node"]]["label"]
     return ast
 

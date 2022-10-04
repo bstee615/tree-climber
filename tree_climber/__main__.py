@@ -17,7 +17,6 @@ def process_file(filename, args):
     # TODO reenable selective processing
     # compute_ast = (
     #     args.draw_ast
-    #     or args.write_ast
     #     or args.draw_cfg
     #     or args.draw_duc
     #     or args.draw_cpg
@@ -35,8 +34,6 @@ def process_file(filename, args):
             ast = make_ast(filename)
             if args.draw_ast:
                 draw_ast(ast)
-            if args.write_ast is not None:
-                write_dot(ast, args.write_ast)
 
         if compute_cfg:
             cfg = make_cfg(ast)
@@ -54,13 +51,6 @@ def process_file(filename, args):
                         draw_cfg(func_cfg, entry=func_entry)
                 else:
                     draw_cfg(cfg)
-            if args.write_cfg is not None:
-                write_dot(cfg, args.write_cfg)
-            if args.write_cfg_json:
-                for n in cfg.nodes():
-                    del cfg.nodes[n]["n"]
-                with open(str(filename) + ".graph.json", "w") as of:
-                    json.dump(json_graph.node_link_data(cfg, attrs=None), of, indent=2)
             print("successfully parsed", filename)
 
         if compute_duc:
@@ -70,9 +60,6 @@ def process_file(filename, args):
 
         if compute_cpg:
             cpg = make_cpg(ast, cfg, duc)
-            # TODO do something about this option
-            # if args.draw_cpg:
-            #     draw_cpg(cpg)
 
         if args.detect_bugs:
             detect_null_pointer_dereference(cpg)
@@ -152,22 +139,16 @@ def main():
         "--draw_ast", action="store_true", help="draw AST (Abstract Syntax Tree)"
     )
     parser.add_argument(
-        "--write_ast", type=str, help="write AST (Abstract Syntax Tree) to DOT"
-    )
-    parser.add_argument(
         "--draw_cfg", action="store_true", help="draw CFG (Control-Flow Graph)"
-    )
-    parser.add_argument(
-        "--write_cfg", type=str, help="write CFG (Control-Flow Graph) to DOT"
-    )
-    parser.add_argument(
-        "--write_cfg_json", action="store_true", help="write CFG to file"
     )
     parser.add_argument(
         "--draw_duc", action="store_true", help="draw DUC (Def-Use Chain)"
     )
     parser.add_argument(
         "--draw_cpg", action="store_true", help="draw CPG (Code Property Graph)"
+    )
+    parser.add_argument(
+        "--output", "-o", type=Path, default=None, help="write CPG to file"
     )
     parser.add_argument(
         "--detect_bugs", action="store_true", help="detect bugs based on CPG"
@@ -202,6 +183,13 @@ def main():
     combined_cpg = stitch_cpg(cpgs)
     if args.draw_cpg:
         draw_cpg(combined_cpg)
+    else:
+        cpg_json = nx.node_link_data(combined_cpg)
+        if args.output is None:
+            print(json.dumps(cpg_json, indent=2))
+        else:
+            with open(args.output, "w") as f:
+                json.dump(cpg_json, f)
 
 
 if __name__ == "__main__":

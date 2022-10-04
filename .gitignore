@@ -181,3 +181,4 @@ workspace/
 # stress test data
 tests/data/linux-*
 nx.html
+graph.json
