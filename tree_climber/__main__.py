@@ -24,7 +24,7 @@ def process_file(filename, args):
     )
     compute_cfg = args.draw_cfg or args.draw_duc or args.draw_cpg
     compute_duc = args.draw_duc or args.draw_cpg
-    compute_cpg = args.draw_cpg or args.detect_bug
+    compute_cpg = args.draw_cpg or args.detect_bugs
 
     try:
         with open(filename, "rb") as f:

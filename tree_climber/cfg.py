@@ -2,7 +2,8 @@ from collections import defaultdict
 import warnings
 from matplotlib import pyplot as plt
 import networkx as nx
-from tree_climber.tree_sitter_utils import c_parser, make_ast
+from tree_climber.tree_sitter_utils import c_parser
+from tree_climber.ast import make_ast
 
 
 class CFGVisitor:
