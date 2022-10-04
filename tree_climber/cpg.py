@@ -7,9 +7,10 @@ import networkx as nx
 
 from tree_climber.utils import get_method_definition, get_method_reference
 from tree_climber.utils import subgraph
-from tree_climber.ast import make_ast
+from tree_climber.ast import make_ast, make_ast_from_tree
 from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
+from tree_climber.utils import c_parser
 
 
 def assemble_cpg(ast, cfg, duc):
@@ -55,6 +56,29 @@ def assemble_cpg(ast, cfg, duc):
     #     for n, l in nx.get_node_attributes(cpg, "label").items()
     # }
     # nx.set_node_attributes(cpg, labels)
+
+    return cpg
+
+
+def make_code_cpg(code, draw_ast=False, draw_cfg=False, draw_duc=False):
+    """
+    Parse one file into a CPG.
+    """
+    tree = c_parser.parse(bytes(code, encoding="utf-8"))
+    ast = make_ast_from_tree(tree)
+    if draw_ast:
+        draw_ast(ast)
+
+    cfg = make_cfg(ast)
+    if draw_cfg:
+        draw_cfg(cfg)
+    print("successfully parsed code")
+
+    duc = make_duc(ast, cfg)
+    if draw_duc:
+        draw_duc(duc)
+
+    cpg = assemble_cpg(ast, cfg, duc)
 
     return cpg
 
