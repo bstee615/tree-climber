@@ -98,6 +98,19 @@ def subgraph(graph, edge_types):
         ]
     )
 
+def get_method_reference(n, typ, ast):
+    if typ == "call_expression":
+        return n, next(ast.nodes[s]["text"] for s in ast.successors(n) if ast.nodes[s]["type"] == "identifier")
+    elif typ == "function_declarator" and not any(
+        ast.nodes[a]["type"] == "function_definition"
+        for a in ast.predecessors(n)
+    ):
+        return n, next(ast.nodes[s]["text"] for s in ast.successors(n) if ast.nodes[s]["type"] == "identifier")
+
+def get_method_definition(n, typ, ast):
+    if typ == "function_definition":
+        declarator = next(s for s in ast.successors(n) if ast.nodes[s]["type"] == "function_declarator")
+        return n, next(ast.nodes[s]["text"] for s in ast.successors(declarator) if ast.nodes[s]["type"] == "identifier")
 
 def stitch_cpg(cpgs):
     combined_cpg = None
@@ -110,23 +123,32 @@ def stitch_cpg(cpgs):
         )
         running_offset += stitch_order[i].number_of_nodes()
     combined_cpg = nx.compose_all(cpgs)
-    # stitch method refs
-    method_refs = []
-    method_refs += [
-        n
-        for n, attr in combined_cpg.nodes(data=True)
-        if attr.get("type", "<NO TYPE>") == "call_expression"
+
+    combined_ast = subgraph(combined_cpg, {"AST"})
+
+    method_refs = [
+        get_method_reference(n, typ, combined_ast) for n, typ in combined_cpg.nodes(data="type")
     ]
-    method_refs += [
-        n
-        for n, attr in combined_cpg.nodes(data=True)
-        if attr.get("type", "<NO TYPE>") == "function_declarator"
-        and not any(
-            combined_cpg.nodes[a]["type"] == "function_definition"
-            for a in subgraph(combined_cpg, {"AST"}).predecessors(n)
-        )
+    method_refs = [n for n in method_refs if n is not None]
+    print("DEBUG", [(n, combined_cpg.nodes[n]["text"], methodname) for n, methodname in method_refs])
+
+    method_defs = [
+        get_method_definition(n, typ, combined_ast) for n, typ in combined_cpg.nodes(data="type")
     ]
-    print("DEBUG", method_refs, [combined_cpg.nodes[n]["text"] for n in method_refs])
+    method_defs = [n for n in method_defs if n is not None]
+    print("DEBUG", [(n, combined_cpg.nodes[n]["text"], methodname) for n, methodname in method_defs])
+
+    call_graph_edges = []
+    methodname_to_defnode = {methodname: n for n, methodname in method_defs}
+    for methodnode, methodname in method_refs:
+        if methodname in methodname_to_defnode:
+            call_graph_edges.append((methodnode, methodname_to_defnode[methodname]))
+        else:
+            call_graph_edges.append((methodnode, methodname))
+    print("DEBUG", call_graph_edges)
+
+    combined_cpg.add_edges_from(call_graph_edges, graph_type="CALL", color="purple")
+
     return combined_cpg
 
 
