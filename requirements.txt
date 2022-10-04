@@ -6,3 +6,4 @@ pygraphviz
 pytest
 black
 GitPython
+pyvis
