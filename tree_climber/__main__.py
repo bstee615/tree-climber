@@ -14,52 +14,34 @@ from networkx.drawing.nx_agraph import write_dot
 
 
 def process_file(filename, args):
-    # TODO reenable selective processing
-    # compute_ast = (
-    #     args.draw_ast
-    #     or args.draw_cfg
-    #     or args.draw_duc
-    #     or args.draw_cpg
-    # )
-    # compute_cfg = args.draw_cfg or args.draw_duc or args.draw_cpg
-    # compute_duc = args.draw_duc or args.draw_cpg
-    # compute_cpg = args.draw_cpg or args.detect_bugs
-    compute_ast = True
-    compute_cfg = True
-    compute_duc = True
-    compute_cpg = True
 
     try:
-        if compute_ast:
-            ast = make_ast(filename)
-            if args.draw_ast:
-                draw_ast(ast)
+        ast = make_ast(filename)
+        if args.draw_ast:
+            draw_ast(ast)
 
-        if compute_cfg:
-            cfg = make_cfg(ast)
-            if args.draw_cfg:
-                if args.each_function:
-                    funcs = [
-                        n
-                        for n, attr in cfg.nodes(data=True)
-                        if attr["label"] == "FUNC_ENTRY"
-                    ]
-                    for func_entry in funcs:
-                        func_cfg = nx.subgraph(
-                            cfg, nx.descendants(cfg, func_entry) | {func_entry}
-                        )
-                        draw_cfg(func_cfg, entry=func_entry)
-                else:
-                    draw_cfg(cfg)
-            print("successfully parsed", filename)
+        cfg = make_cfg(ast)
+        if args.draw_cfg:
+            if args.each_function:
+                funcs = [
+                    n
+                    for n, attr in cfg.nodes(data=True)
+                    if attr["label"] == "FUNC_ENTRY"
+                ]
+                for func_entry in funcs:
+                    func_cfg = nx.subgraph(
+                        cfg, nx.descendants(cfg, func_entry) | {func_entry}
+                    )
+                    draw_cfg(func_cfg, entry=func_entry)
+            else:
+                draw_cfg(cfg)
+        print("successfully parsed", filename)
 
-        if compute_duc:
-            duc = make_duc(ast, cfg)
-            if args.draw_duc:
-                draw_duc(duc)
+        duc = make_duc(ast, cfg)
+        if args.draw_duc:
+            draw_duc(duc)
 
-        if compute_cpg:
-            cpg = make_cpg(ast, cfg, duc)
+        cpg = make_cpg(ast, cfg, duc)
 
         if args.detect_bugs:
             detect_null_pointer_dereference(cpg)

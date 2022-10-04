@@ -104,7 +104,6 @@ class CFGVisitor:
 
     def visit_function_definition(self, n, **kwargs):
         entry_id = self.add_cfg_node(None, "FUNC_ENTRY")
-        self.cfg.graph["entry"] = entry_id
         self.add_edge_from_fringe_to(entry_id)
         self.fringe.append(entry_id)
         self.visit_children(n, **kwargs)
