@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import traceback
 from tree_climber.ast import make_ast
-from tree_climber.cfg_creator import make_cfg
+from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.export.cpg import make_cpg
 from tree_climber.tree_sitter_utils import c_parser

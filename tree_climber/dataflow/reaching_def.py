@@ -1,6 +1,3 @@
-from tree_climber.tree_sitter_utils import c_parser
-from tree_climber.tree_sitter_utils import make_ast
-from tree_climber.cfg_creator import make_cfg
 from tree_climber.dataflow.dataflow_solver import DataflowSolver
 import networkx as nx
 
