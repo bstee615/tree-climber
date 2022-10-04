@@ -1,4 +1,4 @@
-from tree_climber.tree_sitter_utils import c_parser
+from tree_climber.utils import c_parser
 import networkx as nx
 
 # Keys to keep from the tree-sitter AST

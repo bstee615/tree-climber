@@ -5,8 +5,8 @@ AST annotated with CFG, DUC edges.
 
 import networkx as nx
 
-from tree_climber.analysis_utils import get_method_definition, get_method_reference
-from tree_climber.nx_utils import subgraph
+from tree_climber.utils import get_method_definition, get_method_reference
+from tree_climber.utils import subgraph
 
 
 def make_cpg(ast, cfg, duc):

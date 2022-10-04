@@ -6,7 +6,7 @@ from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.export.cpg import make_cpg, stitch_cpg
 import networkx as nx
-from tree_climber.drawing_utils import draw_ast, draw_cfg, draw_duc, draw_cpg
+from tree_climber.utils import draw_ast, draw_cfg, draw_duc, draw_cpg
 from tree_climber.bug_detection import detect_null_pointer_dereference
 import argparse
 

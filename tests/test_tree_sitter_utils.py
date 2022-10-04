@@ -1,6 +1,6 @@
 import pytest
 from tests.utils import draw_ast
-from tree_climber.tree_sitter_utils import c_parser, make_ast
+from tree_climber.utils import c_parser, make_ast
 
 @pytest.mark.slow()
 def test_get_ast():
