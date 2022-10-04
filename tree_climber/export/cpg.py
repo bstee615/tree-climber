@@ -38,10 +38,13 @@ def make_cpg(ast, cfg, duc):
     cpg = nx.compose(cpg, cfg)
     cpg = nx.compose(cpg, nx.MultiDiGraph(duc))
 
-    labels = {
-        n: {"label": l.replace(":", "_")}
-        for n, l in nx.get_node_attributes(cpg, "label").items()
-    }
-    nx.set_node_attributes(cpg, labels)
+    # NOTE: see issue https://github.com/pydot/pydot/issues/264.
+    # when using pyvis, we don't need to do this and I think it's handled elsewhere -
+    # keeping it here for posterity.
+    # labels = {
+    #     n: {"label": l.replace(":", "_")}
+    #     for n, l in nx.get_node_attributes(cpg, "label").items()
+    # }
+    # nx.set_node_attributes(cpg, labels)
 
     return cpg
