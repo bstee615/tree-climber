@@ -182,3 +182,4 @@ workspace/
 tests/data/linux-*
 nx.html
 graph.json
+output-bigvul/
