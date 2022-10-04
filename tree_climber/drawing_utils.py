@@ -18,7 +18,9 @@ def escape_labels(graph):
 
 
 def interactive_graph(graph):
-    nt = Network("950px", "1650px", layout=True, directed=True)
+    nt = Network("950px", "1650px",
+    # layout=True,
+    directed=True)
     # populates the nodes and edges data structures
     nt.from_nx(graph)
     nt.show_buttons(filter_=True)
