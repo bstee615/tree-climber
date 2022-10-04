@@ -11,6 +11,7 @@ from tree_climber.ast import make_ast, make_ast_from_tree
 from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.utils import c_parser
+from tree_climber.utils.drawing import draw_ast, draw_cfg, draw_duc
 
 
 def assemble_cpg(ast, cfg, duc):
@@ -42,7 +43,7 @@ def assemble_cpg(ast, cfg, duc):
         },
     )
     duc = nx.relabel_nodes(
-        duc, {n: attr.get("ast_node") for n, attr in duc.nodes(data=True)}
+        duc, {n: attr.get("ast_node") or n for n, attr in duc.nodes(data=True)}
     )
     cpg = nx.MultiDiGraph(ast)
     cpg = nx.compose(cpg, cfg)
@@ -72,7 +73,6 @@ def make_code_cpg(code, draw_ast=False, draw_cfg=False, draw_duc=False):
     cfg = make_cfg(ast)
     if draw_cfg:
         draw_cfg(cfg)
-    print("successfully parsed code")
 
     duc = make_duc(ast, cfg)
     if draw_duc:
@@ -83,21 +83,20 @@ def make_code_cpg(code, draw_ast=False, draw_cfg=False, draw_duc=False):
     return cpg
 
 
-def make_file_cpg(filename, draw_ast=False, draw_cfg=False, draw_duc=False):
+def make_file_cpg(filename, should_draw_ast=False, should_draw_cfg=False, should_draw_duc=False):
     """
     Parse one file into a CPG.
     """
     ast = make_ast(filename)
-    if draw_ast:
+    if should_draw_ast:
         draw_ast(ast)
 
     cfg = make_cfg(ast)
-    if draw_cfg:
+    if should_draw_cfg:
         draw_cfg(cfg)
-    print("successfully parsed", filename)
 
     duc = make_duc(ast, cfg)
-    if draw_duc:
+    if should_draw_duc:
         draw_duc(duc)
 
     cpg = assemble_cpg(ast, cfg, duc)
@@ -105,13 +104,13 @@ def make_file_cpg(filename, draw_ast=False, draw_cfg=False, draw_duc=False):
     return cpg
 
 
-def make_cpg(filenames):
+def make_cpg(filenames, draw_ast=False, draw_cfg=False, draw_duc=False):
     """
     Parse a list of files into a combined CPG.
     """
     cpgs = []
     for filename in filenames:
-        file_cpg = make_file_cpg(filename)
+        file_cpg = make_file_cpg(filename, should_draw_ast=draw_ast, should_draw_cfg=draw_cfg, should_draw_duc=draw_duc)
         cpgs.append(file_cpg)
     combined_cpg = stitch_cpg(cpgs)
     return combined_cpg

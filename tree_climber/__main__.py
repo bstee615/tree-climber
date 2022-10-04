@@ -10,7 +10,7 @@ import argparse
 def main():
     args = get_args()
     filenames = get_files(args)
-    combined_cpg = make_cpg(filenames)
+    combined_cpg = make_cpg(filenames, draw_ast=args.draw_ast, draw_cfg=args.draw_cfg, draw_duc=args.draw_duc)
     if args.detect_bugs:
         detect_null_pointer_dereference(combined_cpg)
     output_cpg(combined_cpg, args)
