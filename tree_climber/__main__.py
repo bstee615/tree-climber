@@ -130,13 +130,11 @@ def stitch_cpg(cpgs):
         get_method_reference(n, typ, combined_ast) for n, typ in combined_cpg.nodes(data="type")
     ]
     method_refs = [n for n in method_refs if n is not None]
-    print("DEBUG", [(n, combined_cpg.nodes[n]["text"], methodname) for n, methodname in method_refs])
 
     method_defs = [
         get_method_definition(n, typ, combined_ast) for n, typ in combined_cpg.nodes(data="type")
     ]
     method_defs = [n for n in method_defs if n is not None]
-    print("DEBUG", [(n, combined_cpg.nodes[n]["text"], methodname) for n, methodname in method_defs])
 
     call_graph_edges = []
     methodname_to_defnode = {methodname: n for n, methodname in method_defs}
@@ -145,7 +143,6 @@ def stitch_cpg(cpgs):
             call_graph_edges.append((methodnode, methodname_to_defnode[methodname]))
         else:
             call_graph_edges.append((methodnode, methodname))
-    print("DEBUG", call_graph_edges)
 
     combined_cpg.add_edges_from(call_graph_edges, graph_type="CALL", color="purple")
 
