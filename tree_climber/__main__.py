@@ -15,16 +15,21 @@ from networkx.drawing.nx_agraph import write_dot
 
 
 def process_file(filename, args):
-    compute_ast = (
-        args.draw_ast
-        or args.write_ast
-        or args.draw_cfg
-        or args.draw_duc
-        or args.draw_cpg
-    )
-    compute_cfg = args.draw_cfg or args.draw_duc or args.draw_cpg
-    compute_duc = args.draw_duc or args.draw_cpg
-    compute_cpg = args.draw_cpg or args.detect_bugs
+    # TODO reenable selective processing
+    # compute_ast = (
+    #     args.draw_ast
+    #     or args.write_ast
+    #     or args.draw_cfg
+    #     or args.draw_duc
+    #     or args.draw_cpg
+    # )
+    # compute_cfg = args.draw_cfg or args.draw_duc or args.draw_cpg
+    # compute_duc = args.draw_duc or args.draw_cpg
+    # compute_cpg = args.draw_cpg or args.detect_bugs
+    compute_ast = True
+    compute_cfg = True
+    compute_duc = True
+    compute_cpg = True
 
     try:
         with open(filename, "rb") as f:
@@ -69,8 +74,9 @@ def process_file(filename, args):
 
         if compute_cpg:
             cpg = make_cpg(ast, cfg, duc)
-            if args.draw_cpg:
-                draw_cpg(cpg)
+            # TODO do something about this option
+            # if args.draw_cpg:
+            #     draw_cpg(cpg)
 
         if args.detect_bugs:
             detect_null_pointer_dereference(cpg)
@@ -79,6 +85,21 @@ def process_file(filename, args):
         print(traceback.format_exc())
         if not args.continue_on_error:
             raise
+    
+    return cpg
+
+
+def stitch_cpg(cpgs):
+    combined_cpg = None
+    # merge into one big CPG
+    stitch_order = cpgs
+    running_offset = 0
+    for i in range(len(stitch_order)):
+        stitch_order[i] = nx.convert_node_labels_to_integers(stitch_order[i], first_label=running_offset)
+        running_offset += stitch_order[i].number_of_nodes()
+    combined_cpg = nx.compose_all(cpgs)
+    # TODO: stitch method refs
+    return combined_cpg
 
 
 def main():
@@ -122,14 +143,20 @@ def main():
 
     args.filename = Path(args.filename)
     if args.filename.is_dir():
-        filenames = list(args.filename.rglob("*.c"))
+        extensions = {".c", ".h"}
+        filenames = [file for file in args.filename.iterdir() if file.suffix in extensions]
     elif args.filename.is_file():
         filenames = [args.filename]
     else:
         raise FileNotFoundError(args.filename)
     print("parsing", len(filenames), "files", filenames[:5])
+    cpgs = []
     for filename in filenames:
-        process_file(filename, args)
+        file_cpg = process_file(filename, args)
+        cpgs.append(file_cpg)
+    combined_cpg = stitch_cpg(cpgs)
+    if args.draw_cpg:
+        draw_cpg(combined_cpg)
 
 
 if __name__ == "__main__":
