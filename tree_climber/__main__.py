@@ -85,8 +85,18 @@ def process_file(filename, args):
         print(traceback.format_exc())
         if not args.continue_on_error:
             raise
-    
+
     return cpg
+
+
+def subgraph(graph, edge_types):
+    return graph.edge_subgraph(
+        [
+            (u, v, k)
+            for u, v, k, attr in graph.edges(data=True, keys=True)
+            if attr["graph_type"] in edge_types
+        ]
+    )
 
 
 def stitch_cpg(cpgs):
@@ -95,10 +105,28 @@ def stitch_cpg(cpgs):
     stitch_order = cpgs
     running_offset = 0
     for i in range(len(stitch_order)):
-        stitch_order[i] = nx.convert_node_labels_to_integers(stitch_order[i], first_label=running_offset)
+        stitch_order[i] = nx.convert_node_labels_to_integers(
+            stitch_order[i], first_label=running_offset
+        )
         running_offset += stitch_order[i].number_of_nodes()
     combined_cpg = nx.compose_all(cpgs)
-    # TODO: stitch method refs
+    # stitch method refs
+    method_refs = []
+    method_refs += [
+        n
+        for n, attr in combined_cpg.nodes(data=True)
+        if attr.get("type", "<NO TYPE>") == "call_expression"
+    ]
+    method_refs += [
+        n
+        for n, attr in combined_cpg.nodes(data=True)
+        if attr.get("type", "<NO TYPE>") == "function_declarator"
+        and not any(
+            combined_cpg.nodes[a]["type"] == "function_definition"
+            for a in subgraph(combined_cpg, {"AST"}).predecessors(n)
+        )
+    ]
+    print("DEBUG", method_refs, [combined_cpg.nodes[n]["text"] for n in method_refs])
     return combined_cpg
 
 
@@ -144,7 +172,9 @@ def main():
     args.filename = Path(args.filename)
     if args.filename.is_dir():
         extensions = {".c", ".h"}
-        filenames = [file for file in args.filename.iterdir() if file.suffix in extensions]
+        filenames = [
+            file for file in args.filename.iterdir() if file.suffix in extensions
+        ]
     elif args.filename.is_file():
         filenames = [args.filename]
     else:
