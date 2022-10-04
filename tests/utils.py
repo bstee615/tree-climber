@@ -1,3 +1,4 @@
+import copy
 from tree_climber.ast import make_ast
 from tree_climber.cfg import make_cfg
 from tree_climber.config import DRAW_CFG
@@ -5,7 +6,19 @@ from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
 
+def escape_labels(graph):
+    graph = copy.deepcopy(graph)
+    for n, d in graph.nodes(data=True):
+        for k in list(d.keys()):
+            if k == "label":
+                if ":" in graph.nodes[n][k]:
+                    graph.nodes[n][k] = f'"{graph.nodes[n][k]}"'
+            else:
+                del graph.nodes[n][k]
+    return graph
+
 def draw_ast(ast):
+    ast = escape_labels(ast)
     pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
     nx.draw(
         ast,
@@ -16,6 +29,7 @@ def draw_ast(ast):
     plt.show()
 
 def draw(cfg, dataflow_solution=None, ax=None):
+    cfg = escape_labels(cfg)
     pos = nx.nx_pydot.graphviz_layout(cfg, prog="dot")
     nx.draw_networkx_nodes(cfg, pos=pos, ax=ax)
     double_edges = [(u, v, attr.get("label", "")) for u, v, attr in cfg.edges(data=True) if u in cfg.successors(v) and v in cfg.successors(u)]
@@ -34,6 +48,7 @@ def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(DRAW_CFG)):
     tree = c_parser.parse(bytes(code, "utf8"))
     ast = make_ast(tree.root_node)
     if print_ast:
+        ast = escape_labels(ast)
         pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
         nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
         plt.show()
