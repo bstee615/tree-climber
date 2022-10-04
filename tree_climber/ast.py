@@ -1,10 +1,20 @@
-
+from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 
 # Keys to keep from the tree-sitter AST
 KEEP_KEYS = ["text", "start_point", "start_byte", "end_point", "end_byte", "is_named", "has_error", "type",
 # "prev_sibling", "prev_named_sibling",
 ]
+
+
+def make_ast(filename):
+    with open(filename, "rb") as f:
+        tree = c_parser.parse(f.read())
+    ast = make_ast_from_tree(tree)
+    ast.graph["file_name"] = filename
+    ast.nodes[ast.graph["root_node"]]["label"] = f"filename: {filename}\n" + ast.nodes[ast.graph["root_node"]]["label"]
+    return ast
+
 
 def attr_to_label(node_type, code, is_named):
     """
@@ -34,7 +44,7 @@ def attr_to_color(is_named, is_root):
         return "gray"
 
 
-def make_ast(root):
+def make_ast_from_tree(tree):
     """
     Make a nx AST from a tree-sitter AST
     """
@@ -42,7 +52,7 @@ def make_ast(root):
     
     node_id = 0
     ast_root = None
-    q = [(root, None, 0)]
+    q = [(tree.root_node, None, 0)]
     while len(q) > 0:
         v, parent, child_idx = q.pop(0)
 

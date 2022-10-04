@@ -5,7 +5,6 @@ from tree_climber.ast import make_ast
 from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.export.cpg import make_cpg
-from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 from networkx.readwrite import json_graph
 from tree_climber.drawing_utils import draw_ast, draw_cfg, draw_duc, draw_cpg
@@ -32,11 +31,8 @@ def process_file(filename, args):
     compute_cpg = True
 
     try:
-        with open(filename, "rb") as f:
-            tree = c_parser.parse(f.read())
-
         if compute_ast:
-            ast = make_ast(tree.root_node)
+            ast = make_ast(filename)
             if args.draw_ast:
                 draw_ast(ast)
             if args.write_ast is not None:
@@ -142,7 +138,7 @@ def stitch_cpg(cpgs):
         if methodname in methodname_to_defnode:
             call_graph_edges.append((methodnode, methodname_to_defnode[methodname]))
         else:
-            call_graph_edges.append((methodnode, methodname))
+            call_graph_edges.append((methodnode, methodname))  # TODO: handle it by adding a new well-defined placeholder node
 
     combined_cpg.add_edges_from(call_graph_edges, graph_type="CALL", color="purple")
 
