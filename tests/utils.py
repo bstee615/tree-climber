@@ -1,5 +1,5 @@
 import copy
-from tree_climber.ast import make_ast
+from tree_climber.ast import make_ast_from_tree
 from tree_climber.cfg import make_cfg
 from tree_climber.config import DRAW_CFG
 from tree_climber.utils import c_parser
@@ -84,7 +84,7 @@ def draw(cfg, dataflow_solution=None, ax=None):
 
 def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(DRAW_CFG)):
     tree = c_parser.parse(bytes(code, "utf8"))
-    ast = make_ast(tree.root_node)
+    ast = make_ast_from_tree(tree)
     if print_ast:
         # ast = escape_labels(ast)
         pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
