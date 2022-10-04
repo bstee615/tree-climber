@@ -6,15 +6,15 @@ from tree_climber.cfg import make_cfg
 from tree_climber.dataflow.def_use import make_duc
 from tree_climber.export.cpg import make_cpg
 import networkx as nx
-from networkx.readwrite import json_graph
 from tree_climber.drawing_utils import draw_ast, draw_cfg, draw_duc, draw_cpg
 from tree_climber.bug_detection import detect_null_pointer_dereference
 import argparse
-from networkx.drawing.nx_agraph import write_dot
 
 
 def process_file(filename, args):
-
+    """
+    Process one file into a CPG.
+    """
     try:
         ast = make_ast(filename)
         if args.draw_ast:
@@ -55,6 +55,9 @@ def process_file(filename, args):
 
 
 def subgraph(graph, edge_types):
+    """
+    Return a subgraph induced by the edge types.
+    """
     return graph.edge_subgraph(
         [
             (u, v, k)
@@ -64,6 +67,9 @@ def subgraph(graph, edge_types):
     )
 
 def get_method_reference(n, typ, ast):
+    """
+    Return a (n, <method name>) tuple if n is a method reference, otherwise None.
+    """
     if typ == "call_expression":
         return n, next(ast.nodes[s]["text"] for s in ast.successors(n) if ast.nodes[s]["type"] == "identifier")
     elif typ == "function_declarator" and not any(
@@ -73,11 +79,17 @@ def get_method_reference(n, typ, ast):
         return n, next(ast.nodes[s]["text"] for s in ast.successors(n) if ast.nodes[s]["type"] == "identifier")
 
 def get_method_definition(n, typ, ast):
+    """
+    Return a (n, <method name>) tuple if n is a method definition, otherwise None.
+    """
     if typ == "function_definition":
         declarator = next(s for s in ast.successors(n) if ast.nodes[s]["type"] == "function_declarator")
         return n, next(ast.nodes[s]["text"] for s in ast.successors(declarator) if ast.nodes[s]["type"] == "identifier")
 
 def stitch_cpg(cpgs):
+    """
+    Stitch together multiple CPGs.
+    """
     combined_cpg = None
     # merge into one big CPG
     stitch_order = cpgs
@@ -114,6 +126,21 @@ def stitch_cpg(cpgs):
     return combined_cpg
 
 
+def output_cpg(cpg, args):
+    """
+    Write or draw CPG.
+    """
+    if args.draw_cpg:
+        draw_cpg(cpg)
+    else:
+        cpg_json = nx.node_link_data(cpg)
+        if args.output is None:
+            print(json.dumps(cpg_json, indent=2))
+        else:
+            with open(args.output, "w") as f:
+                json.dump(cpg_json, f)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filename", help="filename to parse")
@@ -147,6 +174,17 @@ def main():
     )
     args = parser.parse_args()
 
+    filenames = get_files(args)
+    
+    cpgs = []
+    for filename in filenames:
+        file_cpg = process_file(filename, args)
+        cpgs.append(file_cpg)
+    combined_cpg = stitch_cpg(cpgs)
+
+    output_cpg(combined_cpg, args)
+
+def get_files(args):
     args.filename = Path(args.filename)
     if args.filename.is_dir():
         extensions = {".c", ".h"}
@@ -158,20 +196,7 @@ def main():
     else:
         raise FileNotFoundError(args.filename)
     print("parsing", len(filenames), "files", filenames[:5])
-    cpgs = []
-    for filename in filenames:
-        file_cpg = process_file(filename, args)
-        cpgs.append(file_cpg)
-    combined_cpg = stitch_cpg(cpgs)
-    if args.draw_cpg:
-        draw_cpg(combined_cpg)
-    else:
-        cpg_json = nx.node_link_data(combined_cpg)
-        if args.output is None:
-            print(json.dumps(cpg_json, indent=2))
-        else:
-            with open(args.output, "w") as f:
-                json.dump(cpg_json, f)
+    return filenames
 
 
 if __name__ == "__main__":
