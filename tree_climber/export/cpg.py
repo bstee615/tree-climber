@@ -7,9 +7,12 @@ import networkx as nx
 
 from tree_climber.utils import get_method_definition, get_method_reference
 from tree_climber.utils import subgraph
+from tree_climber.ast import make_ast
+from tree_climber.cfg import make_cfg
+from tree_climber.dataflow.def_use import make_duc
 
 
-def make_cpg(ast, cfg, duc):
+def assemble_cpg(ast, cfg, duc):
     """
     Assemble the CPG.
     """
@@ -54,6 +57,40 @@ def make_cpg(ast, cfg, duc):
     # nx.set_node_attributes(cpg, labels)
 
     return cpg
+
+
+def make_file_cpg(filename, draw_ast=False, draw_cfg=False, draw_duc=False):
+    """
+    Parse one file into a CPG.
+    """
+    ast = make_ast(filename)
+    if draw_ast:
+        draw_ast(ast)
+
+    cfg = make_cfg(ast)
+    if draw_cfg:
+        draw_cfg(cfg)
+    print("successfully parsed", filename)
+
+    duc = make_duc(ast, cfg)
+    if draw_duc:
+        draw_duc(duc)
+
+    cpg = assemble_cpg(ast, cfg, duc)
+
+    return cpg
+
+
+def make_cpg(filenames):
+    """
+    Parse a list of files into a combined CPG.
+    """
+    cpgs = []
+    for filename in filenames:
+        file_cpg = make_file_cpg(filename)
+        cpgs.append(file_cpg)
+    combined_cpg = stitch_cpg(cpgs)
+    return combined_cpg
 
 
 def stitch_cpg(cpgs):
