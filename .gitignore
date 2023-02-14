@@ -183,3 +183,10 @@ tests/data/linux-*
 nx.html
 graph.json
 output-bigvul/
+
+# joern stuff
+1_complete/
+2_openmp/
+3_incomplete/
+cpg.bin
+joern-install.sh
