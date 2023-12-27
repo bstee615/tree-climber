@@ -1,7 +1,10 @@
 class CfgNode:
-    def __init__(self, ast_node):
+    def __init__(self, ast_node, node_type=None):
         self.parents = []
         self.children = []
+        self.parent_annotations = []
+        self.child_annotations = []
+        self.node_type = node_type
 
         self.ast_node = ast_node
     
@@ -14,15 +17,24 @@ class CfgNode:
         else:
             return f"{type(self).__name__} ({self.ast_node.type}) {repr(self.ast_node.text.decode())}"
 
-    def add_parent(self, parent):
+    def add_parent(self, parent, annotation):
         self.parents.append(parent)
+        self.parent_annotations.append(annotation)
 
     def add_child(self, child, annotation=None):
         parent = self
-        annotation_str = annotation or ""
-        # print(f"Add child {parent} -{annotation_str}> {child}")
         parent.children.append(child)
-        child.add_parent(parent)
+        self.child_annotations.append(annotation)
+        child.add_parent(parent, annotation)
+
+    def remove_child(self, child):
+        idx = self.children.index(child)
+        self.children.pop(idx)
+        self.child_annotations.pop(idx)
+        
+        parent_idx = child.parents.index(self)
+        parent_idx.parents.pop(parent_idx)
+        parent_idx.parent_annotations.pop(parent_idx)
 
     @property
     def id(self):
@@ -33,8 +45,8 @@ class CfgSubgraph(CfgNode):
         self.begin = begin
         self.end = end
     
-    def add_parent(self, parent):
-        self.begin.parents.append(parent)
+    def add_parent(self, parent, annotation):
+        self.begin.add_parent(parent, annotation)
     
     def add_child(self, child, annotation=None):
         parent = self
@@ -46,18 +58,10 @@ class CfgSubgraph(CfgNode):
             print("SKIPPING", parent, child)
             return
 
-        # if isinstance(child, CfgSubgraph):
-        #     # print("FOO")
-        #     child = child.begin
-        # elif isinstance(child, CfgNode):
-        #     pass
-        
-        # print("Add child", self, child)
-        
         assert type(parent) == CfgNode, type(parent)
         assert type(child) == CfgNode, type(child)
 
-        parent.add_child(child)
+        parent.add_child(child, annotation)
 
     def __str__(self):
         return f"begin: {self.begin} - end: {self.end}"
@@ -103,7 +107,7 @@ class CfgVisitor:
 
         if node.type == "if_statement":
             condition = node.child_by_field_name("condition")
-            condition_cfg = CfgNode(condition)
+            condition_cfg = CfgNode(condition, node_type="branch")
 
             true_branch = node.child_by_field_name("consequence")
             true_cfg = self.visit(true_branch)
@@ -128,13 +132,13 @@ class CfgVisitor:
             update = node.child_by_field_name("update")
             stmt = next(child for child in reversed(node.children) if child.is_named and child.type != "comment")
 
-            init_cfg = CfgNode(initializer)
-            cond_cfg = CfgNode(condition)
+            init_cfg = CfgNode(initializer, node_type="loop")
+            cond_cfg = CfgNode(condition, node_type="loop")
             fork = self.fork()
             fork.break_statements = []
             fork.continue_statements = []
             stmt_cfg = fork.visit(stmt)
-            update_cfg = CfgNode(update)
+            update_cfg = CfgNode(update, node_type="loop")
             pass_cfg = CfgNode("pass")
             self.passes.append(pass_cfg)
 
@@ -156,12 +160,12 @@ class CfgVisitor:
             cond_cfg.add_child(pass_cfg, annotation="false")
             cfg_node = CfgSubgraph(init_cfg, pass_cfg)
         elif node.type == "function_definition":
-            entry_cfg = CfgNode("entry")
+            entry_cfg = CfgNode("entry", node_type="auxiliary")
             body = node.child_by_field_name("body")
             fork = self.fork()
             fork.return_statements = []
             body_cfg = fork.visit(body)
-            exit_cfg = CfgNode("exit")
+            exit_cfg = CfgNode("exit", node_type="auxiliary")
 
             for return_cfg in fork.return_statements:
                 for c in return_cfg.children:
@@ -191,10 +195,13 @@ class CfgVisitor:
         
         if node.type == "break_statement":
             self.break_statements.append(cfg_node)
+            cfg_node.node_type = "jump"
         if node.type == "continue_statement":
             self.continue_statements.append(cfg_node)
+            cfg_node.node_type = "jump"
         if node.type == "return_statement":
             self.return_statements.append(cfg_node)
+            cfg_node.node_type = "jump"
         if isinstance(cfg_node, CfgSubgraph):
             self.subgraphs.append(cfg_node)
         
@@ -251,27 +258,33 @@ if __name__ == "__main__":
 
     from pyvis.network import Network
 
-    net = Network(directed=True)
+    COLOR_MAP = {
+        "branch": "green",
+        "loop": "red",
+        "jump": "pink",
+        "auxiliary": "purple",
+        None: "blue",
+    }
+    def map_color(node_type):
+        return COLOR_MAP.get(node_type) or "gray"
+
+    net = Network(directed=True, font_color="black")
+
+    def add_pyvis_node(n):
+        net.add_node(n.id, label=str(n),
+                     color=map_color(n.node_type),
+                    #  font_color="black",
+                     )
+        
     visited = set()
     def dfs(n):
-        # if n.id in visited:
-        #     return
         print("Graph-izing", n, n.children)
-        net.add_node(n.id, label=str(n))
-        # for p in n.parents:
-        #     net.add_node(p.id, label=str(p))
-            # TODO: add annotation; net.add_edge(p.id, n.id, label=str() or "")
-            # net.add_edge(p.id, n.id)
-            # if "exit" in str(n):
-            #     print(p, "->", "n")
-        for child in n.children:
-            net.add_node(child.id, label=str(child))
-            net.add_edge(n.id, child.id)
-            if "exit" in str(child):
-                print(n, "->", child)
+        add_pyvis_node(n)
+        for child, annotation in zip(n.children, n.child_annotations):
+            add_pyvis_node(child)
+            net.add_edge(n.id, child.id, label=annotation)
             if child.id not in visited:
                 visited.add(child.id)
                 dfs(child)
     dfs(cfg.begin)
-    # print(net)
     net.show("mygraph.html", notebook=False)
