@@ -1,3 +1,7 @@
+from tree_sitter_languages import get_parser
+from pyvis.network import Network
+
+
 class CfgNode:
     def __init__(self, ast_node, node_type=None):
         self.parents = []
@@ -40,6 +44,7 @@ class CfgNode:
     def id(self):
         return id(self)
 
+
 class CfgSubgraph(CfgNode):
     def __init__(self, begin, end):
         self.begin = begin
@@ -66,9 +71,11 @@ class CfgSubgraph(CfgNode):
     def __str__(self):
         return f"begin: {self.begin} - end: {self.end}"
 
+
 def is_cfg_statement(ast_node):
     """Return true if this node is a CFG statement."""
     return ast_node.type.endswith("_statement") and not ast_node.type == "compound_statement"
+
 
 class CfgVisitor:
     def __init__(self):
@@ -207,57 +214,35 @@ class CfgVisitor:
         
         return cfg_node
 
-if __name__ == "__main__":
-    from tree_sitter_languages import get_parser
-    parser = get_parser("c")
-    tree = parser.parse(b"""int main() {
-    x = 0;
-    if (x > 0) {
-        x += 15;
-        return x;
-    }
-    else
-        for (int i = 0; i < 10; i ++) {
-            x += i;
-            if (x)
-                continue;
-            x -= i;
-        }
-    return x + 10
-}""")
+    def postprocess(self):
+        for n in self.subgraphs:
+            begin = n.begin
+            while isinstance(begin, CfgSubgraph):
+                begin = begin.begin
+            parents = begin.parents
+            for p in parents:
+                p.children = [begin if id(c) == id(n) else c for c in p.children]
+                
+            end = n.end
+            while isinstance(end, CfgSubgraph):
+                end = end.end
+            children = end.children
+            for c in children:
+                c.parents = [end if id(p) == id(n) else p for p in c.parents]
 
-    visitor = CfgVisitor()
-    cfg = visitor.visit(tree.root_node)
-    
-    # normalize cfg
-    for n in visitor.subgraphs:
-        begin = n.begin
-        while isinstance(begin, CfgSubgraph):
-            begin = begin.begin
-        parents = begin.parents
-        for p in parents:
-            p.children = [begin if id(c) == id(n) else c for c in p.children]
-            
-        end = n.end
-        while isinstance(end, CfgSubgraph):
-            end = end.end
-        children = end.children
-        for c in children:
-            c.parents = [end if id(p) == id(n) else p for p in c.parents]
+        for n in self.passes:
+            parents = n.parents
+            children = n.children
+            for p in parents:
+                p.children.remove(n)
+                # print("CHILDREN", p.children, children)
+                p.children.extend(children)
+            for c in children:
+                c.parents.remove(n)
+                c.parents.extend(parents)
 
-    for n in visitor.passes:
-        parents = n.parents
-        children = n.children
-        for p in parents:
-            p.children.remove(n)
-            # print("CHILDREN", p.children, children)
-            p.children.extend(children)
-        for c in children:
-            c.parents.remove(n)
-            c.parents.extend(parents)
 
-    from pyvis.network import Network
-
+def visualize(cfg):
     COLOR_MAP = {
         "branch": "green",
         "loop": "red",
@@ -288,3 +273,27 @@ if __name__ == "__main__":
                 dfs(child)
     dfs(cfg.begin)
     net.show("mygraph.html", notebook=False)
+
+
+if __name__ == "__main__":
+    parser = get_parser("c")
+    tree = parser.parse(b"""int main() {
+    x = 0;
+    if (x > 0) {
+        x += 15;
+        return x;
+    }
+    else
+        for (int i = 0; i < 10; i ++) {
+            x += i;
+            if (x)
+                continue;
+            x -= i;
+        }
+    return x + 10
+}""")
+
+    visitor = CfgVisitor()
+    cfg = visitor.visit(tree.root_node)
+    visitor.postprocess()
+    visualize(cfg)
