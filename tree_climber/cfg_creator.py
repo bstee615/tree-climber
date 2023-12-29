@@ -106,15 +106,15 @@ class CfgVisitor:
 
             pass_cfg = CfgNode("pass")
             self.passes.append(pass_cfg)
-            self.add_child(condition_cfg, true_cfg_entry, label="true")
+            self.add_child(condition_cfg, true_cfg_entry, label="TRUE")
 
             false_branch = node.child_by_field_name("alternative")
             if false_branch:
                 false_branch_entry, false_branch_exit = self.visit(false_branch)
-                self.add_child(condition_cfg, false_branch_entry, label="false")
+                self.add_child(condition_cfg, false_branch_entry, label="FALSE")
                 self.add_child(false_branch_exit, pass_cfg)
             else:
-                self.add_child(condition_cfg, pass_cfg, label="false")
+                self.add_child(condition_cfg, pass_cfg, label="FALSE")
             self.add_child(true_cfg_exit, pass_cfg)
 
             return condition_cfg, pass_cfg
