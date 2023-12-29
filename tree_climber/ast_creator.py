@@ -1,6 +1,7 @@
 from tree_sitter_languages import get_parser
 from pyvis.network import Network
 import networkx as nx
+from .util import concretize_node
 
 
 class AstNode:
@@ -12,6 +13,11 @@ class AstNode:
 
     def __hash__(self):
         return self.ast_node.id
+
+    def asdict(self):
+        return {
+            "ast_node": concretize_node(self.ast_node),
+        }
 
 
 class AstVisitor:

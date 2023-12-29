@@ -1,6 +1,7 @@
 from tree_sitter_languages import get_parser
 from pyvis.network import Network
 import networkx as nx
+from .util import concretize_node
 
 
 class CfgNode:
@@ -20,6 +21,12 @@ class CfgNode:
             return f"{type(self).__name__} ({self.ast_node})"
         else:
             return f"{type(self).__name__} ({self.ast_node.type}) {repr(self.ast_node.text.decode())}"
+
+    def asdict(self):
+        return {
+            "node_type": self.node_type,
+            "ast_node": concretize_node(self.ast_node),
+        }
 
     @property
     def id(self):

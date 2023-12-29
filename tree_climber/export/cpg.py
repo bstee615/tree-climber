@@ -4,33 +4,69 @@ AST annotated with CFG, DUC edges.
 """
 
 import networkx as nx
+from tree_sitter import Node
+from pyvis.network import Network
+from ..util import concretize_graph
+
+
+BLUE = "#5dade2"
+DARK_BLUE = "#2874a6"
+RED = "#FF5733"
+DARK_RED = "#C70039"
+EDGE_COLOR = {
+    "CFG": DARK_RED,
+    "AST": DARK_BLUE,
+}
 
 
 def make_cpg(ast, cfg, duc):
-    ast = ast.copy()
-    cfg = cfg.copy()
-    duc = duc.copy()
-    nx.set_edge_attributes(ast, {(u, v): "AST" for u, v in ast.edges()}, "graph_type")
-    nx.set_edge_attributes(
-        cfg, {(u, v, k): "CFG" for u, v, k in cfg.edges(keys=True)}, "graph_type"
-    )
-    nx.set_edge_attributes(duc, {(u, v): "DUC" for u, v in duc.edges()}, "graph_type")
-    max_ast_node = max(ast.nodes())
-    cfg = nx.relabel_nodes(
-        cfg,
-        {
-            n: attr.get("ast_node", max_ast_node + n + 1)
-            for n, attr in cfg.nodes(data=True)
-        },
-    )
-    duc = nx.relabel_nodes(
-        duc, {n: attr.get("ast_node") for n, attr in duc.nodes(data=True)}
-    )
-    cpg = nx.MultiDiGraph(ast)
-    cpg = nx.compose(cpg, cfg)
-    cpg = nx.compose(cpg, nx.MultiDiGraph(duc))
+    ast_nodes = {node.ast_node.id: node for node in ast.nodes}
+    nx.set_edge_attributes(ast, "AST", name="graph_source")
+    nx.set_edge_attributes(cfg, "CFG", name="graph_source")
 
-    labels = {n: {"label": l.replace(":", "_")} for n, l in nx.get_node_attributes(cpg, "label").items()}
-    nx.set_node_attributes(cpg, labels)
+    # Combine AST and CFG
+    cpg = nx.MultiDiGraph()
+    cpg.add_nodes_from(ast.nodes(data=True))
+    cpg.add_edges_from([(u, v, "AST", d) for u, v, d in ast.edges(data=True)])
+    # Default to AST node color
+    node_colors = {n: {"background": BLUE, "border": DARK_BLUE, "highlight": {"background": BLUE, "border": DARK_BLUE}, "hover": {"background": BLUE, "border": DARK_BLUE}} for n in cpg.nodes(data=False)}
+    for u, v, d in cfg.edges(data=True):
+        if isinstance(u.ast_node, Node):
+            u = ast_nodes[u.ast_node.id]
+        else:
+            cpg.add_node(u)
+        if isinstance(v.ast_node, Node):
+            v = ast_nodes[v.ast_node.id]
+        else:
+            cpg.add_node(v)
+        # Set CFG node color
+        node_colors[u] = {"background": RED, "border": DARK_RED, "highlight": {"background": RED, "border": DARK_RED}, "hover": {"background": RED, "border": DARK_RED}}
+        node_colors[v] = {"background": RED, "border": DARK_RED, "highlight": {"background": RED, "border": DARK_RED}, "hover": {"background": RED, "border": DARK_RED}}
+        cpg.add_edge(u, v, key="CFG", **d)
+    nx.set_node_attributes(cpg, node_colors, name="color")
+    cpg = concretize_graph(cpg)
+
+    # TODO add DUC pointing at CFG nodes
+
+    # Visualize
+    net = Network(directed=True)
+    net.from_nx(cpg)
+    # Set node labels
+    labels = nx.get_node_attributes(cpg, "label")
+    for node in net.nodes:
+        node["label"] = labels[node["id"]]
+    # Set edge labels
+    edge_labels = {(u, v, k): d.upper() for (u, v, k), d in nx.get_edge_attributes(cpg, "label").items()}
+    edge_type = {}
+    for u, v, k in cpg.edges(keys=True):
+        id = (u, v)
+        if id not in edge_type or edge_type[id] == "AST":
+            edge_type[id] = k
+    for edge in net.edges:
+        id = (edge["from"], edge["to"])
+        edge["color"] = EDGE_COLOR[edge_type[id]]
+        edge["label"] = edge_labels.get((*id, "CFG"), None)
+    # Export graph
+    net.show("mygraph.html", notebook=False)
 
     return cpg
