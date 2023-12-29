@@ -1,5 +1,5 @@
 from tree_climber.dataflow.dataflow_solver import DataflowSolver
-import networkx as nx
+from tree_sitter import Node
 
 
 def get_definition(ast_node):
@@ -36,9 +36,8 @@ class ReachingDefinitionSolver(DataflowSolver):
         def2code = {}
         def_idx = 0
         for n in cfg.nodes():
-            attr = cfg.nodes[n]
-            if "n" in attr:
-                ast_node = attr["n"]
+            ast_node = n.ast_node
+            if isinstance(ast_node, Node):
                 _id = get_definition(ast_node)
                 if _id is not None:
                     node2def[n] = def_idx

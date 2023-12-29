@@ -1,14 +1,17 @@
-
 import networkx as nx
 from tree_climber.dataflow.reaching_def import ReachingDefinitionSolver
+from tree_sitter import Node
+from pyvis.network import Network
+from ..util import concretize_graph
 
 
 def get_uses(cfg, solver, n):
     """return the set of variables used in n"""
     used_ids = set()
     attr = cfg.nodes[n]
-    if "n" in attr:
-        q = [attr["n"]]
+    ast_node = n.ast_node
+    if isinstance(ast_node, Node):
+        q = [ast_node]
         while q:
             n = q.pop(0)
             if n.type == "identifier":
@@ -47,9 +50,6 @@ def make_duc(cfg, verbose=0):
                        `-'
     """
     duc = nx.DiGraph()
-    duc.add_nodes_from(
-        [(n, dict(cfg_node=n, **attr)) for n, attr in cfg.nodes(data=True)]
-    )
     solver = ReachingDefinitionSolver(cfg, verbose=verbose)
     solution_in, solution_out = solver.solve()
     solution = solution_in
@@ -72,11 +72,10 @@ def make_duc(cfg, verbose=0):
                         use_node,
                         label=str(solver.def2id[solver.node2def[def_node]]),
                     )
-    duc.remove_nodes_from(
-        [
-            n
-            for n, attr in duc.nodes(data=True)
-            if attr["label"] in ("FUNC_ENTRY", "FUNC_EXIT")
-        ]
-    )
+    duc.remove_nodes_from([n for n in duc.nodes() if n.node_type == "auxiliary"])
     return duc
+
+def visualize_duc(duc, fpath):
+    net = Network(directed=True)
+    net.from_nx(concretize_graph(duc))
+    net.show(fpath, notebook=False)

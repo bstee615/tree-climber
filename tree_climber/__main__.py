@@ -1,7 +1,7 @@
 from pathlib import Path
 from .cfg_creator import CfgVisitor, visualize_cfg
 from .ast_creator import AstVisitor, visualize_ast
-from .dataflow.def_use import make_duc
+from .dataflow.def_use import make_duc, visualize_duc
 from .export.cpg import make_cpg, visualize_cpg
 import argparse
 from tree_sitter_languages import get_parser
@@ -43,9 +43,8 @@ if __name__ == "__main__":
 
         print("successfully parsed", filename)
 
-        # TODO update
-        # duc = make_duc(cfg_visitor.graph)
-        duc = None
+        duc = make_duc(cfg)
+        visualize_duc(duc, "duc.html")
 
         cpg = make_cpg(ast, cfg, duc)
         visualize_cpg(cpg, "cpg.html")
