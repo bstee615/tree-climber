@@ -1,7 +1,7 @@
 from tree_sitter_languages import get_parser
 from pyvis.network import Network
 import networkx as nx
-from .util import concretize_node
+from .util import concretize_graph, concretize_node
 
 
 class AstNode:
@@ -31,24 +31,10 @@ class AstVisitor:
             self.graph.add_edge(ast_node, child_node)
         return ast_node
 
-    def visualize(self, root):
-        net = Network(directed=True, font_color="black", layout=True)
-
-        def add_pyvis_node(n):
-            net.add_node(hash(n), label=str(n))
-            
-        visited = set()
-        def dfs(n):
-            add_pyvis_node(n)
-            edges = [v for u, v in self.graph.out_edges(n)]
-            for child in edges:
-                add_pyvis_node(child)
-                net.add_edge(hash(n), hash(child))
-                if child not in visited:
-                    visited.add(child)
-                    dfs(child)
-        dfs(root)
-        net.show("mygraph.html", notebook=False)
+def visualize_ast(ast, fpath):
+    net = Network(directed=True)
+    net.from_nx(concretize_graph(ast))
+    net.show(fpath, notebook=False)
 
 
 if __name__ == "__main__":

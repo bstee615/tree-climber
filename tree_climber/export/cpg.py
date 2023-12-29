@@ -48,6 +48,11 @@ def make_cpg(ast, cfg, duc):
 
     # TODO add DUC pointing at CFG nodes
 
+    return cpg
+
+
+def visualize_cpg(cpg, fpath):
+    """Visualize a CPG as an HTML file."""
     # Visualize
     net = Network(directed=True)
     net.from_nx(cpg)
@@ -67,6 +72,4 @@ def make_cpg(ast, cfg, duc):
         edge["color"] = EDGE_COLOR[edge_type[id]]
         edge["label"] = edge_labels.get((*id, "CFG"), None)
     # Export graph
-    net.show("mygraph.html", notebook=False)
-
-    return cpg
+    net.show(fpath, notebook=False)

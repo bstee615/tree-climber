@@ -10,12 +10,10 @@ def concretize_graph(G):
     mapping = {n: to_id(n) for n in G.nodes()}
     attrs = {to_id(n): n.asdict() for n in G.nodes()}
     labels = {to_id(n): str(n) for n in G.nodes()}
-    edge_labels = {(to_id(u), to_id(v), "CFG"): d["annotation"] for u, v, d in G.edges(data=True) if "annotation" in d}
     # Relabel nodes to a unique string ID
     G = nx.relabel_nodes(G, mapping, copy=True)
     # Set node and edge attributes
     nx.set_node_attributes(G, attrs)
-    nx.set_edge_attributes(G, edge_labels, name="label")
     nx.set_node_attributes(G, labels, name="label")
     return G
 

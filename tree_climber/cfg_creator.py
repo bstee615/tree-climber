@@ -1,7 +1,7 @@
 from tree_sitter_languages import get_parser
 from pyvis.network import Network
 import networkx as nx
-from .util import concretize_node
+from .util import concretize_graph, concretize_node
 
 
 class CfgNode:
@@ -106,15 +106,15 @@ class CfgVisitor:
 
             pass_cfg = CfgNode("pass")
             self.passes.append(pass_cfg)
-            self.add_child(condition_cfg, true_cfg_entry, annotation="true")
+            self.add_child(condition_cfg, true_cfg_entry, label="true")
 
             false_branch = node.child_by_field_name("alternative")
             if false_branch:
                 false_branch_entry, false_branch_exit = self.visit(false_branch)
-                self.add_child(condition_cfg, false_branch_entry, annotation="false")
+                self.add_child(condition_cfg, false_branch_entry, label="false")
                 self.add_child(false_branch_exit, pass_cfg)
             else:
-                self.add_child(condition_cfg, pass_cfg, annotation="false")
+                self.add_child(condition_cfg, pass_cfg, label="false")
             self.add_child(true_cfg_exit, pass_cfg)
 
             return condition_cfg, pass_cfg
@@ -142,10 +142,10 @@ class CfgVisitor:
                 self.add_child(continue_cfg, update_cfg)
 
             self.add_child(init_cfg, cond_cfg)
-            self.add_child(cond_cfg, stmt_entry, annotation="true")
+            self.add_child(cond_cfg, stmt_entry, label="true")
             self.add_child(stmt_exit, update_cfg)
             self.add_child(update_cfg, cond_cfg)
-            self.add_child(cond_cfg, pass_cfg, annotation="false")
+            self.add_child(cond_cfg, pass_cfg, label="false")
 
             return init_cfg, pass_cfg
         elif node.type == "function_definition":
@@ -213,40 +213,12 @@ class CfgVisitor:
             for p in parents:
                 for c in children:
                     self.add_child(p, c, **data)
+            self.graph.remove_node(n)
 
-
-    def visualize(self, root):
-        """Visualize CFG using PyVis"""
-        COLOR_MAP = {
-            "branch": "green",
-            "loop": "red",
-            "jump": "pink",
-            "auxiliary": "purple",
-            None: "blue",
-        }
-        def map_color(node_type):
-            return COLOR_MAP.get(node_type) or "gray"
-
-        net = Network(directed=True, font_color="black")
-
-        def add_pyvis_node(n):
-            net.add_node(hash(n), label=str(n),
-                        color=map_color(n.node_type),
-                        #  font_color="black",
-                        )
-            
-        visited = set()
-        def dfs(n):
-            add_pyvis_node(n)
-            edges = [(v, a) for u, v, a in self.graph.out_edges(n, data="annotation")]
-            for child, annotation in edges:
-                add_pyvis_node(child)
-                net.add_edge(hash(n), hash(child), label=annotation)
-                if child not in visited:
-                    visited.add(child)
-                    dfs(child)
-        dfs(root)
-        net.show("mygraph.html", notebook=False)
+def visualize_cfg(cfg, fpath):
+    net = Network(directed=True)
+    net.from_nx(concretize_graph(cfg))
+    net.show(fpath, notebook=False)
 
 
 if __name__ == "__main__":

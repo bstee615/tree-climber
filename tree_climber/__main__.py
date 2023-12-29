@@ -1,8 +1,8 @@
 from pathlib import Path
-from tree_climber.cfg_creator import CfgVisitor
-from tree_climber.ast_creator import AstVisitor
+from tree_climber.cfg_creator import CfgVisitor, visualize_cfg
+from tree_climber.ast_creator import AstVisitor, visualize_ast
 from tree_climber.dataflow.def_use import make_duc
-from tree_climber.export.cpg import make_cpg
+from tree_climber.export.cpg import make_cpg, visualize_cpg
 import argparse
 from tree_sitter_languages import get_parser
 from tree_sitter import Node
@@ -84,17 +84,15 @@ if __name__ == "__main__":
         # Parse AST
         ast_visitor = AstVisitor()
         ast_root = ast_visitor.visit(tree.root_node)
-        ast_visitor.visualize(ast_root)
         ast = ast_visitor.graph
+        visualize_ast(ast, "ast.html")
 
         # Parse CFG
         cfg_visitor = CfgVisitor()
         cfg_entry, _ = cfg_visitor.visit(tree.root_node)
         cfg_visitor.postprocess()
-        cfg_visitor.visualize(cfg_entry)
         cfg = cfg_visitor.graph
-
-        # link_ast_to_cfg(ast, cfg)
+        visualize_cfg(cfg, "cfg.html")
 
         print("successfully parsed", filename)
 
@@ -103,5 +101,7 @@ if __name__ == "__main__":
         duc = None
 
         cpg = make_cpg(ast, cfg, duc)
+        visualize_cpg(cpg, "cpg.html")
+
         # TODO update
         # detect_bugs(cpg)
