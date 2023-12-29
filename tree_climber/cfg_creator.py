@@ -164,7 +164,6 @@ class CfgVisitor:
             for child in children:
                 cfg_entry, cfg_exit = self.visit(child)
                 if last_cfg_exit is not None:
-                    print("Sequential:", last_cfg_exit, cfg_entry)
                     self.add_child(last_cfg_exit, cfg_entry)
                 if cfg_begin is None:
                     cfg_begin = cfg_entry
@@ -213,7 +212,6 @@ class CfgVisitor:
         net = Network(directed=True, font_color="black")
 
         def add_pyvis_node(n):
-            print("add node", hash(n))
             net.add_node(hash(n), label=str(n),
                         color=map_color(n.node_type),
                         #  font_color="black",

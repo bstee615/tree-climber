@@ -29,7 +29,6 @@ class AstVisitor:
         net = Network(directed=True, font_color="black", layout=True)
 
         def add_pyvis_node(n):
-            print("add node", hash(n))
             net.add_node(hash(n), label=str(n))
             
         visited = set()
