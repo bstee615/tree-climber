@@ -1,416 +1,257 @@
-from collections import defaultdict
-import warnings
-from matplotlib import pyplot as plt
-from tree_climber.ast_creator import ASTCreator
-from tree_climber.base_visitor import BaseVisitor
+from tree_sitter_languages import get_parser
+from pyvis.network import Network
 import networkx as nx
-from tree_climber.tree_sitter_utils import c_parser
 
 
-class CFGCreator(BaseVisitor):
-    """
-    AST visitor which creates a CFG.
-    After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
-    """
+class CfgNode:
+    """Represents a node in the CFG."""
+    def __init__(self, ast_node, node_type=None):
+        self.node_type = node_type
+        self.ast_node = ast_node
+    
+    def __repr__(self):
+        return str(self)
+    
+    def __hash__(self):
+        return self.id
+    
+    def __str__(self):
+        if isinstance(self.ast_node, str):
+            return f"{type(self).__name__} ({self.ast_node})"
+        else:
+            return f"{type(self).__name__} ({self.ast_node.type}) {repr(self.ast_node.text.decode())}"
 
-    def __init__(self, ast):
-        super(CFGCreator).__init__()
-        self.ast = ast
-        self.cfg = nx.MultiDiGraph()
-        self.node_id = 0
-        self.fringe = []
-        self.break_fringe = []
-        self.continue_fringe = []
-        self.gotos = {}
-        self.labels = {}
+    @property
+    def id(self):
+        return id(self)
 
-    @staticmethod
-    def make_cfg(ast):
-        visitor = CFGCreator(ast)
-        visitor.visit(ast.graph["root_node"])
-        cfg = visitor.cfg
-        # Postprocessing
 
-        # pass through dummy nodes
-        nodes_to_remove = []
-        for n, attr in cfg.nodes(data=True):
-            if attr.get("dummy", False):
-                preds = list(cfg.predecessors(n))
-                succs = list(cfg.successors(n))
-                # Forward label from edges incoming to dummy.
-                for pred in preds:
-                    new_edge_label = list(cfg.adj[pred][n].values())[0].get(
-                        "label", None
-                    )
-                    for succ in succs:
-                        cfg.add_edge(pred, succ, label=new_edge_label)
-                nodes_to_remove.append(n)
-        cfg.remove_nodes_from(nodes_to_remove)
+def is_cfg_statement(ast_node):
+    """Return true if this node is a CFG statement."""
+    return ast_node.type.endswith("_statement") and not ast_node.type == "compound_statement"
 
-        return visitor.cfg
 
-    def get_children(self, n):
-        return list(self.ast.successors(n))
+class CfgVisitor:
+    """Walks the AST to create a CFG."""
+    
+    def __init__(self):
+        self.return_statements = []
+        self.break_statements = []
+        self.continue_statements = []
+        self.passes = []
 
-    def visit(self, n, **kwargs):
-        return getattr(
-            self, "visit_" + self.ast.nodes[n]["node_type"], self.visit_default
-        )(n=n, **kwargs)
+        self.graph = nx.DiGraph()
 
-    def visit_children(self, n, **kwargs):
-        for c in self.ast.successors(n):
-            should_continue = self.visit(c, **kwargs)
-            if should_continue == False:
-                break
+    def fork(self):
+        """Fork this visitor to walk a subgraph of the CFG"""
+        visitor = CfgVisitor()
+        visitor.return_statements = self.return_statements
+        visitor.break_statements = self.break_statements
+        visitor.continue_statements = self.continue_statements
+        visitor.passes = self.passes
+        visitor.graph = self.graph
+        return visitor
 
-    def add_dummy_node(self):
-        """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
-        node_id = self.node_id
-        self.cfg.add_node(node_id, dummy=True, label="DUMMY")
-        self.node_id += 1
-        return node_id
+    def add_child(self, parent, child, **kwargs):
+        self.graph.add_edge(parent, child, **kwargs)
+    
+    def parents(self, node):
+        return self.graph.predecessors(node)
+    
+    def remove_children(self, node):
+        self.graph.remove_edges_from(list(self.graph.out_edges(node)))
+    
+    def children(self, node):
+        return self.graph.successors(node)
+    
+    def visit(self, node):
+        """
+        Convert a single node as the root to a subgraph in the CFG.
+        Return two nodes, one root and one "tail", lowest point in the CFG.
+        For subgraphs which terminate in multiple nodes, point all to a "pass-through" node which will be post-processed out.
 
-    def add_cfg_node(self, ast_node, label=None, **kwargs):
-        node_id = self.node_id
-        ast_kwargs = {}
-        if ast_node is not None:
-            attr = self.ast.nodes[ast_node]
-            ast_kwargs.update(attr)
-        if label is not None:
-            ast_kwargs["label"] = label
-        if ast_node is not None:
-            ast_kwargs["ast_node"] = ast_node
-        ast_kwargs.update(kwargs)
-        self.cfg.add_node(node_id, **ast_kwargs)
-        self.node_id += 1
-        return node_id
+        Compound statements:
+        a -> b -> c ; return (a, c)
 
-    def add_edge_from_fringe_to(self, node_id):
-        # Assign edges with labels
-        fringe_by_type = defaultdict(list)
-        for source in self.fringe:
-            if isinstance(source, tuple):
-                fringe_by_type[source[1]].append(source[0])
+        If statements:
+        cond -T-> a -> pass ; return (cond, pass)
+             -F-> b -/
+        
+        Loops:
+        init -> c....o....n....d -F-> pass ; return (init, pass)
+                -T-> update -/
+        """
+
+        # TODO: switch
+        # TODO: while
+        # TODO: do while
+        # TODO: goto
+        # C++
+        # TODO: try/catch
+        # TODO: range for
+        # TODO: class, struct
+        if node.type == "if_statement":
+            condition = node.child_by_field_name("condition")
+            condition_cfg = CfgNode(condition, node_type="branch")
+
+            true_branch = node.child_by_field_name("consequence")
+            true_cfg_entry, true_cfg_exit = self.visit(true_branch)
+
+            pass_cfg = CfgNode("pass")
+            self.passes.append(pass_cfg)
+            self.add_child(condition_cfg, true_cfg_entry, annotation="true")
+
+            false_branch = node.child_by_field_name("alternative")
+            if false_branch:
+                false_branch_entry, false_branch_exit = self.visit(false_branch)
+                self.add_child(condition_cfg, false_branch_entry, annotation="false")
+                self.add_child(false_branch_exit, pass_cfg)
             else:
-                fringe_by_type[None].append(source)
-        for edge_type, fringe in fringe_by_type.items():
-            kwargs = {}
-            if edge_type is not None:
-                kwargs["label"] = str(edge_type)
-            self.cfg.add_edges_from(zip(fringe, [node_id] * len(self.fringe)), **kwargs)
-        self.fringe = []
+                self.add_child(condition_cfg, pass_cfg, annotation="false")
+            self.add_child(true_cfg_exit, pass_cfg)
 
-    """
-    VISITOR RULES
-    """
+            return condition_cfg, pass_cfg
+        elif node.type == "for_statement":
+            initializer = node.child_by_field_name("initializer")
+            condition = node.child_by_field_name("condition")
+            update = node.child_by_field_name("update")
+            stmt = next(child for child in reversed(node.children) if child.is_named and child.type != "comment")
 
-    def visit_function_definition(self, n, **kwargs):
-        entry_id = self.add_cfg_node(None, "FUNC_ENTRY")
-        self.cfg.graph["entry"] = entry_id
-        self.add_edge_from_fringe_to(entry_id)
-        self.fringe.append(entry_id)
-        self.visit_children(n, **kwargs)
-        exit_id = self.add_cfg_node(None, "FUNC_EXIT")
-        self.add_edge_from_fringe_to(exit_id)
-        # paste goto edges
-        for label in self.gotos:
-            try:
-                self.cfg.add_edge(self.gotos[label], self.labels[label], label="goto")
-            except KeyError:
-                warnings.warn("missing goto target. Skipping.", f"label={label}", f"gotos={self.gotos}")
-        for n in nx.descendants(self.cfg, entry_id):
-            attr = self.cfg.nodes[n]
-            if attr.get("n", None) is not None and attr["n"].type == "return_statement":
-                self.cfg.add_edge(n, exit_id, label="return")
-        self.fringe.append(exit_id)
+            init_cfg = CfgNode(initializer, node_type="loop")
+            cond_cfg = CfgNode(condition, node_type="loop")
+            fork = self.fork()
+            fork.break_statements = []
+            fork.continue_statements = []
+            stmt_entry, stmt_exit = fork.visit(stmt)
+            update_cfg = CfgNode(update, node_type="loop")
+            pass_cfg = CfgNode("pass")
+            self.passes.append(pass_cfg)
 
-    def visit_default(self, n, **kwargs):
-        self.visit_children(n)
+            for break_cfg in fork.break_statements:
+                self.remove_children(break_cfg)
+                self.add_child(break_cfg, pass_cfg)
+            for continue_cfg in fork.continue_statements:
+                self.remove_children(continue_cfg)
+                self.add_child(continue_cfg, update_cfg)
 
-    """STRAIGHT LINE STATEMENTS"""
+            self.add_child(init_cfg, cond_cfg)
+            self.add_child(cond_cfg, stmt_entry, annotation="true")
+            self.add_child(stmt_exit, update_cfg)
+            self.add_child(update_cfg, cond_cfg)
+            self.add_child(cond_cfg, pass_cfg, annotation="false")
 
-    def enter_statement(self, n):
-        node_id = self.add_cfg_node(n)
-        self.add_edge_from_fringe_to(node_id)
-        self.fringe.append(node_id)
+            return init_cfg, pass_cfg
+        elif node.type == "function_definition":
+            entry_cfg = CfgNode("entry", node_type="auxiliary")
+            body = node.child_by_field_name("body")
+            fork = self.fork()
+            fork.return_statements = []
+            body_entry, body_exit = fork.visit(body)
+            exit_cfg = CfgNode("exit", node_type="auxiliary")
 
-    def visit_expression_statement(self, n, **kwargs):
-        self.enter_statement(n)
-        self.visit_default(n, **kwargs)
+            for return_cfg in fork.return_statements:
+                self.remove_children(return_cfg)
+                self.add_child(return_cfg, exit_cfg)
 
-    def visit_declaration(self, n, **kwargs):
-        self.enter_statement(n)
-        self.visit_default(n, **kwargs)
-
-    """STRUCTURED CONTROL FLOW"""
-
-    def visit_if_statement(self, n, **kwargs):
-        condition = self.get_children(self.get_children(n)[0])[0]
-        condition_id = self.add_cfg_node(condition)
-        self.add_edge_from_fringe_to(condition_id)
-        self.fringe.append((condition_id, True))
-
-        compound_statement = self.get_children(n)[1]
-        self.visit(compound_statement)
-        # NOTE: this assert doesn't work in the case of an if with an empty else
-        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
-
-        if len(self.get_children(n)) > 2:
-            else_compound_statement = self.get_children(n)[2]
-            old_fringe = self.fringe
-            self.fringe = [(condition_id, False)]
-            self.visit(else_compound_statement)
-            self.fringe = old_fringe + self.fringe
+            self.add_child(entry_cfg, body_entry)
+            self.add_child(body_exit, exit_cfg)
+            return entry_cfg, exit_cfg
+        elif node.type in ("translation_unit", "compound_statement"):
+            children = [child for child in node.children if child.is_named and not child.type == "comment"]
+            cfg_begin = None
+            cfg_end = None
+            last_cfg_exit = None
+            for child in children:
+                cfg_entry, cfg_exit = self.visit(child)
+                if last_cfg_exit is not None:
+                    print("Sequential:", last_cfg_exit, cfg_entry)
+                    self.add_child(last_cfg_exit, cfg_entry)
+                if cfg_begin is None:
+                    cfg_begin = cfg_entry
+                cfg_end = last_cfg_exit = cfg_exit
+                
+            return cfg_begin, cfg_end
+        elif is_cfg_statement(node):
+            cfg_node = CfgNode(node)
+            self.graph.add_node(cfg_node)
+            if node.type == "break_statement":
+                self.break_statements.append(cfg_node)
+                cfg_node.node_type = "jump"
+            if node.type == "continue_statement":
+                self.continue_statements.append(cfg_node)
+                cfg_node.node_type = "jump"
+            if node.type == "return_statement":
+                self.return_statements.append(cfg_node)
+                cfg_node.node_type = "jump"
+            return cfg_node, cfg_node
         else:
-            self.fringe.append((condition_id, False))
+            raise NotImplementedError(f"({node.type}) {node.text.decode()}")
 
-    def visit_for_statement(self, n, **kwargs):
-        n_attr = self.ast.nodes[n]
-        # print(n, n_attr["node_type"], kwargs, n_attr)
-        i = 0
-        if n_attr.get("has_init", False):
-            init = self.get_children(n)[i]
-            i += 1
-        else:
-            init = None
-        if n_attr.get("has_cond", False):
-            cond = self.get_children(n)[i]
-            i += 1
-        else:
-            cond = None
-        if n_attr.get("has_incr", False):
-            incr = self.get_children(n)[i]
-            i += 1
-        else:
-            incr = None
-
-        if cond is not None:
-            cond_id = self.add_cfg_node(cond)
-        else:
-            cond_id = self.add_cfg_node(None, f"<TRUE>")
-
-        if init is not None:
-            init_id = self.add_cfg_node(init)
-            self.add_edge_from_fringe_to(init_id)
-            self.cfg.add_edge(init_id, cond_id)
-        else:
-            self.add_edge_from_fringe_to(cond_id)
-        self.fringe.append((cond_id, True))
-
-        compound_statement = self.get_children(n)[i]
-        self.visit(compound_statement)
-        # NOTE: this assert doesn't work in the case of an if with an empty else
-        # assert len(self.fringe) == 1, "fringe should now have last statement of compound_statement"
-        if incr is not None:
-            incr_id = self.add_cfg_node(incr)
-            self.add_edge_from_fringe_to(incr_id)
-            self.cfg.add_edge(incr_id, cond_id)
-            self.cfg.add_edges_from(
-                zip(self.continue_fringe, [incr_id] * len(self.continue_fringe)),
-                label="continue",
-            )
-            self.continue_fringe = []
-        else:
-            self.add_edge_from_fringe_to(cond_id)
-            self.cfg.add_edges_from(
-                zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)),
-                label="continue",
-            )
-            self.continue_fringe = []
-        self.fringe.append((cond_id, False))
-
-        self.fringe += [(n, "break") for n in self.break_fringe]
-        self.break_fringe = []
-
-    def visit_while_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[0])[0]
-        cond_id = self.add_cfg_node(cond)
-
-        self.add_edge_from_fringe_to(cond_id)
-        self.fringe.append((cond_id, True))
-
-        compound_statement = self.get_children(n)[1]
-        self.visit(compound_statement)
-        self.add_edge_from_fringe_to(cond_id)
-        self.fringe.append((cond_id, False))
-
-        self.cfg.add_edges_from(
-            zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)),
-            label="continue",
-        )
-        self.continue_fringe = []
-        self.fringe += [(n, "break") for n in self.break_fringe]
-        self.break_fringe = []
-
-    def visit_do_statement(self, n, **kwargs):
-        dummy_id = self.add_dummy_node()
-        self.add_edge_from_fringe_to(dummy_id)
-        self.fringe.append(dummy_id)
-
-        compound_statement = self.get_children(n)[0]
-        self.visit(compound_statement)
-
-        cond = self.get_children(self.get_children(n)[1])[0]
-        cond_id = self.add_cfg_node(cond)
-        self.add_edge_from_fringe_to(cond_id)
-        self.cfg.add_edge(cond_id, dummy_id, label=str(True))
-        self.fringe.append((cond_id, False))
-
-        self.cfg.add_edges_from(
-            zip(self.continue_fringe, [cond_id] * len(self.continue_fringe)),
-            label="continue",
-        )
-        self.continue_fringe = []
-        self.fringe += [(n, "break") for n in self.break_fringe]
-        self.break_fringe = []
-
-    def visit_switch_statement(self, n, **kwargs):
-        cond = self.get_children(self.get_children(n)[0])[0]
-        cond_id = self.add_cfg_node(cond)
-        self.add_edge_from_fringe_to(cond_id)
-        cases = self.get_children(self.get_children(n)[1])
-        default_was_hit = False
-        for case in cases:
-            while self.ast.nodes[case]["node_type"] != "case_statement":
-                if self.ast.nodes[case]["node_type"] == "labeled_statement":
-                    self.add_label_node(case)
-                    case = self.get_children(case)[1]
-                else:
-                    raise NotImplementedError(self.ast.nodes[case]["node_type"])
-            case_children = self.get_children(case)
-            case_attr = self.ast.nodes[case]
-            if len(self.get_children(case)) == 0:
-                continue
-            body_nodes = [
-                c
-                for c in case_children
-                if case_attr["body_begin"] <= self.ast.nodes[c]["child_idx"]
-            ]
-            if case_attr["is_default"]:
-                default_was_hit = True
-            case_text = self.ast.nodes[case]["code"]
-            case_text = case_text[: case_text.find(":") + 1]
-            # TODO: append previous cases with no body
-            self.fringe.append((cond_id, case_text))
-            for body_node in body_nodes:
-                should_continue = self.visit(body_node)
-                if should_continue == False:
-                    break
-        if not default_was_hit:
-            self.fringe.append((cond_id, "default:"))
-        self.fringe += [(n, "break") for n in self.break_fringe]
-        self.break_fringe = []
-
-    def visit_return_statement(self, n, **kwargs):
-        node_id = self.add_cfg_node(n)
-        self.add_edge_from_fringe_to(node_id)
-        self.visit_default(n, **kwargs)
-        # This is meant to skip adding subsequent statements to the CFG.
-        # TODO: consider how to handle this with goto statements.
-        return False
-
-    def visit_break_statement(self, n, **kwargs):
-        node_id = self.add_cfg_node(n)
-        self.add_edge_from_fringe_to(node_id)
-        self.break_fringe.append(node_id)
-        self.visit_default(n, **kwargs)
-        return False
-
-    def visit_continue_statement(self, n, **kwargs):
-        node_id = self.add_cfg_node(n)
-        self.add_edge_from_fringe_to(node_id)
-        self.continue_fringe.append(node_id)
-        self.visit_default(n, **kwargs)
-        return False
-
-    def visit_goto_statement(self, n, **kwargs):
-        node_id = self.add_cfg_node(n)
-        self.add_edge_from_fringe_to(node_id)
-        statement_identifier_attr = self.ast.nodes[self.get_children(n)[0]]
-        assert statement_identifier_attr["node_type"] == "statement_identifier"
-        self.gotos[statement_identifier_attr["code"]] = node_id
-        self.visit_default(n, **kwargs)
-
-    def add_label_node(self, n):
-        code = self.ast.nodes[n]["code"]
-        code = code[:code.find(":")+1]
-        node_id = self.add_cfg_node(n, code=code)
-        self.add_edge_from_fringe_to(node_id)
-        statement_identifier_attr = self.ast.nodes[self.get_children(n)[0]]
-        assert statement_identifier_attr["node_type"] == "statement_identifier"
-        self.labels[statement_identifier_attr["code"]] = node_id
-        self.fringe.append(node_id)
-
-    def visit_labeled_statement(self, n, **kwargs):
-        self.add_label_node(n)
-        self.visit_default(n, **kwargs)
+    def postprocess(self):
+        """Postprocess a CFG created using this visitor"""
+        for n in self.passes:
+            parents = list(self.parents(n))
+            children = list(self.children(n))
+            self.graph.remove_edges_from(list(self.graph.in_edges(n)) + list(self.graph.out_edges(n)))
+            for p in parents:
+                for c in children:
+                    self.add_child(p, c)
 
 
-def test():
-    code = """int a = 30;
+    def visualize(self, root):
+        """Visualize CFG using PyVis"""
+        COLOR_MAP = {
+            "branch": "green",
+            "loop": "red",
+            "jump": "pink",
+            "auxiliary": "purple",
+            None: "blue",
+        }
+        def map_color(node_type):
+            return COLOR_MAP.get(node_type) or "gray"
 
-struct foo {
-    int z;
-};
+        net = Network(directed=True, font_color="black")
 
-int main()
-{
-    int x = 0;
-    for (int i = 0; i < 10; i ++) {
-        x -= i;
+        def add_pyvis_node(n):
+            print("add node", hash(n))
+            net.add_node(hash(n), label=str(n),
+                        color=map_color(n.node_type),
+                        #  font_color="black",
+                        )
+            
+        visited = set()
+        def dfs(n):
+            add_pyvis_node(n)
+            edges = [(v, a) for u, v, a in self.graph.out_edges(n, data="annotation")]
+            for child, annotation in edges:
+                add_pyvis_node(child)
+                net.add_edge(hash(n), hash(child), label=annotation)
+                if child not in visited:
+                    visited.add(child)
+                    dfs(child)
+        dfs(root)
+        net.show("mygraph.html", notebook=False)
+
+
+if __name__ == "__main__":
+    parser = get_parser("c")
+    tree = parser.parse(b"""int main() {
+    x = 0;
+    if (x > 0) {
+        x += 15;
+        return x;
     }
-    x += 20;
-    switch (x) {
-        case 0:
-            x += 30;
-            break;
-        case 1:
-            x -= 1;
-        case 2:
-            x -= a;
-            break;
-        default:
-            return -2;
-    }
-    while (x > 10) {
-        x -= 5;
-    }
-    do {
-        x -= 5;
-    } while (x > 0);
-    return x;
-}
+    else
+        for (int i = 0; i < 10; i ++) {
+            x += i;
+            if (x)
+                continue;
+            x -= i;
+        }
+    return x + 10
+}""")
 
-struct foo;
-"""
-    tree = c_parser.parse(bytes(code, "utf8"))
-
-    fig, ax = plt.subplots(2)
-    ast = ASTCreator.make_ast(tree.root_node)
-    pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
-    nx.draw(
-        ast,
-        pos=pos,
-        labels={n: attr["label"] for n, attr in ast.nodes(data=True)},
-        with_labels=True,
-        ax=ax[0],
-    )
-
-    cfg = CFGCreator.make_cfg(ast)
-    pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog="dot")
-    nx.draw(
-        cfg,
-        pos=pos,
-        labels={n: attr["label"] for n, attr in cfg.nodes(data=True)},
-        with_labels=True,
-        ax=ax[1],
-    )
-    nx.draw_networkx_edge_labels(
-        cfg,
-        pos=pos,
-        edge_labels={
-            (u, v): attr.get("label", "") for (u, v, attr) in cfg.edges(data=True)
-        },
-        ax=ax[1],
-    )
-    plt.show()
+    visitor = CfgVisitor()
+    cfg_entry, cfg_exit = visitor.visit(tree.root_node)
+    visitor.postprocess()
+    visitor.visualize(cfg_entry)
