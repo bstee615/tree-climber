@@ -89,14 +89,6 @@ class CfgVisitor:
                 -T-> update -/
         """
 
-        # TODO: switch
-        # TODO: while
-        # TODO: do while
-        # TODO: goto
-        # C++
-        # TODO: try/catch
-        # TODO: range for
-        # TODO: class, struct
         if node.type == "if_statement":
             condition = node.child_by_field_name("condition")
             condition_cfg = CfgNode(condition, node_type="branch")

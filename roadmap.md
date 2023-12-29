@@ -5,6 +5,7 @@
     * [ ] Parse Linux kernel.
     * [ ] Parse Big-Vul dataset https://github.com/ZeoVan/MSR_20_Code_vulnerability_CSV_Dataset.
 * [ ] Handle multiple files and functions correctly. Currently, we have only verified correct procedure when the program is a single function.
+* [x] Rewrite for easier continued development
 * [x] PDG (def-use graph)
 
 ## C language features
@@ -19,4 +20,14 @@ https://en.cppreference.com/w/c
 * [ ] expressions inside statements, such as `if ((i = 0) == 0)`
 * [ ] variadic functions
 * [ ] global variables
+* [ ] switch
+* [ ] while
+* [ ] do while
+* [ ] goto
 * [x] goto and labels
+
+## C++ language features
+
+* [ ] try/catch
+* [ ] range for
+* [ ] class, struct
