@@ -2,7 +2,7 @@ from pathlib import Path
 from .cfg_creator import CfgVisitor, visualize_cfg
 from .ast_creator import AstVisitor, visualize_ast
 from .dataflow.def_use import make_duc, visualize_duc
-from .export.cpg import make_cpg, visualize_cpg
+from .views.cpg import make_cpg, visualize_cpg
 import argparse
 from tree_sitter_languages import get_parser
 from .analysis.bug_detection import detect_bugs
