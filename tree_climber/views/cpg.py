@@ -13,9 +13,11 @@ BLUE = "#5dade2"
 DARK_BLUE = "#2874a6"
 RED = "#FF5733"
 DARK_RED = "#C70039"
+DARK_GREEN = "#196f3d"
 EDGE_COLOR = {
     "CFG": DARK_RED,
     "AST": DARK_BLUE,
+    "DUC": DARK_GREEN,
 }
 
 
@@ -43,10 +45,16 @@ def make_cpg(ast, cfg, duc):
         node_colors[u] = {"background": RED, "border": DARK_RED, "highlight": {"background": RED, "border": DARK_RED}, "hover": {"background": RED, "border": DARK_RED}}
         node_colors[v] = {"background": RED, "border": DARK_RED, "highlight": {"background": RED, "border": DARK_RED}, "hover": {"background": RED, "border": DARK_RED}}
         cpg.add_edge(u, v, key="CFG", **d)
+        
+    for u, v, d in duc.edges(data=True):
+        if isinstance(u.ast_node, Node):
+            u = ast_nodes[u.ast_node.id]
+        if isinstance(v.ast_node, Node):
+            v = ast_nodes[v.ast_node.id]
+        cpg.add_edge(u, v, key="DUC", **d)
+
     nx.set_node_attributes(cpg, node_colors, name="color")
     cpg = concretize_graph(cpg)
-
-    # TODO add DUC pointing at CFG nodes
 
     return cpg
 
