@@ -2,7 +2,11 @@ from tree_sitter_languages import get_parser
 from pyvis.network import Network
 
 
+# TODO update to use networkx
+
+
 class CfgNode:
+    """Represents a node in the CFG."""
     def __init__(self, ast_node, node_type=None):
         self.parents = []
         self.children = []
@@ -46,6 +50,7 @@ class CfgNode:
 
 
 class CfgSubgraph(CfgNode):
+    """Represents a subgraph (group of connected nodes) in the CFG."""
     def __init__(self, begin, end):
         self.begin = begin
         self.end = end
@@ -60,7 +65,6 @@ class CfgSubgraph(CfgNode):
         
         if child in parent.children:
             assert parent in child.parents
-            print("SKIPPING", parent, child)
             return
 
         assert type(parent) == CfgNode, type(parent)
@@ -78,6 +82,8 @@ def is_cfg_statement(ast_node):
 
 
 class CfgVisitor:
+    """Walks the AST to create a CFG."""
+    
     def __init__(self):
         self.return_statements = []
         self.break_statements = []
@@ -86,6 +92,7 @@ class CfgVisitor:
         self.passes = []
 
     def fork(self):
+        """Fork this visitor to walk a subgraph of the CFG"""
         visitor = CfgVisitor()
         visitor.return_statements = self.return_statements
         visitor.break_statements = self.break_statements
@@ -98,20 +105,28 @@ class CfgVisitor:
         """
         Convert a single node as the root to a subgraph in the CFG.
         Return two nodes, one root and one "tail", lowest point in the CFG.
-        For subgraphs which terminate in multiple nodes, point all to a "pass-through" node which will be post-processed.
+        For subgraphs which terminate in multiple nodes, point all to a "pass-through" node which will be post-processed out.
 
         Compound statements:
         a -> b -> c ; return (a, c)
 
         If statements:
         cond -T-> a -> pass ; return (cond, pass)
-            -F-> b -/
+             -F-> b -/
         
         Loops:
         init -> c....o....n....d -F-> pass ; return (init, pass)
                 -T-> update -/
         """
 
+        # TODO: switch
+        # TODO: while
+        # TODO: do while
+        # TODO: goto
+        # C++
+        # TODO: try/catch
+        # TODO: range for
+        # TODO: class, struct
         if node.type == "if_statement":
             condition = node.child_by_field_name("condition")
             condition_cfg = CfgNode(condition, node_type="branch")
@@ -215,6 +230,7 @@ class CfgVisitor:
         return cfg_node
 
     def postprocess(self):
+        """Postprocess a CFG created using this visitor"""
         for n in self.subgraphs:
             begin = n.begin
             while isinstance(begin, CfgSubgraph):
@@ -235,7 +251,6 @@ class CfgVisitor:
             children = n.children
             for p in parents:
                 p.children.remove(n)
-                # print("CHILDREN", p.children, children)
                 p.children.extend(children)
             for c in children:
                 c.parents.remove(n)
@@ -243,6 +258,7 @@ class CfgVisitor:
 
 
 def visualize(cfg):
+    """Visualize CFG using PyVis"""
     COLOR_MAP = {
         "branch": "green",
         "loop": "red",
@@ -263,7 +279,6 @@ def visualize(cfg):
         
     visited = set()
     def dfs(n):
-        print("Graph-izing", n, n.children)
         add_pyvis_node(n)
         for child, annotation in zip(n.children, n.child_annotations):
             add_pyvis_node(child)
@@ -273,6 +288,11 @@ def visualize(cfg):
                 dfs(child)
     dfs(cfg.begin)
     net.show("mygraph.html", notebook=False)
+
+
+# def to_nx():
+#     # TODO
+#     pass
 
 
 if __name__ == "__main__":
