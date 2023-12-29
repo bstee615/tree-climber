@@ -198,10 +198,21 @@ class CfgVisitor:
         for n in self.passes:
             parents = list(self.parents(n))
             children = list(self.children(n))
-            self.graph.remove_edges_from(list(self.graph.in_edges(n)) + list(self.graph.out_edges(n)))
+            
+            in_edges = list(self.graph.in_edges(n, data=True))
+            in_edge_data = [d for u, v, d in in_edges]
+            assert all(in_edge_data[0] == d for d in in_edge_data), in_edge_data
+            
+            out_edges = list(self.graph.out_edges(n, data=True))
+            out_edge_data = [d for u, v, d in out_edges]
+            assert all(out_edge_data[0] == d for d in out_edge_data), out_edge_data
+            
+            data = {**in_edge_data[0], **out_edge_data[0]}
+
+            self.graph.remove_edges_from(in_edges + out_edges)
             for p in parents:
                 for c in children:
-                    self.add_child(p, c)
+                    self.add_child(p, c, **data)
 
 
     def visualize(self, root):
