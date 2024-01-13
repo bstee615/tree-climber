@@ -22,7 +22,7 @@ https://en.cppreference.com/w/c
 * [ ] global variables
 * [ ] switch
 * [x] while
-* [ ] do while
+* [x] do while
 * [ ] goto
 * [x] goto and labels
 

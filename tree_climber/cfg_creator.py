@@ -164,6 +164,30 @@ class CfgVisitor:
             self.add_child(cond_cfg, pass_cfg, label="false")
 
             return cond_cfg, pass_cfg
+        elif node.type == "do_statement":
+            condition = node.child_by_field_name("condition")
+            body = node.child_by_field_name("body")
+
+            cond_cfg = CfgNode(condition, node_type="loop")
+            fork = self.fork()
+            fork.break_statements = []
+            fork.continue_statements = []
+            body_entry, body_exit = fork.visit(body)
+            pass_cfg = CfgNode("pass")
+            self.passes.append(pass_cfg)
+
+            for break_cfg in fork.break_statements:
+                self.remove_children(break_cfg)
+                self.add_child(break_cfg, pass_cfg)
+            for continue_cfg in fork.continue_statements:
+                self.remove_children(continue_cfg)
+                self.add_child(continue_cfg, update_cfg)
+
+            self.add_child(body_exit, cond_cfg)
+            self.add_child(cond_cfg, body_entry, label="true")
+            self.add_child(cond_cfg, pass_cfg, label="false")
+
+            return body_entry, pass_cfg
         elif node.type == "function_definition":
             entry_cfg = CfgNode("entry", node_type="auxiliary")
             body = node.child_by_field_name("body")
@@ -255,6 +279,9 @@ if __name__ == "__main__":
     while (x) {
         x --;
     }
+    do {
+        x --;
+    } while (x);
                         
     return x + 10
 }""")
