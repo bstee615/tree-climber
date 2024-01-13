@@ -126,15 +126,27 @@ class CfgVisitor:
             fork.break_statements = []
             fork.continue_statements = []
 
+            last_cfg_exit = None
             body = node.child_by_field_name("body")
             children = [c for c in body.children if c.is_named and not c.type == "comment"]
             for case_stmt in children:
                 case_cond = case_stmt.child_by_field_name("value")
                 case_cond_text = case_cond.text.decode()
-                case_body = next(c for c in case_stmt.children if c.id != case_cond.id and c.is_named and not c.type == "comment")
-                case_entry, case_exit = fork.visit(case_body)
-                self.add_child(condition_cfg, case_entry, label=case_cond_text)
-                self.add_child(case_exit, pass_cfg)
+                parent_cfg = condition_cfg
+                for child in case_stmt.children:
+                    if child.id != case_cond.id and child.is_named and not child.type == "comment":
+                        child_entry, child_exit = fork.visit(child)
+                        self.add_child(parent_cfg, child_entry, label=case_cond_text)
+                        case_cond_text = None
+                        parent_cfg = child_exit
+                        if last_cfg_exit is not None:
+                            self.add_child(last_cfg_exit, child_entry)
+                            last_cfg_exit = None
+                last_cfg_exit = child_exit
+
+            for break_cfg in fork.break_statements:
+                self.remove_children(break_cfg)
+                self.add_child(break_cfg, pass_cfg)
 
             return condition_cfg, pass_cfg
         elif node.type == "for_statement":
@@ -392,12 +404,12 @@ int main(int argc, char **argv) {
     switch (x) {
         case 0:
             x += 10;
-            break;
+            if (x > 10) break;
         case 10:
             x -= 10;
             break;
     }
-                        
+
 end:
     return x + 10
 }
