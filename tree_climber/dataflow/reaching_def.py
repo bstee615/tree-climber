@@ -14,7 +14,6 @@ def get_definition(ast_node):
         yield from get_definition(ast_node.child_by_field_name("left"))
         yield from get_definition(ast_node.child_by_field_name("right"))
     elif ast_node.type == "parenthesized_expression":
-        print("DEBUG:", named_children(ast_node)[0])
         yield from get_definition(named_children(ast_node)[0])
     elif ast_node.type == "pointer_declarator":
         yield from get_definition(named_children(ast_node)[1])

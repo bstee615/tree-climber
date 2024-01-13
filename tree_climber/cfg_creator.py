@@ -35,7 +35,8 @@ class CfgNode:
 
 def is_cfg_statement(ast_node):
     """Return true if this node is a CFG statement."""
-    return ast_node.type.endswith("_statement") and not ast_node.type == "compound_statement"
+    return (ast_node.type.endswith("_statement") and not ast_node.type == "compound_statement") \
+        or ast_node.type in ["declaration"]
 
 
 class CfgVisitor:
