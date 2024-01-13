@@ -110,6 +110,28 @@ class CfgVisitor:
             self.add_child(true_cfg_exit, pass_cfg)
 
             return condition_cfg, pass_cfg
+        if node.type == "switch_statement":
+            condition = node.child_by_field_name("condition")
+            condition_cfg = CfgNode(condition, node_type="branch")
+
+            pass_cfg = CfgNode("pass")
+            self.passes.append(pass_cfg)
+
+            fork = self.fork()
+            fork.break_statements = []
+            fork.continue_statements = []
+
+            body = node.child_by_field_name("body")
+            children = [c for c in body.children if c.is_named]
+            for case_stmt in children:
+                case_cond = case_stmt.child_by_field_name("value")
+                case_cond_text = case_cond.text.decode()
+                case_body = next(c for c in case_stmt.children if c.id != case_cond.id and c.is_named)
+                case_entry, case_exit = fork.visit(case_body)
+                self.add_child(condition_cfg, case_entry, label=case_cond_text)
+                self.add_child(case_exit, pass_cfg)
+
+            return condition_cfg, pass_cfg
         elif node.type == "for_statement":
             initializer = node.child_by_field_name("initializer")
             condition = node.child_by_field_name("condition")
@@ -282,6 +304,15 @@ if __name__ == "__main__":
     do {
         x --;
     } while (x);
+                        
+    switch (x) {
+        case 0:
+            x += 10;
+            break;
+        case 10:
+            x -= 10;
+            break;
+    }
                         
     return x + 10
 }""")
