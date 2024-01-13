@@ -12,13 +12,16 @@
 
 https://en.cppreference.com/w/c
 
-### Definitions/types
+### Types and non-executable constructs
 
 * [ ] preprocessor macros
 * [ ] headers
 * [ ] structs
 * [ ] custom typedefs
-* [ ] variadic functions
+
+### Function definitions
+
+* [x] variadic functions
 * [x] function parameters
 
 ### Executable statements
