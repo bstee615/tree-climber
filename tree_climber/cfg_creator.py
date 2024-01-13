@@ -324,7 +324,7 @@ if __name__ == "__main__":
     parser = get_parser("c")
     tree = parser.parse(b"""int main() {
     x = 0;
-    if (x > 0) {
+    if ((i = 0) == 0) {
         x += 15;
     }
     else

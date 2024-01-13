@@ -1,22 +1,33 @@
 from tree_climber.dataflow.dataflow_solver import DataflowSolver
 from tree_sitter import Node
+from collections import defaultdict
+
+
+def named_children(node):
+    return [child for child in node.children if child.is_named and child.type != "comment"]
 
 
 def get_definition(ast_node):
     if ast_node.type == "identifier":
-        return ast_node.text.decode()
+        yield ast_node.text.decode()
+    elif ast_node.type == "binary_expression":
+        yield from get_definition(ast_node.child_by_field_name("left"))
+        yield from get_definition(ast_node.child_by_field_name("right"))
+    elif ast_node.type == "parenthesized_expression":
+        print("DEBUG:", named_children(ast_node)[0])
+        yield from get_definition(named_children(ast_node)[0])
     elif ast_node.type == "pointer_declarator":
-        return get_definition(ast_node.children[1])
+        yield from get_definition(named_children(ast_node)[1])
     elif ast_node.type == "init_declarator":
-        return get_definition(ast_node.children[0])
+        yield from get_definition(named_children(ast_node)[0])
     elif ast_node.type == "declaration":
-        return get_definition(ast_node.children[1])
+        yield from get_definition(named_children(ast_node)[1])
     elif ast_node.type == "assignment_expression":
-        return get_definition(ast_node.children[0])
+        yield from get_definition(named_children(ast_node)[0])
     elif ast_node.type == "update_expression":
-        return get_definition(ast_node.children[0])
+        yield from get_definition(named_children(ast_node)[0])
     elif ast_node.type == "expression_statement":
-        return get_definition(ast_node.children[0])
+        yield from get_definition(named_children(ast_node)[0])
     return None
 
 
@@ -29,7 +40,7 @@ class ReachingDefinitionSolver(DataflowSolver):
     def __init__(self, cfg, verbose=0):
         super().__init__(cfg, verbose)
 
-        node2def = {}
+        node2defs = defaultdict(list)
         def2node = {}
         id2def = {}
         def2id = {}
@@ -38,9 +49,9 @@ class ReachingDefinitionSolver(DataflowSolver):
         for n in cfg.nodes():
             ast_node = n.ast_node
             if isinstance(ast_node, Node):
-                _id = get_definition(ast_node)
-                if _id is not None:
-                    node2def[n] = def_idx
+                _ids = get_definition(ast_node)
+                for _id in _ids:
+                    node2defs[n].append(def_idx)
                     def2node[def_idx] = n
 
                     if _id not in id2def:
@@ -51,34 +62,35 @@ class ReachingDefinitionSolver(DataflowSolver):
 
                     def_idx += 1
         if verbose >= 1:
-            print("node2def", node2def)
+            print("node2defs", node2defs)
             print("def2node", def2node)
             print("id2def", id2def)
             print("def2id", def2id)
             print("def2code", def2code)
-        self.node2def = node2def
+        self.node2defs = node2defs
         self.def2node = def2node
         self.id2def = id2def
         self.def2id = def2id
         self.def2code = def2code
 
     def gen(self, n) -> set:
-        if n in self.node2def:
-            d = self.node2def[n]
+        if n in self.node2defs:
+            defs = self.node2defs[n]
             if self.verbose >= 2:
-                print("gen", n, d)
-            return {d}
+                print("gen", n, defs)
+            return set(defs)
         else:
             return set()
 
     def kill(self, n) -> set:
-        if n in self.node2def:
-            d = self.node2def[n]
-            if d in self.def2id:
-                i = self.def2id[d]
-                if i in self.id2def:
-                    if self.verbose >= 2:
-                        print("kill", n, self.id2def[i])
-                    return self.id2def[i]
+        if n in self.node2defs:
+            defs = self.node2defs[n]
+            for d in defs:
+                if d in self.def2id:
+                    i = self.def2id[d]
+                    if i in self.id2def:
+                        if self.verbose >= 2:
+                            print("kill", n, self.id2def[i])
+                        return self.id2def[i]
         else:
             return set()

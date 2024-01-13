@@ -70,7 +70,7 @@ def make_duc(cfg, verbose=0):
                     duc.add_edge(
                         def_node,
                         use_node,
-                        label=str(solver.def2id[solver.node2def[def_node]]),
+                        label=str(",".join(solver.def2id[d] for d in solver.node2defs[def_node] if solver.def2id[d] in used_ids)),
                     )
     duc.remove_nodes_from([n for n in duc.nodes() if n.node_type == "auxiliary"])
     return duc
@@ -79,3 +79,24 @@ def visualize_duc(duc, fpath):
     net = Network(directed=True)
     net.from_nx(concretize_graph(duc))
     net.show(fpath, notebook=False)
+
+if __name__ == "__main__":
+    from tree_sitter_languages import get_parser
+    parser = get_parser("c")
+    tree = parser.parse(b"""int main() {
+    int x = 0;
+    if ((x = 10 == 10) && ((y = 5) == 5)) {
+        x += 10;
+        y -= x;
+        return x + y;
+    }
+    return x - 10;
+}""")
+
+    from tree_climber.cfg_creator import CfgVisitor
+    visitor = CfgVisitor()
+    cfg_entry, cfg_exit = visitor.visit(tree.root_node)
+    visitor.postprocess()
+    cfg = visitor.graph
+    duc = make_duc(cfg)
+    visualize_duc(duc, "test_duc.html")

@@ -12,14 +12,19 @@
 
 https://en.cppreference.com/w/c
 
+### Definitions/types
+
 * [ ] preprocessor macros
 * [ ] headers
 * [ ] function parameters
 * [ ] structs
 * [ ] custom typedefs
-* [ ] expressions inside statements, such as `if ((i = 0) == 0)`
 * [ ] variadic functions
+
+### Executable statements
+
 * [ ] global variables
+* [x] expressions inside statements, such as `if ((i = 0) == 0)`
 * [x] goto
 * [x] switch
 * [x] while
