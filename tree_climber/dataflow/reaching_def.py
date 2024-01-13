@@ -13,20 +13,10 @@ def get_definition(ast_node):
     elif ast_node.type == "binary_expression":
         yield from get_definition(ast_node.child_by_field_name("left"))
         yield from get_definition(ast_node.child_by_field_name("right"))
-    elif ast_node.type == "parenthesized_expression":
+    elif ast_node.type in ["parenthesized_expression", "init_declarator", "assignment_expression", "update_expression", "expression_statement"]:
         yield from get_definition(named_children(ast_node)[0])
-    elif ast_node.type == "pointer_declarator":
+    elif ast_node.type in ["pointer_declarator", "declaration", "parameter_declaration"]:
         yield from get_definition(named_children(ast_node)[1])
-    elif ast_node.type == "init_declarator":
-        yield from get_definition(named_children(ast_node)[0])
-    elif ast_node.type == "declaration":
-        yield from get_definition(named_children(ast_node)[1])
-    elif ast_node.type == "assignment_expression":
-        yield from get_definition(named_children(ast_node)[0])
-    elif ast_node.type == "update_expression":
-        yield from get_definition(named_children(ast_node)[0])
-    elif ast_node.type == "expression_statement":
-        yield from get_definition(named_children(ast_node)[0])
     return None
 
 

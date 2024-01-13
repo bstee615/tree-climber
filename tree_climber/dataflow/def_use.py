@@ -83,8 +83,7 @@ def visualize_duc(duc, fpath):
 if __name__ == "__main__":
     from tree_sitter_languages import get_parser
     parser = get_parser("c")
-    tree = parser.parse(b"""int main() {
-    int x = 0;
+    tree = parser.parse(b"""int main(int x) {
     if ((x = 10 == 10) && ((y = 5) == 5)) {
         x += 10;
         y -= x;

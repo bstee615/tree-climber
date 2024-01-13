@@ -16,10 +16,10 @@ https://en.cppreference.com/w/c
 
 * [ ] preprocessor macros
 * [ ] headers
-* [ ] function parameters
 * [ ] structs
 * [ ] custom typedefs
 * [ ] variadic functions
+* [x] function parameters
 
 ### Executable statements
 

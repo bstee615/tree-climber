@@ -36,7 +36,7 @@ class CfgNode:
 def is_cfg_statement(ast_node):
     """Return true if this node is a CFG statement."""
     return (ast_node.type.endswith("_statement") and not ast_node.type == "compound_statement") \
-        or ast_node.type in ["declaration"]
+        or ast_node.type in ["declaration", "parameter_declaration"]
 
 
 class CfgVisitor:
@@ -217,6 +217,11 @@ class CfgVisitor:
             return body_entry, pass_cfg
         elif node.type == "function_definition":
             entry_cfg = CfgNode("entry", node_type="auxiliary")
+            parent_cfg = entry_cfg
+            for param in [c for c in node.child_by_field_name("declarator").child_by_field_name("parameters").children if c.is_named and c.type != "comment"]:
+                param_cfg = CfgNode(param)
+                self.add_child(parent_cfg, param_cfg)
+                parent_cfg = param_cfg
             body = node.child_by_field_name("body")
             fork = self.fork()
             fork.return_statements = []
@@ -227,7 +232,7 @@ class CfgVisitor:
                 self.remove_children(return_cfg)
                 self.add_child(return_cfg, exit_cfg)
 
-            self.add_child(entry_cfg, body_entry)
+            self.add_child(parent_cfg, body_entry)
             self.add_child(body_exit, exit_cfg)
             return entry_cfg, exit_cfg
         elif node.type == "labeled_statement":
@@ -323,7 +328,7 @@ def visualize_cfg(cfg, fpath):
 
 if __name__ == "__main__":
     parser = get_parser("c")
-    tree = parser.parse(b"""int main() {
+    tree = parser.parse(b"""int main(int argc, char **argv) {
     x = 0;
     if ((i = 0) == 0) {
         x += 15;
