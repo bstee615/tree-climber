@@ -45,6 +45,8 @@ class CfgVisitor:
         self.return_statements = []
         self.break_statements = []
         self.continue_statements = []
+        self.goto_statements = []
+        self.labeled_statements = []
         self.passes = []
 
         self.graph = nx.DiGraph()
@@ -55,6 +57,8 @@ class CfgVisitor:
         visitor.return_statements = self.return_statements
         visitor.break_statements = self.break_statements
         visitor.continue_statements = self.continue_statements
+        visitor.goto_statements = self.goto_statements
+        visitor.labeled_statements = self.labeled_statements
         visitor.passes = self.passes
         visitor.graph = self.graph
         return visitor
@@ -225,6 +229,25 @@ class CfgVisitor:
             self.add_child(entry_cfg, body_entry)
             self.add_child(body_exit, exit_cfg)
             return entry_cfg, exit_cfg
+        elif node.type == "labeled_statement":
+            label = node.child_by_field_name("label")
+            label_text = label.text.decode()
+
+            children = [child for child in node.children if child.id != label.id and child.is_named and not child.type == "comment"]
+            cfg_begin = None
+            cfg_end = None
+            last_cfg_exit = None
+            for child in children:
+                cfg_entry, cfg_exit = self.visit(child)
+                if last_cfg_exit is not None:
+                    self.add_child(last_cfg_exit, cfg_entry)
+                if cfg_begin is None:
+                    cfg_begin = cfg_entry
+                cfg_end = last_cfg_exit = cfg_exit
+            
+            self.labeled_statements.append((cfg_begin, label_text))
+                
+            return cfg_begin, cfg_end
         elif node.type in ("translation_unit", "compound_statement"):
             children = [child for child in node.children if child.is_named and not child.type == "comment"]
             cfg_begin = None
@@ -245,11 +268,15 @@ class CfgVisitor:
             if node.type == "break_statement":
                 self.break_statements.append(cfg_node)
                 cfg_node.node_type = "jump"
-            if node.type == "continue_statement":
+            elif node.type == "continue_statement":
                 self.continue_statements.append(cfg_node)
                 cfg_node.node_type = "jump"
-            if node.type == "return_statement":
+            elif node.type == "return_statement":
                 self.return_statements.append(cfg_node)
+                cfg_node.node_type = "jump"
+            elif node.type == "goto_statement":
+                label = node.child_by_field_name("label").text.decode()
+                self.goto_statements.append((cfg_node, label))
                 cfg_node.node_type = "jump"
             return cfg_node, cfg_node
         else:
@@ -257,6 +284,12 @@ class CfgVisitor:
 
     def postprocess(self):
         """Postprocess a CFG created using this visitor"""
+        for goto_cfg, label in self.goto_statements:
+            # TODO handle duplicate labels
+            label_cfg = next(stmt for stmt, l in self.labeled_statements if l == label)
+            self.remove_children(goto_cfg)
+            self.add_child(goto_cfg, label_cfg)
+
         for n in self.passes:
             parents = list(self.parents(n))
             children = list(self.children(n))
@@ -300,6 +333,9 @@ if __name__ == "__main__":
     
     while (x) {
         x --;
+        if (y) {
+            goto end;
+        }
     }
     do {
         x --;
@@ -314,6 +350,7 @@ if __name__ == "__main__":
             break;
     }
                         
+end:
     return x + 10
 }""")
 

@@ -20,7 +20,7 @@ https://en.cppreference.com/w/c
 * [ ] expressions inside statements, such as `if ((i = 0) == 0)`
 * [ ] variadic functions
 * [ ] global variables
-* [ ] goto
+* [x] goto
 * [x] switch
 * [x] while
 * [x] do while
