@@ -21,7 +21,7 @@ https://en.cppreference.com/w/c
 * [ ] variadic functions
 * [ ] global variables
 * [ ] switch
-* [ ] while
+* [x] while
 * [ ] do while
 * [ ] goto
 * [x] goto and labels
