@@ -10,6 +10,7 @@ int main() {
             if (x)
                 continue;
             x -= i;
+            break;
         }
     return x + 10
 }

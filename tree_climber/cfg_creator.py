@@ -165,18 +165,18 @@ class CfgVisitor:
             pass_cfg = CfgNode("pass")
             self.passes.append(pass_cfg)
 
+            self.add_child(init_cfg, cond_cfg)
+            self.add_child(cond_cfg, stmt_entry, label="TRUE")
+            self.add_child(stmt_exit, update_cfg)
+            self.add_child(update_cfg, cond_cfg)
+            self.add_child(cond_cfg, pass_cfg, label="FALSE")
+
             for break_cfg in fork.break_statements:
                 self.remove_children(break_cfg)
                 self.add_child(break_cfg, pass_cfg)
             for continue_cfg in fork.continue_statements:
                 self.remove_children(continue_cfg)
                 self.add_child(continue_cfg, update_cfg)
-
-            self.add_child(init_cfg, cond_cfg)
-            self.add_child(cond_cfg, stmt_entry, label="TRUE")
-            self.add_child(stmt_exit, update_cfg)
-            self.add_child(update_cfg, cond_cfg)
-            self.add_child(cond_cfg, pass_cfg, label="FALSE")
 
             return init_cfg, pass_cfg
         elif node.type == "while_statement":
@@ -191,16 +191,16 @@ class CfgVisitor:
             pass_cfg = CfgNode("pass")
             self.passes.append(pass_cfg)
 
+            self.add_child(cond_cfg, body_entry, label="TRUE")
+            self.add_child(body_exit, cond_cfg)
+            self.add_child(cond_cfg, pass_cfg, label="FALSE")
+
             for break_cfg in fork.break_statements:
                 self.remove_children(break_cfg)
                 self.add_child(break_cfg, pass_cfg)
             for continue_cfg in fork.continue_statements:
                 self.remove_children(continue_cfg)
                 self.add_child(continue_cfg, update_cfg)
-
-            self.add_child(cond_cfg, body_entry, label="TRUE")
-            self.add_child(body_exit, cond_cfg)
-            self.add_child(cond_cfg, pass_cfg, label="FALSE")
 
             return cond_cfg, pass_cfg
         elif node.type == "do_statement":
@@ -215,16 +215,16 @@ class CfgVisitor:
             pass_cfg = CfgNode("pass")
             self.passes.append(pass_cfg)
 
+            self.add_child(body_exit, cond_cfg)
+            self.add_child(cond_cfg, body_entry, label="TRUE")
+            self.add_child(cond_cfg, pass_cfg, label="FALSE")
+
             for break_cfg in fork.break_statements:
                 self.remove_children(break_cfg)
                 self.add_child(break_cfg, pass_cfg)
             for continue_cfg in fork.continue_statements:
                 self.remove_children(continue_cfg)
                 self.add_child(continue_cfg, update_cfg)
-
-            self.add_child(body_exit, cond_cfg)
-            self.add_child(cond_cfg, body_entry, label="TRUE")
-            self.add_child(cond_cfg, pass_cfg, label="FALSE")
 
             return body_entry, pass_cfg
         elif node.type == "function_definition":
