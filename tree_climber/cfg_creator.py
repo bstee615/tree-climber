@@ -126,11 +126,11 @@ class CfgVisitor:
             fork.continue_statements = []
 
             body = node.child_by_field_name("body")
-            children = [c for c in body.children if c.is_named]
+            children = [c for c in body.children if c.is_named and not c.type == "comment"]
             for case_stmt in children:
                 case_cond = case_stmt.child_by_field_name("value")
                 case_cond_text = case_cond.text.decode()
-                case_body = next(c for c in case_stmt.children if c.id != case_cond.id and c.is_named)
+                case_body = next(c for c in case_stmt.children if c.id != case_cond.id and c.is_named and not c.type == "comment")
                 case_entry, case_exit = fork.visit(case_body)
                 self.add_child(condition_cfg, case_entry, label=case_cond_text)
                 self.add_child(case_exit, pass_cfg)
