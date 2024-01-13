@@ -254,8 +254,9 @@ class CfgVisitor:
             self.labeled_statements.append((cfg_begin, label_text))
                 
             return cfg_begin, cfg_end
-        elif node.type in ("translation_unit", "compound_statement"):
+        elif node.type == "compound_statement":
             children = [child for child in node.children if child.is_named and not child.type == "comment"]
+
             cfg_begin = None
             cfg_end = None
             last_cfg_exit = None
@@ -268,6 +269,35 @@ class CfgVisitor:
                 cfg_end = last_cfg_exit = cfg_exit
                 
             return cfg_begin, cfg_end
+        elif node.type in ("translation_unit", "compound_statement"):
+            children = [child for child in node.children if child.is_named and not child.type == "comment"]
+
+            globals = [child for child in children if child.type != "function_definition"]
+            functions = [child for child in children if child.type == "function_definition"]
+            pass_cfg = CfgNode("pass")
+            self.passes.append(pass_cfg)
+            
+            if len(globals) > 0:
+                cfg_begin = None
+                cfg_end = None
+                last_cfg_exit = None
+                for child in globals:
+                    cfg_entry, cfg_exit = self.visit(child)
+                    if last_cfg_exit is not None:
+                        self.add_child(last_cfg_exit, cfg_entry)
+                    if cfg_begin is None:
+                        cfg_begin = cfg_entry
+                    cfg_end = last_cfg_exit = cfg_exit
+            else:
+                cfg_begin = cfg_end = CfgNode("pass")
+                self.passes.append(cfg_begin)
+                
+            for child in functions:
+                cfg_entry, cfg_exit = self.visit(child)
+                self.add_child(cfg_end, cfg_entry)
+                self.add_child(cfg_exit, pass_cfg)
+
+            return cfg_begin, pass_cfg
         elif is_cfg_statement(node):
             cfg_node = CfgNode(node)
             self.graph.add_node(cfg_node)
@@ -301,16 +331,22 @@ class CfgVisitor:
             children = list(self.children(n))
             
             in_edges = list(self.graph.in_edges(n, data=True))
-            in_edge_data = in_edges[0][2]
-            mismatched_nodes = [(u, v, d) for u, v, d in in_edges if in_edge_data != d]
-            if any(mismatched_nodes):
-                print("WARNING: Mismatched in data", mismatched_nodes, in_edges[0])
+            if len(in_edges) > 0:
+                in_edge_data = in_edges[0][2]
+                mismatched_nodes = [(u, v, d) for u, v, d in in_edges if in_edge_data != d]
+                if any(mismatched_nodes):
+                    print("WARNING: Mismatched in data", mismatched_nodes, in_edges[0])
+            else:
+                in_edge_data = {}
             
             out_edges = list(self.graph.out_edges(n, data=True))
-            out_edge_data = out_edges[0][2]
-            mismatched_nodes = [(u, v, d) for u, v, d in out_edges if out_edge_data != d]
-            if any(mismatched_nodes):
-                print("WARNING: Mismatched out data", mismatched_nodes, out_edges[0])
+            if len(out_edges) > 0:
+                out_edge_data = out_edges[0][2]
+                mismatched_nodes = [(u, v, d) for u, v, d in out_edges if out_edge_data != d]
+                if any(mismatched_nodes):
+                    print("WARNING: Mismatched out data", mismatched_nodes, out_edges[0])
+            else:
+                out_edge_data = {}
             
             data = {**in_edge_data, **out_edge_data}
 
@@ -328,7 +364,9 @@ def visualize_cfg(cfg, fpath):
 
 if __name__ == "__main__":
     parser = get_parser("c")
-    tree = parser.parse(b"""int main(int argc, char **argv) {
+    tree = parser.parse(b"""int GLOBAL = 0;
+                        
+int main(int argc, char **argv) {
     x = 0;
     if ((i = 0) == 0) {
         x += 15;
@@ -336,7 +374,7 @@ if __name__ == "__main__":
     else
         for (int i = 0; i < 10; i ++) {
             x += i;
-            if (x)
+            if (GLOBAL)
                 continue;
             x -= i;
         }
@@ -348,7 +386,7 @@ if __name__ == "__main__":
         }
     }
     do {
-        x --;
+        GLOBAL2 --;
     } while (x);
                         
     switch (x) {
@@ -362,7 +400,14 @@ if __name__ == "__main__":
                         
 end:
     return x + 10
-}""")
+}
+                        
+void func2(int a) {
+    return a + 100;
+}
+
+int GLOBAL2 = 0;                        
+""")
 
     visitor = CfgVisitor()
     cfg_entry, cfg_exit = visitor.visit(tree.root_node)

@@ -23,7 +23,7 @@ https://en.cppreference.com/w/c
 
 ### Executable statements
 
-* [ ] global variables
+* [x] global variables
 * [x] expressions inside statements, such as `if ((i = 0) == 0)`
 * [x] goto
 * [x] switch
