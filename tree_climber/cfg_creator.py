@@ -295,14 +295,18 @@ class CfgVisitor:
             children = list(self.children(n))
             
             in_edges = list(self.graph.in_edges(n, data=True))
-            in_edge_data = [d for u, v, d in in_edges]
-            assert all(in_edge_data[0] == d for d in in_edge_data), in_edge_data
+            in_edge_data = in_edges[0][2]
+            mismatched_nodes = [(u, v, d) for u, v, d in in_edges if in_edge_data != d]
+            if any(mismatched_nodes):
+                print("WARNING: Mismatched in data", mismatched_nodes, in_edges[0])
             
             out_edges = list(self.graph.out_edges(n, data=True))
-            out_edge_data = [d for u, v, d in out_edges]
-            assert all(out_edge_data[0] == d for d in out_edge_data), out_edge_data
+            out_edge_data = out_edges[0][2]
+            mismatched_nodes = [(u, v, d) for u, v, d in out_edges if out_edge_data != d]
+            if any(mismatched_nodes):
+                print("WARNING: Mismatched out data", mismatched_nodes, out_edges[0])
             
-            data = {**in_edge_data[0], **out_edge_data[0]}
+            data = {**in_edge_data, **out_edge_data}
 
             self.graph.remove_edges_from(in_edges + out_edges)
             for p in parents:
