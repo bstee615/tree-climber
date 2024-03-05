@@ -1,7 +1,7 @@
 from tree_sitter_languages import get_parser
 from pyvis.network import Network
 import networkx as nx
-from .util import concretize_graph, concretize_node
+from .util import concretize_graph, concretize_node, truncate
 
 
 class AstNode:
@@ -9,7 +9,7 @@ class AstNode:
         self.ast_node = ast_node
     
     def __str__(self):
-        return f"{type(self).__name__} ({self.ast_node.type}) {repr(self.ast_node.text.decode())}"
+        return f"{type(self).__name__} ({self.ast_node.type}) {repr(truncate(self.ast_node.text.decode()))}"
 
     def __hash__(self):
         return self.ast_node.id
@@ -25,6 +25,8 @@ class AstVisitor:
         self.graph = nx.DiGraph()
 
     def visit(self, node):
+        # if node.is_missing or node.is_error:
+        #     raise Exception("Error parsing AST!")
         ast_node = AstNode(node)
         for child in node.children:
             child_node = self.visit(child)

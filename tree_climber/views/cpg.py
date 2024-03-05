@@ -21,6 +21,12 @@ EDGE_COLOR = {
 }
 
 
+def should_include(node):
+    return node.is_named and node.type not in [
+        "comment", "argument_list", "identifier", "number_literal", "string_literal",
+    ]
+
+
 def make_cpg(ast, cfg, duc):
     ast_nodes = {node.ast_node.id: node for node in ast.nodes}
     nx.set_edge_attributes(ast, "AST", name="graph_source")
@@ -28,6 +34,12 @@ def make_cpg(ast, cfg, duc):
 
     # Combine AST and CFG
     cpg = nx.MultiDiGraph()
+    nodes_to_remove = []
+    for n in ast.nodes():
+        if not should_include(n.ast_node):
+            nodes_to_remove.extend(nx.descendants(ast, n))
+            nodes_to_remove.append(n)
+    ast.remove_nodes_from(nodes_to_remove)
     cpg.add_nodes_from(ast.nodes(data=True))
     cpg.add_edges_from([(u, v, "AST", {"color": DARK_BLUE, **d}) for u, v, d in ast.edges(data=True)])
     # Default to AST node color
@@ -46,12 +58,13 @@ def make_cpg(ast, cfg, duc):
         node_colors[v] = {"background": RED, "border": DARK_RED, "highlight": {"background": RED, "border": DARK_RED}, "hover": {"background": RED, "border": DARK_RED}}
         cpg.add_edge(u, v, key="CFG", color=DARK_RED, **d)
         
-    for u, v, d in duc.edges(data=True):
-        if isinstance(u.ast_node, Node):
-            u = ast_nodes[u.ast_node.id]
-        if isinstance(v.ast_node, Node):
-            v = ast_nodes[v.ast_node.id]
-        cpg.add_edge(u, v, key="DUC", color=DARK_GREEN, **d)
+    if duc is not None:
+        for u, v, d in duc.edges(data=True):
+            if isinstance(u.ast_node, Node):
+                u = ast_nodes[u.ast_node.id]
+            if isinstance(v.ast_node, Node):
+                v = ast_nodes[v.ast_node.id]
+            cpg.add_edge(u, v, key="DUC", color=DARK_GREEN, **d)
 
     nx.set_node_attributes(cpg, node_colors, name="color")
     cpg = concretize_graph(cpg)

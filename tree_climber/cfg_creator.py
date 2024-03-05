@@ -1,7 +1,7 @@
 from tree_sitter_languages import get_parser
 from pyvis.network import Network
 import networkx as nx
-from .util import concretize_graph, concretize_node
+from .util import concretize_graph, concretize_node, truncate
 
 
 class CfgNode:
@@ -20,7 +20,7 @@ class CfgNode:
         if isinstance(self.ast_node, str):
             return f"{type(self).__name__} ({self.ast_node})"
         else:
-            return f"{type(self).__name__} ({self.ast_node.type}) {repr(self.ast_node.text.decode())}"
+            return f"{type(self).__name__} ({self.ast_node.type}) {repr(truncate(self.ast_node.text.decode()))}"
 
     def asdict(self):
         return {
@@ -130,11 +130,18 @@ class CfgVisitor:
             body = node.child_by_field_name("body")
             children = [c for c in body.children if c.is_named and not c.type == "comment"]
             for case_stmt in children:
+                # print("CASE:", case_stmt, [(c.type, c.text.decode()) for c in case_stmt.children])
                 case_cond = case_stmt.child_by_field_name("value")
-                case_cond_text = case_cond.text.decode()
+                if case_cond is None:
+                    case_cond_text = "default"
+                    case_cond_id = None
+                else:
+                    case_cond_text = case_cond.text.decode()
+                    case_cond_id = case_cond.id
                 parent_cfg = condition_cfg
                 for child in case_stmt.children:
-                    if child.id != case_cond.id and child.is_named and not child.type == "comment":
+                    if child.id != case_cond_id and child.is_named and not child.type == "comment":
+                        # print("CASE CHILD:", child.type, child.text.decode())
                         child_entry, child_exit = fork.visit(child)
                         self.add_child(parent_cfg, child_entry, label=case_cond_text)
                         case_cond_text = None
@@ -142,6 +149,7 @@ class CfgVisitor:
                         if last_cfg_exit is not None:
                             self.add_child(last_cfg_exit, child_entry)
                             last_cfg_exit = None
+                self.add_child(child_exit, pass_cfg)
                 last_cfg_exit = child_exit
 
             for break_cfg in fork.break_statements:
@@ -230,7 +238,11 @@ class CfgVisitor:
         elif node.type == "function_definition":
             entry_cfg = CfgNode("entry", node_type="auxiliary")
             parent_cfg = entry_cfg
-            for param in [c for c in node.child_by_field_name("declarator").child_by_field_name("parameters").children if c.is_named and c.type != "comment"]:
+            function_declarator = node.child_by_field_name("declarator")
+            while function_declarator.type != "function_declarator":
+                assert function_declarator.type in ["pointer_declarator"], function_declarator.type
+                function_declarator = function_declarator.child_by_field_name("declarator")
+            for param in [c for c in function_declarator.child_by_field_name("parameters").children if c.is_named and c.type != "comment"]:
                 param_cfg = CfgNode(param)
                 self.add_child(parent_cfg, param_cfg)
                 parent_cfg = param_cfg
@@ -246,6 +258,9 @@ class CfgVisitor:
 
             self.add_child(parent_cfg, body_entry)
             self.add_child(body_exit, exit_cfg)
+
+            # func_cfg = CfgNode(node, node_type="function")
+            # self.add_child(func_cfg, entry_cfg)
             return entry_cfg, exit_cfg
         elif node.type == "labeled_statement":
             label = node.child_by_field_name("label")
@@ -328,7 +343,11 @@ class CfgVisitor:
                 cfg_node.node_type = "jump"
             return cfg_node, cfg_node
         else:
-            raise NotImplementedError(f"({node.type}) {node.text.decode()}")
+            print(f"Not implemented: ({node.type}) {node.text.decode()}")
+            # raise NotImplementedError(f"({node.type}) {node.text.decode()}")
+            pass_cfg = CfgNode("pass")
+            self.passes.append(pass_cfg)
+            return pass_cfg, pass_cfg
 
     def postprocess(self):
         """Postprocess a CFG created using this visitor"""
@@ -339,33 +358,39 @@ class CfgVisitor:
             self.add_child(goto_cfg, label_cfg)
 
         for n in self.passes:
-            parents = list(self.parents(n))
+            # parents = list(self.parents(n))
             children = list(self.children(n))
             
+            # TODO: handle mismatch when two edges have different data
             in_edges = list(self.graph.in_edges(n, data=True))
-            if len(in_edges) > 0:
-                in_edge_data = in_edges[0][2]
-                mismatched_nodes = [(u, v, d) for u, v, d in in_edges if in_edge_data != d]
-                if any(mismatched_nodes):
-                    print("WARNING: Mismatched in data", mismatched_nodes, in_edges[0])
-            else:
-                in_edge_data = {}
+            # if len(in_edges) > 0:
+            #     in_edge_data = in_edges[0][2]
+            #     mismatched_nodes = [(u, v, d) for u, v, d in in_edges if in_edge_data != d]
+            #     if any(mismatched_nodes):
+            #         print("WARNING: Mismatched in data", mismatched_nodes, in_edges[0])
+            # else:
+            #     in_edge_data = {}
             
+            # TODO: handle mismatch when two edges have different data
             out_edges = list(self.graph.out_edges(n, data=True))
-            if len(out_edges) > 0:
-                out_edge_data = out_edges[0][2]
-                mismatched_nodes = [(u, v, d) for u, v, d in out_edges if out_edge_data != d]
-                if any(mismatched_nodes):
-                    print("WARNING: Mismatched out data", mismatched_nodes, out_edges[0])
-            else:
-                out_edge_data = {}
+            assert len(out_edges) in [0, 1], out_edges
+            # if len(out_edges) > 0:
+            #     out_edge_data = out_edges[0][2]
+            #     mismatched_nodes = [(u, v, d) for u, v, d in out_edges if out_edge_data != d]
+            #     if any(mismatched_nodes):
+            #         print("WARNING: Mismatched out data", mismatched_nodes, out_edges[0])
+            # else:
+            #     out_edge_data = {}
             
-            data = {**in_edge_data, **out_edge_data}
+            # data = {**in_edge_data, **out_edge_data}
 
             self.graph.remove_edges_from(in_edges + out_edges)
-            for p in parents:
+            for p, _, data in in_edges:
                 for c in children:
                     self.add_child(p, c, **data)
+            # for p in parents:
+            #     for c in children:
+            #         self.add_child(p, c, **data)
             self.graph.remove_node(n)
 
 def visualize_cfg(cfg, fpath):

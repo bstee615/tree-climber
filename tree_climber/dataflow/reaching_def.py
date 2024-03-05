@@ -16,7 +16,10 @@ def get_definition(ast_node):
     elif ast_node.type in ["parenthesized_expression", "init_declarator", "assignment_expression", "update_expression", "expression_statement"]:
         yield from get_definition(named_children(ast_node)[0])
     elif ast_node.type in ["pointer_declarator", "declaration", "parameter_declaration"]:
-        yield from get_definition(named_children(ast_node)[1])
+        # print("TYPE:", ast_node.type, "CODE:", ast_node.text.decode(), "NAMED CHILDREN:", named_children(ast_node))
+        children = named_children(ast_node)
+        if len(children) > 1:
+            yield from get_definition(children[1])
     return None
 
 

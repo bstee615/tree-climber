@@ -18,6 +18,12 @@ def concretize_graph(G):
     return G
 
 
+def truncate(text):
+    if len(text) > 30:
+        text = text[:30] + "..."
+    return text
+
+
 def concretize_node(node):
     """Convert all data in an AST-based node to serializable types."""
     if isinstance(node, Node):
