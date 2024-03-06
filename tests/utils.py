@@ -1,9 +1,5 @@
-import os
-from tree_climber.ast_creator import ASTCreator
-from tree_climber.base_visitor import BaseVisitor
-from tree_climber.cfg_creator import CFGCreator
+from tree_climber.cfg_parser import CFGParser
 from tree_climber.config import DRAW_CFG
-from tree_climber.tree_sitter_utils import c_parser
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -23,16 +19,7 @@ def draw(cfg, dataflow_solution=None, ax=None):
 
 
 def parse_and_create_cfg(code, print_ast=False, draw_cfg=bool(DRAW_CFG)):
-    tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
-    if print_ast:
-        pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog='dot')
-        nx.draw(ast, pos=pos, labels={n: attr["label"] for n, attr in ast.nodes(data=True)}, with_labels = True)
-        plt.show()
-    cfg = CFGCreator.make_cfg(ast)
-    if draw_cfg:
-        draw(cfg)
-    return cfg
+    return CFGParser(code)
 
 def get_adj_label(cfg, u, v):
     """get label of first edge connecting u and v in cfg"""

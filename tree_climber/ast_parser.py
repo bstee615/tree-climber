@@ -1,57 +1,68 @@
-import networkx as nx
-from matplotlib import pyplot as plt
 import warnings
 
+from pathlib import Path
+import networkx as nx
+from tree_sitter import Node, Tree
+from tree_sitter_languages import get_parser
+
+from tree_climber.base_parser import BaseParser
 from tree_climber.base_visitor import BaseVisitor
-from tree_climber.tree_sitter_utils import c_parser
+from tree_climber.util import Counter
 
 
 def assert_boolean_expression(n):
     assert (
         n.type.endswith("_statement")
         or n.type.endswith("_expression")
-        or n.type in ("true", "false", "identifier", "number_literal")  # TODO: handle ERROR (most often shows up as comma_expression in for loop onditioanl)
+        or n.type in ("true", "false", "identifier", "number_literal")  # TODO: handle ERROR (most often shows up as comma_expression in for loop conditional)
     ), (n, n.type, n.text.decode())
 
 
-def assert_branch_target(n):
-    assert (
-        n.type.endswith("_statement")
-        or n.type.endswith("_expression")
-        or n.type in ("else",)
-    ), (n, n.type)
-    
-
 def check_ast_error_in_children(n):
     if any(c.type == "ERROR" for c in n.children):
-        raise AstErrorException()
+        raise AstErrorException(n.text.decode())
 
 
 class AstErrorException(Exception):
     pass
 
 
-class ASTCreator(BaseVisitor):
+class ASTParser(BaseVisitor, BaseParser):
     """
     AST visitor which creates a CFG.
     After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
     """
 
     def __init__(self, strict):
-        super(ASTCreator).__init__()
+        super(ASTParser).__init__()
         self.ast = nx.DiGraph()
-        self.node_id = 0
+        self.counter = Counter()
         self.strict = strict
 
     @staticmethod
-    def make_ast(root_node, strict=True):
-        visitor = ASTCreator(strict=strict)
+    def parse(data, strict=True):
+        if isinstance(data, Path):
+            return ASTParser.parse(data.read_text())
+        elif isinstance(data, str) or isinstance(data, bytes):
+            parser = get_parser("c")
+            if isinstance(data, str):
+                data = data.encode("utf-8")
+            root_node = parser.parse(data).root_node
+        elif isinstance(data, Tree):
+            root_node = data.root_node
+        elif isinstance(data, Node):
+            root_node = data
+        else:
+            raise NotImplementedError(type(data))
+        visitor = ASTParser(strict=strict)
         visitor.visit(root_node, parent_id=None)
+        visitor.ast.graph["graph_type"] = "AST"
         return visitor.ast
 
     def visit(self, n, **kwargs):
-        if n.type == "ERROR" and self.strict:
-            raise AstErrorException()
+        if self.strict:
+            if n.type == "ERROR":
+                raise AstErrorException(n.text.decode())
         else:
             warnings.warn("encountered ERROR in AST")
 
@@ -109,8 +120,7 @@ class ASTCreator(BaseVisitor):
 
     def visit_default(self, n, parent_id, **kwargs):
         code = n.text.decode()
-        my_id = self.node_id
-        self.node_id += 1
+        my_id = self.counter.get_and_increment()
         if parent_id is None:
             self.ast.graph["root_node"] = my_id
         if n.is_named and n.type != "comment":
@@ -140,26 +150,3 @@ class ASTCreator(BaseVisitor):
             if parent_id is not None:
                 self.ast.add_edge(parent_id, my_id)
             self.visit_children(n, parent_id=my_id)
-
-
-def test():
-    code = """#include <stdio.h>
-int main()
-{
-    int i = 0;
-    for (; i < 10; i ++) {
-        printf("%d\n", i);
-    }
-    return 0;
-}
-"""
-    tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
-    pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
-    nx.draw(
-        ast,
-        pos=pos,
-        labels={n: attr["label"] for n, attr in ast.nodes(data=True)},
-        with_labels=True,
-    )
-    plt.show()

@@ -1,6 +1,3 @@
-from tree_climber.tree_sitter_utils import c_parser
-
-
 class BaseVisitor:
     """
     Extensible AST visitor.
@@ -20,11 +17,3 @@ class BaseVisitor:
         print("enter", n, "kwargs", kwargs)
         self.visit_children(n)
         print("exit", n)
-
-
-def test_print_ast():
-    with open("tests/data/do_while_continue.c", "rb") as f:
-        tree = c_parser.parse(f.read())
-
-    v = BaseVisitor()
-    v.visit(tree.root_node)

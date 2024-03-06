@@ -1,23 +1,26 @@
-from collections import defaultdict
 import warnings
-from matplotlib import pyplot as plt
-from tree_climber.ast_creator import ASTCreator
-from tree_climber.base_visitor import BaseVisitor
+from collections import defaultdict
+
 import networkx as nx
-from tree_climber.tree_sitter_utils import c_parser
+from matplotlib import pyplot as plt
+
+from tree_climber.ast_parser import ASTParser
+from tree_climber.base_parser import BaseParser
+from tree_climber.base_visitor import BaseVisitor
+from tree_climber.util import Counter
 
 
-class CFGCreator(BaseVisitor):
+class CFGParser(BaseVisitor, BaseParser):
     """
     AST visitor which creates a CFG.
     After traversing the AST by calling visit() on the root, self.cfg has a complete CFG.
     """
 
     def __init__(self, ast):
-        super(CFGCreator).__init__()
+        super(CFGParser).__init__()
         self.ast = ast
         self.cfg = nx.MultiDiGraph()
-        self.node_id = 0
+        self.counter = Counter()
         self.fringe = []
         self.break_fringe = []
         self.continue_fringe = []
@@ -25,29 +28,36 @@ class CFGCreator(BaseVisitor):
         self.labels = {}
 
     @staticmethod
-    def make_cfg(ast):
-        visitor = CFGCreator(ast)
+    def parse(data):
+        if isinstance(data, nx.Graph):
+            assert data.graph["graph_type"] == "AST"
+            ast = data
+        else:
+            # TODO: Forward kwargs to ASTParser
+            ast = ASTParser.parse(data)
+        visitor = CFGParser(ast)
         visitor.visit(ast.graph["root_node"])
-        cfg = visitor.cfg
-        # Postprocessing
+        visitor.postprocess()
+        visitor.cfg.graph["graph_type"] = "CFG"
+        visitor.cfg.graph["parents"] = {"AST": ast}
+        return visitor.cfg
 
+    def postprocess(self):
         # pass through dummy nodes
         nodes_to_remove = []
-        for n, attr in cfg.nodes(data=True):
+        for n, attr in self.cfg.nodes(data=True):
             if attr.get("dummy", False):
-                preds = list(cfg.predecessors(n))
-                succs = list(cfg.successors(n))
+                preds = list(self.cfg.predecessors(n))
+                succs = list(self.cfg.successors(n))
                 # Forward label from edges incoming to dummy.
                 for pred in preds:
-                    new_edge_label = list(cfg.adj[pred][n].values())[0].get(
+                    new_edge_label = list(self.cfg.adj[pred][n].values())[0].get(
                         "label", None
                     )
                     for succ in succs:
-                        cfg.add_edge(pred, succ, label=new_edge_label)
+                        self.cfg.add_edge(pred, succ, label=new_edge_label)
                 nodes_to_remove.append(n)
-        cfg.remove_nodes_from(nodes_to_remove)
-
-        return visitor.cfg
+        self.cfg.remove_nodes_from(nodes_to_remove)
 
     def get_children(self, n):
         return list(self.ast.successors(n))
@@ -65,13 +75,11 @@ class CFGCreator(BaseVisitor):
 
     def add_dummy_node(self):
         """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
-        node_id = self.node_id
+        node_id = self.counter.get_and_increment()
         self.cfg.add_node(node_id, dummy=True, label="DUMMY")
-        self.node_id += 1
         return node_id
 
     def add_cfg_node(self, ast_node, label=None, **kwargs):
-        node_id = self.node_id
         ast_kwargs = {}
         if ast_node is not None:
             attr = self.ast.nodes[ast_node]
@@ -81,8 +89,8 @@ class CFGCreator(BaseVisitor):
         if ast_node is not None:
             ast_kwargs["ast_node"] = ast_node
         ast_kwargs.update(kwargs)
+        node_id = self.counter.get_and_increment()
         self.cfg.add_node(node_id, **ast_kwargs)
-        self.node_id += 1
         return node_id
 
     def add_edge_from_fringe_to(self, node_id):
@@ -383,10 +391,12 @@ int main()
 
 struct foo;
 """
-    tree = c_parser.parse(bytes(code, "utf8"))
+
+    cfg = CFGParser.parse(code)
 
     fig, ax = plt.subplots(2)
-    ast = ASTCreator.make_ast(tree.root_node)
+    
+    ast = cfg.graph["parents"]["AST"]
     pos = nx.drawing.nx_agraph.graphviz_layout(ast, prog="dot")
     nx.draw(
         ast,
@@ -396,7 +406,6 @@ struct foo;
         ax=ax[0],
     )
 
-    cfg = CFGCreator.make_cfg(ast)
     pos = nx.drawing.nx_agraph.graphviz_layout(cfg, prog="dot")
     nx.draw(
         cfg,

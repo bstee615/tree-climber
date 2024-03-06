@@ -1,9 +1,7 @@
-from tree_climber.ast_creator import ASTCreator
-from tree_climber.dataflow.def_use import make_duc
-from tree_climber.tree_sitter_utils import c_parser
-from tree_climber.cfg_creator import CFGCreator
-from tests.utils import *
 import pytest
+
+from ..utils import *
+from tree_climber.duc_parser import DUCParser
 
 
 def test_get_def_use_chain():
@@ -26,10 +24,8 @@ def test_get_def_use_chain():
         return x;
     }
     """
-    tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
-    duc = make_duc(cfg)
+    duc = DUCParser(code)
+    cfg = duc.graph["parents"]["CFG"]
 
     init_x_node = get_node_by_code(duc, "int x = 0;")
     init_i_node = get_node_by_code(duc, "int i = 0;")
@@ -84,8 +80,6 @@ def test_get_def_use_chain():
 
 @pytest.mark.slow
 def test_debug():
-    from tests.utils import draw
-
     code = """int main()
     {
         int i = 0;
@@ -103,11 +97,8 @@ def test_debug():
         return x;
     }
     """
-    tree = c_parser.parse(bytes(code, "utf8"))
-    ast = ASTCreator.make_ast(tree.root_node)
-    cfg = CFGCreator.make_cfg(ast)
-    duc = make_duc(cfg)
-    print(duc.nodes(data=True))
+    duc = DUCParser(code)
+    cfg = duc.graph["parents"]["CFG"]
 
     _, ax = plt.subplots(2)
     pos = nx.drawing.nx_agraph.graphviz_layout(duc, prog="dot")

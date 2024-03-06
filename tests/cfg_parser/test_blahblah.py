@@ -1,4 +1,4 @@
-from tests.utils import *
+from ..utils import *
 import networkx as nx
 
 def test_screwy_program():
