@@ -58,6 +58,7 @@ class CPGParser(BaseParser):
                 if k != "label":
                     del d[k]
         pos = nx.nx_pydot.graphviz_layout(cpg, prog="dot")
+        # TODO: remove AST subtrees without CFG/DUC edges
         nx.draw(cpg, pos=pos)
         nx.draw_networkx_labels(
             cpg,

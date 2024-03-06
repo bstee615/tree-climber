@@ -39,6 +39,7 @@ class CFGParser(BaseVisitor, BaseParser):
         visitor.visit(ast.graph["root_node"])
         visitor.postprocess()
         visitor.cfg.graph["graph_type"] = "CFG"
+        # TODO: Make utilities on BaseParser to automatically inherit parent graph attributes
         visitor.cfg.graph["parents"] = {"AST": ast}
         return visitor.cfg
 
