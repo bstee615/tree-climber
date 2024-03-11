@@ -19,9 +19,7 @@ class CPGParser(BaseParser):
         duc = DUCParser.parse(cfg)
 
         nx.set_edge_attributes(ast, {(u, v): "AST" for u, v in ast.edges()}, "graph_type")
-        nx.set_edge_attributes(
-            cfg, {(u, v, k): "CFG" for u, v, k in cfg.edges(keys=True)}, "graph_type"
-        )
+        nx.set_edge_attributes(cfg, {(u, v): "CFG" for u, v in cfg.edges()}, "graph_type")
         nx.set_edge_attributes(duc, {(u, v): "DUC" for u, v in duc.edges()}, "graph_type")
         max_ast_node = max(ast.nodes())
         cfg = nx.relabel_nodes(
@@ -35,7 +33,7 @@ class CPGParser(BaseParser):
             duc, {n: attr.get("ast_node") for n, attr in duc.nodes(data=True)}
         )
         cpg = nx.MultiDiGraph(ast)
-        cpg = nx.compose(cpg, cfg)
+        cpg = nx.compose(cpg, nx.MultiDiGraph(cfg))
         cpg = nx.compose(cpg, nx.MultiDiGraph(duc))
 
         labels = {n: {"label": l.replace(":", "_")} for n, l in nx.get_node_attributes(cpg, "label").items()}

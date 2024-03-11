@@ -19,7 +19,7 @@ class CFGParser(BaseVisitor, BaseParser):
     def __init__(self, ast):
         super(CFGParser).__init__()
         self.ast = ast
-        self.cfg = nx.MultiDiGraph()
+        self.cfg = nx.DiGraph()
         self.counter = Counter()
         self.fringe = []
         self.break_fringe = []
