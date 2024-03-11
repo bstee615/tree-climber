@@ -1,4 +1,5 @@
 import networkx as nx
+from tree_climber.util import extract_subgraph
 
 def detect_npd(cpg):
     """
@@ -6,22 +7,8 @@ def detect_npd(cpg):
     """
 
     # Extract AST and DUC from CPG for manipulation
-    ast = nx.edge_subgraph(
-        cpg,
-        [
-            (u, v, k)
-            for u, v, k, attr in cpg.edges(data=True, keys=True)
-            if attr["graph_type"] == "AST"
-        ],
-    )
-    duc = nx.edge_subgraph(
-        cpg,
-        [
-            (u, v, k)
-            for u, v, k, attr in cpg.edges(data=True, keys=True)
-            if attr["graph_type"] == "DUC"
-        ],
-    )
+    ast = extract_subgraph(cpg, "AST")
+    duc = extract_subgraph(cpg, "DUC")
 
     # Get all NULL assignments
     null_assignment = [
