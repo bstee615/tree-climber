@@ -2,7 +2,7 @@ import networkx as nx
 
 from tree_climber.base_parser import BaseParser
 from tree_climber.cfg_parser import CFGParser
-from tree_climber.duc_parser.reaching_def import ReachingDefinitionSolver
+from tree_climber.dataflow.reaching_def import ReachingDefinitionSolver
 
 
 def get_uses(cfg, solver, n):

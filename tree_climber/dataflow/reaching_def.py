@@ -1,4 +1,4 @@
-from tree_climber.duc_parser.dataflow_solver import DataflowSolver
+from tree_climber.dataflow.dataflow_solver import DataflowSolver
 
 
 def get_definition(ast_node):
