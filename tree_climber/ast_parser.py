@@ -59,6 +59,12 @@ class ASTParser(BaseVisitor, BaseParser):
         visitor.ast.graph["graph_type"] = "AST"
         return visitor.ast
 
+    def get_type(self, n):
+        return n.type
+
+    def get_children(self, n):
+        return n.children
+
     def visit(self, n, **kwargs):
         if self.strict:
             if n.has_error or n.is_missing:
@@ -66,7 +72,13 @@ class ASTParser(BaseVisitor, BaseParser):
         else:
             warnings.warn("encountered ERROR in AST")
 
-        super().visit(n, **kwargs)
+        return getattr(self, f"visit_{self.get_type(n)}", self.visit_default)(n=n, **kwargs)
+
+    def visit_children(self, n, **kwargs):
+        for i, c in enumerate(n.children):
+            should_continue = self.visit(c, **kwargs)
+            if should_continue == False:
+                break
 
     def visit_for_statement(self, n, **kwargs):
         children = n.children
