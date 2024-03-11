@@ -61,7 +61,7 @@ class ASTParser(BaseVisitor, BaseParser):
 
     def visit(self, n, **kwargs):
         if self.strict:
-            if n.type == "ERROR":
+            if n.has_error or n.is_missing:
                 raise AstErrorException(n.text.decode())
         else:
             warnings.warn("encountered ERROR in AST")

@@ -29,6 +29,10 @@ class CFGParser(BaseVisitor, BaseParser):
 
     @staticmethod
     def parse(data):
+        """
+        Parse some data into a CFG.
+        Can be some code, tree-sitter tree, or an AST.
+        """
         if isinstance(data, nx.Graph):
             assert data.graph["graph_type"] == "AST"
             ast = data
@@ -44,6 +48,9 @@ class CFGParser(BaseVisitor, BaseParser):
         return visitor.cfg
 
     def postprocess(self):
+        """
+        Perform final postprocessing steps on a CFG.
+        """
         # pass through dummy nodes
         nodes_to_remove = []
         for n, attr in self.cfg.nodes(data=True):
@@ -61,6 +68,7 @@ class CFGParser(BaseVisitor, BaseParser):
         self.cfg.remove_nodes_from(nodes_to_remove)
 
     def get_children(self, n):
+        """Get AST children of a node."""
         return list(self.ast.successors(n))
 
     def visit(self, n, **kwargs):
@@ -75,38 +83,43 @@ class CFGParser(BaseVisitor, BaseParser):
                 break
 
     def add_dummy_node(self):
-        """dummy nodes are nodes whose connections should be forwarded in a post-processing step"""
+        """
+        Add a dummy node to the CFG.
+        Dummy nodes are nodes whose connections should be forwarded in a post-processing step.
+        """
         node_id = self.counter.get_and_increment()
         self.cfg.add_node(node_id, dummy=True, label="DUMMY")
         return node_id
 
     def add_cfg_node(self, ast_node, label=None, **kwargs):
-        ast_kwargs = {}
+        """Add CFG node to the graph, inheriting properties from the progenitor AST node if any."""
+        existing_kwargs = {}
         if ast_node is not None:
             attr = self.ast.nodes[ast_node]
-            ast_kwargs.update(attr)
+            existing_kwargs.update(attr)
+            existing_kwargs["ast_node"] = ast_node
         if label is not None:
-            ast_kwargs["label"] = label
-        if ast_node is not None:
-            ast_kwargs["ast_node"] = ast_node
-        ast_kwargs.update(kwargs)
+            existing_kwargs["label"] = label
+        existing_kwargs.update(kwargs)
         node_id = self.counter.get_and_increment()
-        self.cfg.add_node(node_id, **ast_kwargs)
+        self.cfg.add_node(node_id, **existing_kwargs)
         return node_id
 
-    def add_edge_from_fringe_to(self, node_id):
-        # Assign edges with labels
+    def add_edge_from_fringe_to(self, dst_node_id):
+        """
+        Attach the current fringe to a node, transferring edge types if any are assigned.
+        """
         fringe_by_type = defaultdict(list)
-        for source in self.fringe:
-            if isinstance(source, tuple):
-                fringe_by_type[source[1]].append(source[0])
+        for src_node_id in self.fringe:
+            if isinstance(src_node_id, tuple):
+                fringe_by_type[src_node_id[1]].append(src_node_id[0])
             else:
-                fringe_by_type[None].append(source)
+                fringe_by_type[None].append(src_node_id)
         for edge_type, fringe in fringe_by_type.items():
             kwargs = {}
             if edge_type is not None:
                 kwargs["label"] = str(edge_type)
-            self.cfg.add_edges_from(zip(fringe, [node_id] * len(self.fringe)), **kwargs)
+            self.cfg.add_edges_from(zip(fringe, [dst_node_id] * len(self.fringe)), **kwargs)
         self.fringe = []
 
     """

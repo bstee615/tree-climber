@@ -20,7 +20,6 @@ def get_uses(cfg, solver, n):
             q.extend(n.children)
     return used_ids
 
-
 class DUCParser(BaseParser):
     @staticmethod
     def parse(data, verbose=0):
@@ -57,17 +56,23 @@ class DUCParser(BaseParser):
             cfg = CFGParser.parse(data)
 
         duc = nx.DiGraph()
+
+        # Start with the CFG nodes
         duc.add_nodes_from(
             [(n, dict(cfg_node=n, **attr)) for n, attr in cfg.nodes(data=True)]
         )
+
+        # Do dataflow analysis
         solver = ReachingDefinitionSolver(cfg, verbose=verbose)
-        solution_in, solution_out = solver.solve()
-        solution = solution_in
+        solution, _ = solver.solve()
+        
+        # Find all DUC edges.
         for n in cfg.nodes():
             incoming_defs = solution[n]
             if len(incoming_defs) > 0:
                 use_node = n
 
+                # TODO: Make utility methods
                 def_ids = set(map(solver.def2id.__getitem__, incoming_defs))
                 used_ids = get_uses(cfg, solver, use_node)
                 used_def_ids = def_ids & used_ids

@@ -15,8 +15,8 @@ if __name__ == "__main__":
     print("Parsing file:", to_parse)
     try:
         cpg = CPGParser.parse(to_parse)
-        # CPGParser.draw(cpg)
         detect_bugs(cpg)
+        CPGParser.draw(cpg)
     except Exception:
         print("Error parsing file:", to_parse)
         raise
