@@ -30,7 +30,7 @@ def detect_bugs(cpg):
         )
     ]
     for ass in null_assignment:
-        for usage in duc.adj[ass]:
+        for usage in duc.adj.get(ass, []):
             usage_attr = cpg.nodes[usage]
             call_expr = next(
                 (
