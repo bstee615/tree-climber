@@ -167,6 +167,7 @@ class CFGParser(BaseVisitor, BaseParser):
     """STRUCTURED CONTROL FLOW"""
 
     def visit_if_statement(self, n, **kwargs):
+        # TODO: Use child_by_field_name where possible
         condition = self.get_children(self.get_children(n)[0])[0]
         condition_id = self.add_cfg_node(condition)
         self.add_edge_from_fringe_to(condition_id)
