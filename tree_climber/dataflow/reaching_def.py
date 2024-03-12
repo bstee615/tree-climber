@@ -26,7 +26,7 @@ class ReachingDefinitionSolver(DataflowSolver):
     """
 
     def __init__(self, cfg, verbose=0):
-        super().__init__(cfg, verbose)
+        super().__init__(cfg, verbose, "forward")
 
         node2def = {}
         def2node = {}

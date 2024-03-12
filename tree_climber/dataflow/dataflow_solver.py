@@ -11,11 +11,20 @@ class DataflowSolver:
     - for each CFG node n, a dataflow function fn : D → D (that defines the effect of executing n). 
     """
 
-    def __init__(self, cfg, verbose):
+    def __init__(self, cfg, verbose, direction):
         self.cfg = cfg
         self.verbose = verbose
+        self.direction = direction
 
     def solve(self):
+        return {
+            "forward": self.solve_forward,
+            "backward": self.solve_backward,
+        }[self.direction]()
+
+    def solve_backward(self):
+        pass
+    def solve_forward(self):
         _in = {}
         out = {}
         for n in self.cfg.nodes():
@@ -26,12 +35,10 @@ class DataflowSolver:
         while q:
             n = q.pop(0)
 
-            # TODO: generalize to backward problems
             _in[n] = set()
             for pred in self.cfg.predecessors(n):
-                _in[n] |= out[pred]
+                _in[n] = _in[n].union(out[pred])
 
-            # TODO: generalize to backward problems
             new_out_n = self.gen(n).union(_in[n].difference(self.kill(n)))
 
             if self.verbose >= 2:
