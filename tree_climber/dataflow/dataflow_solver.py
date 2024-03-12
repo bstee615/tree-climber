@@ -23,7 +23,37 @@ class DataflowSolver:
         }[self.direction]()
 
     def solve_backward(self):
-        pass
+        _in = {}
+        out = {}
+        for n in self.cfg.nodes():
+            _in[n] = set()  # can optimize by OUT[n] = GEN[n];
+            if self.verbose >= 1:
+                print(n, repr(self.cfg.nodes[n]["label"]))
+
+        q = list(reversed(list(self.cfg.nodes())))
+        i = 0
+        while q:
+            n = q.pop(0)
+
+            out[n] = set()
+            for succ in self.cfg.successors(n):
+                out[n] = out[n].union(_in[succ])
+
+            new_in_n = self.gen(n).union(out[n].difference(self.kill(n)))
+
+            if self.verbose >= 2:
+                print(f"{i=}, {n=}, {_in=}, {out=}, {new_in_n=}")
+
+            if _in[n] != new_in_n:
+                if self.verbose >= 1:
+                    print(f"{i=}, {n=} changed {_in[n]} -> {new_in_n}")
+                _in[n] = new_in_n
+                for pred in self.cfg.predecessors(n):
+                    q.append(pred)
+            i += 1
+
+        return _in, out
+
     def solve_forward(self):
         _in = {}
         out = {}
