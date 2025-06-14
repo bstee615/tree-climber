@@ -36,6 +36,7 @@ The `docs/` directory is the authoritative source of truth for all project docum
 The AI_Agent must read the relevant documentation from the `docs/` directory to ensure it has the most up-to-date information before proceeding with any work.
 After any change, the AI_Agent must ensure that all relevant documentation is updated to reflect the current state of the project.
 If the item is in `docs/work-items.md`, the AI_Agent must ensure that the PBI status is up-to-date.
+Do not move onto the next task in `docs/work-items.md` until told.
 
 # 2. Fundamental Principles
 
