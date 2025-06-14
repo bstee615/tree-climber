@@ -41,14 +41,22 @@ class CFGNode:
     source_text: str = ""
     successors: Set[int] = field(default_factory=set)
     predecessors: Set[int] = field(default_factory=set)
+    # Dictionary to store edge labels: {successor_id: label}
+    edge_labels: Dict[int, str] = field(default_factory=dict)
 
-    def add_successor(self, node_id: int):
-        """Add a successor node"""
+    def add_successor(self, node_id: int, label: Optional[str] = None):
+        """Add a successor node with an optional label"""
         self.successors.add(node_id)
+        if label is not None:
+            self.edge_labels[node_id] = label
 
     def add_predecessor(self, node_id: int):
         """Add a predecessor node"""
         self.predecessors.add(node_id)
+        
+    def get_edge_label(self, successor_id: int) -> Optional[str]:
+        """Get the label for an edge to a successor, if it exists"""
+        return self.edge_labels.get(successor_id)
 
 
 class CFG:
@@ -74,10 +82,10 @@ class CFG:
 
         return node_id
 
-    def add_edge(self, from_id: int, to_id: int):
-        """Add an edge between two nodes"""
+    def add_edge(self, from_id: int, to_id: int, label: Optional[str] = None):
+        """Add an edge between two nodes with an optional label"""
         if from_id in self.nodes and to_id in self.nodes:
-            self.nodes[from_id].add_successor(to_id)
+            self.nodes[from_id].add_successor(to_id, label)
             self.nodes[to_id].add_predecessor(from_id)
 
     def set_entry(self, node_id: int):
@@ -327,19 +335,21 @@ class CCFGVisitor(CFGVisitor):
 
         exit_nodes = []
 
-        # Process then branch
+        # Process then branch with "true" label
         if then_stmt:
             then_result = self.visit(then_stmt)
-            self.cfg.add_edge(cond_id, then_result.entry_node_id)
+            self.cfg.add_edge(cond_id, then_result.entry_node_id, "true")
             exit_nodes.extend(then_result.exit_node_ids)
 
-        # Process else branch
+        # Process else branch with "false" label
         if else_stmt:
             else_result = self.visit(else_stmt)
-            self.cfg.add_edge(cond_id, else_result.entry_node_id)
+            self.cfg.add_edge(cond_id, else_result.entry_node_id, "false")
             exit_nodes.extend(else_result.exit_node_ids)
         else:
-            # No else branch, condition can fall through
+            # No else branch, condition can fall through (implicit else)
+            # We'll add the condition itself as an exit node with a "false" label
+            # This represents the path where the condition is false but there's no explicit else branch
             exit_nodes.append(cond_id)
 
         return CFGTraversalResult(
@@ -381,14 +391,14 @@ class CCFGVisitor(CFGVisitor):
         # Process loop body
         if body_stmt:
             body_result = self.visit(body_stmt)
-            # Connect condition to body entry
-            self.cfg.add_edge(loop_header_id, body_result.entry_node_id)
+            # Connect condition to body entry with "true" label
+            self.cfg.add_edge(loop_header_id, body_result.entry_node_id, "true")
             # Connect body exits back to condition
             for body_exit in body_result.exit_node_ids:
                 self.cfg.add_edge(body_exit, loop_header_id)
 
-        # Connect condition to exit (false branch)
-        self.cfg.add_edge(loop_header_id, loop_exit_id)
+        # Connect condition to exit (false branch) with "false" label
+        self.cfg.add_edge(loop_header_id, loop_exit_id, "false")
 
         # Clean up loop context
         self.context.pop_loop_context()
@@ -430,8 +440,8 @@ class CCFGVisitor(CFGVisitor):
         # Process body
         if body_stmt:
             body_result = self.visit(body_stmt)
-            # Connect condition to body entry
-            self.cfg.add_edge(condition_id, body_result.entry_node_id)
+            # Connect condition to body entry with "true" label
+            self.cfg.add_edge(condition_id, body_result.entry_node_id, "true")
             # Connect body exits to update
             for body_exit in body_result.exit_node_ids:
                 self.cfg.add_edge(body_exit, update_id)
@@ -439,8 +449,8 @@ class CCFGVisitor(CFGVisitor):
         # Connect update back to condition
         self.cfg.add_edge(update_id, condition_id)
 
-        # Connect condition to exit (false branch)
-        self.cfg.add_edge(condition_id, exit_id)
+        # Connect condition to exit (false branch) with "false" label
+        self.cfg.add_edge(condition_id, exit_id, "false")
 
         # Clean up loop context
         self.context.pop_loop_context()
@@ -553,10 +563,15 @@ class CFGBuilder:
             label = f"{node_id}: {node.source_text[:50]}"
             dot.node(str(node_id), label, shape=shape, style="filled", fillcolor=color)
 
-        # Add edges
+        # Add edges with labels
         for node_id, node in cfg.nodes.items():
             for successor_id in node.successors:
-                dot.edge(str(node_id), str(successor_id))
+                # Check if there's a label for this edge
+                edge_label = node.get_edge_label(successor_id)
+                if edge_label:
+                    dot.edge(str(node_id), str(successor_id), label=edge_label)
+                else:
+                    dot.edge(str(node_id), str(successor_id))
 
         dot.render(output_file, format="png", cleanup=True)
         return f"{output_file}.png"
@@ -570,14 +585,28 @@ if __name__ == "__main__":
         int a = 0;
         int b = 1;
         int c = 3;
+        
+        // Test conditional branching with true/false labels
         if (n <= 1) {
             return 1;
+        } else {
+            c = 5;
         }
+        
         c = 10;
         int result = 1;
+        
+        // Test loop with true/false labels
         for (int i = 2; i <= n; i++) {
             result *= i;
         }
+        
+        // Test while loop with true/false labels
+        while (n > 0) {
+            n--;
+            n -= 1;
+        }
+        
         return result;
     }
     """
