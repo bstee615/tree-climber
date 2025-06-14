@@ -23,6 +23,20 @@ This policy provides a single, authoritative, and machine-readable source of tru
   - All code changes must be associated with a specific task.
   - All PBIs must be aligned with the PRD when applicable.
 
+## 1.3 docs
+
+The `docs/` directory is the authoritative source of truth for all project documentation, including:
+- Product Backlog Items (PBIs), especially active items in `docs/work-items.md`
+- Tasks
+- Architectural decisions
+- Technical documentation
+- Test plans and results
+- User guides and manuals
+
+The AI_Agent must read the relevant documentation from the `docs/` directory to ensure it has the most up-to-date information before proceeding with any work.
+After any change, the AI_Agent must ensure that all relevant documentation is updated to reflect the current state of the project.
+If the item is in `docs/work-items.md`, the AI_Agent must ensure that the PBI status is up-to-date.
+
 # 2. Fundamental Principles
 
 > Rationale: Establishes the foundational rules that govern all work, preventing scope creep, enforcing accountability, and ensuring the integrity of the development process.
