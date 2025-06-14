@@ -1,0 +1,21 @@
+[project]
+name = "tree-sprawler"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "bstee615", email = "benjaminjsteenhoek@gmail.com" }
+]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "graphviz>=0.20.3",
+    "tree-sitter<0.21.0",
+    "tree-sitter-languages>=1.10.2",
+]
+
+[project.scripts]
+tree-sprawler = "tree_sprawler:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
