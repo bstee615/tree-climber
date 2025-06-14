@@ -183,6 +183,38 @@ class CFGVisitor:
 class CCFGVisitor(CFGVisitor):
     """C-specific CFG visitor implementation"""
 
+    def is_linear_statement(self, node: Any) -> bool:
+        """Check if a node represents a simple linear statement"""
+        # Control flow statements that create branches or edges
+        non_linear_types = [
+            "if_statement", 
+            "for_statement", 
+            "while_statement", 
+            "do_statement", 
+            "switch_statement",
+            "break_statement", 
+            "continue_statement", 
+            "return_statement", 
+            "goto_statement",
+            "compound_statement",
+        ]
+        
+        # Check if node type isn't one of the non-linear types
+        return node.type.endswith("_statement") and node.type not in non_linear_types
+
+    def visit_expression_statement(self, node: Any) -> CFGTraversalResult:
+        return self.visit_linear_statement(node)
+
+    def visit_declaration(self, node: Any) -> CFGTraversalResult:
+        return self.visit_linear_statement(node)
+
+    def visit_linear_statement(self, node: Any) -> CFGTraversalResult:
+        # If the node is a linear statement, create a statement node
+        node_id = self.cfg.create_node(
+            NodeType.STATEMENT, node, self.get_source_text(node)
+        )
+        return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
+
     def visit_function_definition(self, node: Any) -> CFGTraversalResult:
         """Visit a function definition"""
         # Find function name and body
@@ -535,9 +567,13 @@ if __name__ == "__main__":
     # Example C code
     c_code = """
     int factorial(int n) {
+        int a = 0;
+        int b = 1;
+        int c = 3;
         if (n <= 1) {
             return 1;
         }
+        c = 10;
         int result = 1;
         for (int i = 2; i <= n; i++) {
             result *= i;
@@ -555,4 +591,3 @@ if __name__ == "__main__":
     print(f"CFG built for function: {cfg.function_name}")
     print(f"Number of nodes: {len(cfg.nodes)}")
     image_path = builder.visualize_cfg(cfg)
-    print(f"CFG visualization saved to: {image_path}")
