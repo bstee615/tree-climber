@@ -323,10 +323,13 @@ class CCFGVisitor(CFGVisitor):
                 else_stmt = child
             i += 1
 
-        # Create condition node
+        # Create condition node with actual condition text
         if condition_node:
+            condition_text = self.get_source_text(condition_node)
             cond_id = self.cfg.create_node(
-                NodeType.CONDITION, condition_node, self.get_source_text(condition_node)
+                NodeType.CONDITION, 
+                condition_node, 
+                f"if condition: {condition_text}"
             )
         else:
             cond_id = self.cfg.create_node(
@@ -368,16 +371,17 @@ class CCFGVisitor(CFGVisitor):
             elif child.type != "while":
                 body_stmt = child
 
-        # Create loop header (condition)
+        # Create loop header (condition) with actual condition text
         if condition_node:
+            condition_text = self.get_source_text(condition_node)
             loop_header_id = self.cfg.create_node(
                 NodeType.LOOP_HEADER,
                 condition_node,
-                f"while {self.get_source_text(condition_node)}",
+                f"while condition: {condition_text}",
             )
         else:
             loop_header_id = self.cfg.create_node(
-                NodeType.LOOP_HEADER, source_text="while"
+                NodeType.LOOP_HEADER, source_text="while condition"
             )
 
         # Create exit node for the loop
@@ -410,26 +414,59 @@ class CCFGVisitor(CFGVisitor):
     def visit_for_statement(self, node: Any) -> CFGTraversalResult:
         """Visit a for loop"""
         body_stmt = None
+        init_expr = None
+        condition_expr = None
+        update_expr = None
 
-        # Parse for statement - this is simplified
-        # In practice, you'd need more sophisticated parsing
+        # Parse for statement to find the different components
         for child in node.children:
-            if child.type == "compound_statement":
+            if child.type == "for":
+                continue
+            elif child.type == "(" or child.type == ")":
+                continue
+            elif child.type == "compound_statement" or child.type == "expression_statement":
                 body_stmt = child
+            elif child.type == ";":
+                continue
+            else:
+                # The for loop format is: for (init; condition; update) body
+                # We need to find these three components based on their position
+                if init_expr is None:
+                    init_expr = child
+                elif condition_expr is None:
+                    condition_expr = child
+                elif update_expr is None:
+                    update_expr = child
 
-        # Create initialization node
-        init_id = self.cfg.create_node(NodeType.STATEMENT, source_text="for init")
-
-        # Create condition node
-        condition_id = self.cfg.create_node(
-            NodeType.LOOP_HEADER, source_text="for condition"
+        # Create initialization node with actual initialization code
+        init_text = self.get_source_text(init_expr) if init_expr else "for init"
+        init_id = self.cfg.create_node(
+            NodeType.STATEMENT, 
+            init_expr, 
+            f"for init: {init_text}"
         )
 
-        # Create update node
-        update_id = self.cfg.create_node(NodeType.STATEMENT, source_text="for update")
+        # Create condition node with actual condition code
+        condition_text = self.get_source_text(condition_expr) if condition_expr else "for condition"
+        condition_id = self.cfg.create_node(
+            NodeType.LOOP_HEADER, 
+            condition_expr, 
+            f"for condition: {condition_text}"
+        )
+
+        # Create update node with actual update code
+        update_text = self.get_source_text(update_expr) if update_expr else "for update"
+        update_id = self.cfg.create_node(
+            NodeType.STATEMENT, 
+            update_expr, 
+            f"for update: {update_text}"
+        )
 
         # Create exit node
-        exit_id = self.cfg.create_node(NodeType.STATEMENT, source_text="for exit")
+        exit_id = self.cfg.create_node(
+            NodeType.STATEMENT, 
+            source_text="for exit"
+        )
 
         # Connect init to condition
         self.cfg.add_edge(init_id, condition_id)
