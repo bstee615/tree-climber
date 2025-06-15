@@ -5,7 +5,7 @@ from tree_sprawler.dataflow.dataflow_types import DataflowProblem, DataflowResul
 
 
 class RoundRobinSolver:
-    def solve_dataflow(self, cfg: CFG, problem: DataflowProblem) -> DataflowResult:
+    def solve(self, cfg: CFG, problem: DataflowProblem) -> DataflowResult:
         """
         Solve a dataflow problem on a given Control Flow Graph (CFG).
         """

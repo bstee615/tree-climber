@@ -1,8 +1,6 @@
-from tree_sprawler.dataflow.dataflow_types import DataflowProblem
-from tree_sprawler.dataflow.problems.reaching_definitions import (
-    Empty,
-    ReachingDefinitionsGenKill,
-    Union,
+from tree_sprawler.dataflow.analyses.def_use import DefUseSolver, UseDefSolver
+from tree_sprawler.dataflow.analyses.reaching_definitions import (
+    ReachingDefinitionsProblem,
 )
 from tree_sprawler.dataflow.solver import RoundRobinSolver
 
@@ -18,11 +16,15 @@ if __name__ == "__main__":
         
         // Test if-else statement
         if (n > 0) {
-            result = n * 2;
+            result = result * 2;
         } else if (n < 0) {
-            result = -n;
+            result = -result;
+            print(result);
         }
-        print(result);
+
+        if (n == 0) {
+            print(result);
+        }
     }
     """
     builder = CFGBuilder("c")
@@ -32,14 +34,11 @@ if __name__ == "__main__":
     # Visualize the CFG
     visualize_cfg(cfg)
 
-    problem = DataflowProblem(
-        meet=Union(),
-        transfer=ReachingDefinitionsGenKill(),
-        in_init=Empty(),
-        out_init=Empty(),
-    )
+    # Analyze reaching definitions
+    problem = ReachingDefinitionsProblem()
 
     solver = RoundRobinSolver()
-    result = solver.solve_dataflow(cfg, problem)
+    result = solver.solve(cfg, problem)
+    print("Reaching definitions:")
     print("IN Facts:", result.in_facts)
     print("OUT Facts:", result.out_facts)
