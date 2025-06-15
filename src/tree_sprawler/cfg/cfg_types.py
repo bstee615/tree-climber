@@ -36,6 +36,7 @@ class CFGNode:
     # Dictionary to store edge labels: {successor_id: label}
     edge_labels: Dict[int, str] = field(default_factory=dict)
     variable_definitions: List[str] = field(default_factory=list)
+    variable_uses: List[str] = field(default_factory=list)
 
     def add_successor(self, node_id: int, label: Optional[str] = None):
         """Add a successor node with an optional label"""

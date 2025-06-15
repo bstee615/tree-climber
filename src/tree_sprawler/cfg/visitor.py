@@ -6,6 +6,7 @@ from tree_sprawler.ast_utils import (
     get_calls,
     get_definitions,
     get_source_text,
+    get_uses,
 )
 from tree_sprawler.cfg.cfg_types import CFGNode, CFGTraversalResult, NodeType
 
@@ -138,12 +139,14 @@ class CFG:
 
         call_edges = []
         definitions = []
+        uses = []
         self.nodes[node_id] = CFGNode(
             id=node_id,
             node_type=node_type,
             ast_node=ast_node,
             source_text=source_text,
             variable_definitions=definitions,
+            variable_uses=uses,
         )
         if ast_node is not None:
             function_calls = get_calls(ast_node)
@@ -156,6 +159,7 @@ class CFG:
                         call_edges.append((node_id, definition_id))
                         break
             definitions.extend(get_definitions(ast_node))
+            uses.extend(get_uses(ast_node))
         for a, b in call_edges:
             self.add_edge(a, b, label="function_call")
 
