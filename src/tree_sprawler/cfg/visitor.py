@@ -7,7 +7,7 @@ from tree_sprawler.ast_utils import (
     get_definitions,
     get_source_text,
 )
-from tree_sprawler.cfg.types import CFGNode, CFGTraversalResult, NodeType
+from tree_sprawler.cfg.cfg_types import CFGNode, CFGTraversalResult, NodeType
 
 
 class ControlFlowContext:

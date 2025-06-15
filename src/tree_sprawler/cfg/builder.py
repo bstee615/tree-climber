@@ -1,8 +1,8 @@
 import graphviz
 from tree_sitter_languages import get_parser
 
+from tree_sprawler.cfg.cfg_types import NodeType
 from tree_sprawler.cfg.languages.c import CCFGVisitor
-from tree_sprawler.cfg.types import NodeType
 from tree_sprawler.cfg.visitor import CFG
 
 
