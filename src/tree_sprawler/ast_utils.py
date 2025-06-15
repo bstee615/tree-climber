@@ -86,8 +86,27 @@ def get_uses(ast_node: Node) -> List[str]:
     while stack:
         current = stack.pop()
 
-        # TODO: Handle assignments and function calls differently
         if current.type == "identifier":
+            # Skip identifiers in assignment left-hand side or function definition
+            if current.parent:
+                # Skip identifiers that are function names in call expressions
+                if current.parent.type == "call_expression":
+                    continue
+                # Skip identifiers on the left side of assignment expressions
+                if current.parent.type == "assignment_expression":
+                    continue
+                # Skip function definition names
+                if current.parent.type == "function_definition":
+                    continue
+                # Skip parameter declarations
+                if current.parent.type == "parameter_declaration":
+                    continue
+                # Skip variable declarators
+                if current.parent.type == "init_declarator":
+                    continue
+                # Skip function declarators
+                if current.parent.type == "function_declarator":
+                    continue
             uses.append(current.text.decode())
 
         # Add all children to the stack in reverse order
