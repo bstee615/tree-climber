@@ -82,7 +82,7 @@ class CCFGVisitor(CFGVisitor):
         self.cfg.function_name = function_name
 
         # Create entry node with function name and parameters
-        param_info = f"{function_name}({', '.join(parameters)})"
+        param_info = function_name
         entry_id = self.cfg.create_node(
             NodeType.ENTRY, source_text=param_info, ast_node=declarator
         )
