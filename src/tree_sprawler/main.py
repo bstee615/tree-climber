@@ -1,5 +1,6 @@
 # Example usage
 from tree_sprawler.cfg.builder import CFGBuilder
+from tree_sprawler.cfg.visualization import visualize_cfg
 
 if __name__ == "__main__":
     # Example C code
@@ -82,4 +83,4 @@ if __name__ == "__main__":
     cfg = builder.build_cfg(c_code)
     print(f"CFG built for function: {cfg.function_name}")
     print(f"Number of nodes: {len(cfg.nodes)}")
-    image_path = builder.visualize_cfg(cfg)
+    image_path = visualize_cfg(cfg)
