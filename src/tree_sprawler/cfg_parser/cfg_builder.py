@@ -87,7 +87,7 @@ class CFGBuilder:
                 shape = "box"
                 color = "violet"
 
-            label = f"{node_id}: {node.source_text[:50]}"
+            label = f"{node_id}: {node.source_text[:50]}{'\ndefinitions: ' + ', '.join(node.variable_definitions) if node.variable_definitions else ''}"
             dot.node(str(node_id), label, shape=shape, style="filled", fillcolor=color)
 
         # Add edges with labels

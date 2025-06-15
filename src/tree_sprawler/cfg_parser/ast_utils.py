@@ -20,7 +20,6 @@ def get_calls(ast_node: Node) -> List[str]:
     while stack:
         current = stack.pop()
 
-        # Check if this node is a definition we're interested in
         if current.type == "call_expression":
             identifier = None
             for child in current.children:
@@ -39,3 +38,40 @@ def get_calls(ast_node: Node) -> List[str]:
             stack.append(child)
 
     return calls
+
+
+def get_definitions(ast_node: Node) -> List[str]:
+    """Extract variable definitions under an AST node."""
+    definitions = []
+    if not ast_node:
+        return definitions
+
+    # Stack for DFS traversal
+    stack = [ast_node]
+
+    while stack:
+        current = stack.pop()
+
+        if current.type == "init_declarator":
+            identifier = None
+            for child in current.children:
+                if child.type == "identifier":
+                    identifier = child.text.decode()
+                    break
+            if identifier:
+                definitions.append(identifier)
+        elif current.type == "assignment_expression":
+            identifier = None
+            for child in current.children:
+                if child.type == "identifier":
+                    identifier = child.text.decode()
+                    break
+            if identifier:
+                definitions.append(identifier)
+
+        # Add all children to the stack in reverse order
+        # (to process them in the original left-to-right order)
+        for child in reversed(current.children):
+            stack.append(child)
+
+    return definitions

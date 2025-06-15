@@ -2,7 +2,11 @@ from typing import Dict, List, Optional
 
 from tree_sitter import Node
 
-from tree_sprawler.cfg_parser.ast_utils import get_calls, get_source_text
+from tree_sprawler.cfg_parser.ast_utils import (
+    get_calls,
+    get_definitions,
+    get_source_text,
+)
 from tree_sprawler.cfg_parser.cfg_types import CFGNode, CFGTraversalResult, NodeType
 
 
@@ -132,8 +136,14 @@ class CFG:
         node_id = self._next_id
         self._next_id += 1
 
+        call_edges = []
+        definitions = []
         self.nodes[node_id] = CFGNode(
-            id=node_id, node_type=node_type, ast_node=ast_node, source_text=source_text
+            id=node_id,
+            node_type=node_type,
+            ast_node=ast_node,
+            source_text=source_text,
+            variable_definitions=definitions,
         )
         if ast_node is not None:
             function_calls = get_calls(ast_node)
@@ -143,10 +153,11 @@ class CFG:
                     definition_name,
                 ) in self.context.function_definitions.items():
                     if definition_name in function_calls:
-                        self.add_edge(node_id, definition_id, label="function_call")
+                        call_edges.append((node_id, definition_id))
                         break
-                        # NOTE: Maybe not needed
-                        # self.context.add_goto_ref(definition_name, node_id)
+            definitions.extend(get_definitions(ast_node))
+        for a, b in call_edges:
+            self.add_edge(a, b, label="function_call")
 
         return node_id
 
