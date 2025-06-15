@@ -1,7 +1,6 @@
 # Define a simple dataflow problem (e.g., reaching definitions)
 from typing import Iterable, Set
 
-from tree_sprawler.ast_utils import get_definitions
 from tree_sprawler.cfg.cfg_types import CFGNode
 from tree_sprawler.dataflow.dataflow_types import (
     DataflowFact,
@@ -31,7 +30,7 @@ class Union(MeetOperation):
 class ReachingDefinitionsGenKill(TransferFunction):
     def __call__(self, node: CFGNode, in_facts: Set[DataflowFact]) -> Set[DataflowFact]:
         node_id = node.id
-        defined_variables = get_definitions(node.ast_node) if node.ast_node else []
+        defined_variables = node.variable_definitions if node.ast_node else []
         gen_facts = {
             ReachingDefinition(variable=var, node_id=node_id)
             for var in defined_variables
