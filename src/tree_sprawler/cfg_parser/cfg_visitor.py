@@ -171,10 +171,10 @@ class CFGTraversalResult:
 class CFGVisitor:
     """Base visitor class for CFG construction using visitor pattern"""
 
-    def __init__(self):
+    def __init__(self, source_code: str):
         self.cfg = CFG()
         self.context = ControlFlowContext()
-        self.source_code = ""
+        self.source_code = source_code
 
     def visit(self, node: Node) -> CFGTraversalResult:
         """
