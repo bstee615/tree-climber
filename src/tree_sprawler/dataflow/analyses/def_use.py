@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, List
 
-from tree_sprawler.ast_utils import get_uses
 from tree_sprawler.cfg.visitor import CFG
 from tree_sprawler.dataflow.analyses.reaching_definitions import ReachingDefinition
 from tree_sprawler.dataflow.dataflow_types import DataflowResult
@@ -43,7 +42,7 @@ class UseDefSolver:
         for node_id, node in cfg.nodes.items():
             if not node.ast_node:
                 continue  # Skip nodes without AST nodes
-            uses_by_node[node_id] = set(get_uses(node.ast_node))
+            uses_by_node[node_id] = set(node.variable_uses)
 
         # Second pass: create chains for each unique use
         for node_id, var_names in uses_by_node.items():
@@ -93,7 +92,7 @@ class DefUseSolver:
                 continue  # Skip nodes without AST nodes
 
             # For each variable used in this node
-            for variable_name in get_uses(node.ast_node):
+            for variable_name in node.variable_uses:
                 # Find all reaching definitions for this use
                 in_at_point = dataflow_result.in_facts[node_id]
                 definitions = [
@@ -119,7 +118,9 @@ class DefUseSolver:
                 DefUseChain(
                     variable_name=variable_name,
                     definition=def_node_id,
-                    uses=sorted(list(uses)),  # Convert set to sorted list for consistency
+                    uses=sorted(
+                        list(uses)
+                    ),  # Convert set to sorted list for consistency
                 )
             )
 
