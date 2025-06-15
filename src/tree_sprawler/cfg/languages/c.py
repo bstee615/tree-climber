@@ -50,30 +50,53 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_function_definition(self, node: Node) -> CFGTraversalResult:
         """Visit a function definition"""
-        # Find function name and body
+        # Find function name, parameters and body
         function_name = ""
+        parameters = []
         body_node = None
+        declarator = None
+        closing_brace = None
 
         for child in node.children:
             if child.type == "function_declarator":
-                # Extract function name
+                declarator = child
+                # Extract function name and parameters
                 for subchild in child.children:
                     if subchild.type == "identifier":
                         function_name = get_source_text(subchild)
-                        break
+                    elif subchild.type == "parameter_list":
+                        for param in subchild.children:
+                            if param.type == "parameter_declaration":
+                                # Find the parameter name
+                                for param_child in param.children:
+                                    if param_child.type == "identifier":
+                                        param_name = get_source_text(param_child)
+                                        parameters.append(param_name)
+                                        break
             elif child.type == "compound_statement":
                 body_node = child
+                for subchild in child.children:
+                    if subchild.type == "}":
+                        closing_brace = subchild
 
         self.cfg.function_name = function_name
 
-        # Create entry node
-        entry_id = self.cfg.create_node(NodeType.ENTRY, source_text=function_name)
+        # Create entry node with function name and parameters
+        param_info = f"{function_name}({', '.join(parameters)})"
+        entry_id = self.cfg.create_node(
+            NodeType.ENTRY, source_text=param_info, ast_node=declarator
+        )
+        # Add parameter definitions to the entry node
+        if parameters:
+            self.cfg.nodes[entry_id].variable_definitions.extend(parameters)
         self.cfg.entry_node_ids.append(entry_id)
         self.context.push_entry(entry_id)
         self.context.register_function_definition(entry_id, function_name)
 
         # Create exit node
-        exit_id = self.cfg.create_node(NodeType.EXIT, source_text=function_name)
+        exit_id = self.cfg.create_node(
+            NodeType.EXIT, source_text=function_name, ast_node=closing_brace
+        )
         self.cfg.exit_node_ids.append(exit_id)
         self.context.push_exit(exit_id)
 
