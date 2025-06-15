@@ -212,13 +212,11 @@ class CFGVisitor:
                 
             # Check NodeType or source_text prefixes
             is_entry_exit_type = node.node_type in [NodeType.ENTRY, NodeType.EXIT]
-            is_entry_exit_text = (node.source_text.startswith("ENTRY:") or 
-                                 node.source_text.startswith("EXIT:"))
             is_else_text = "else" in node.source_text.lower()
             is_case_node = (node.node_type == NodeType.CASE) or node.source_text.startswith("CASE:")
             is_default_node = (node.node_type == NodeType.DEFAULT) or (node.source_text == "DEFAULT")
-            
-            if is_entry_exit_type or is_entry_exit_text or is_else_text or is_case_node or is_default_node:
+
+            if any([is_entry_exit_type, is_else_text, is_case_node, is_default_node]):
                 special_nodes.append(node_id)
                 
         # For each special node, create direct connections between predecessors and successors
