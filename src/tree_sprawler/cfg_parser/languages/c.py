@@ -5,7 +5,8 @@ This framework uses the visitor pattern with depth-first traversal to build CFGs
 
 from tree_sitter import Node
 
-from tree_sprawler.cfg_parser.cfg_visitor import CFGTraversalResult, CFGVisitor, NodeType
+from tree_sprawler.cfg_parser.cfg_types import CFGTraversalResult, NodeType
+from tree_sprawler.cfg_parser.cfg_visitor import CFGVisitor
 from tree_sprawler.cfg_parser.ast_utils import get_source_text
 
 

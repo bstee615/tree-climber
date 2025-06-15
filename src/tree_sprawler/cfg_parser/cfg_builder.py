@@ -1,4 +1,5 @@
-from tree_sprawler.cfg_parser.cfg_visitor import CFG, NodeType
+from tree_sprawler.cfg_parser.cfg_types import NodeType
+from tree_sprawler.cfg_parser.cfg_visitor import CFG
 from tree_sprawler.cfg_parser.languages.c import CCFGVisitor
 import graphviz
 
