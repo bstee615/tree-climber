@@ -185,6 +185,91 @@ class CFGVisitor:
         visitor = getattr(self, method_name, self.generic_visit)
         return visitor(node)
 
+    def postprocess_cfg(self):
+        """
+        Post-process the CFG to apply transformations after the initial construction.
+        Currently implements:
+        - Passthrough for ENTRY and EXIT nodes (connecting predecessors directly to successors)
+        """
+        self._passthrough_entry_exit_nodes()
+
+    def _passthrough_entry_exit_nodes(self):
+        """
+        For ENTRY, EXIT, and ELSE nodes (except the main function entry/exit):
+        1. Create direct connections from predecessors to successors
+        2. Remove the nodes and all their connections
+        
+        This applies to:
+        1. Nodes with NodeType.ENTRY or NodeType.EXIT 
+        2. Nodes whose source_text starts with "ENTRY:", "EXIT:", or contains "else"
+        """
+        # Find all ENTRY, EXIT and ELSE nodes (except for the overall function entry/exit)
+        special_nodes = []
+        for node_id, node in self.cfg.nodes.items():
+            # Skip the overall function entry/exit nodes
+            if (node_id == self.cfg.entry_node_id or node_id == self.cfg.exit_node_id):
+                continue
+                
+            # Check NodeType or source_text prefixes
+            is_entry_exit_type = node.node_type in [NodeType.ENTRY, NodeType.EXIT]
+            is_entry_exit_text = (node.source_text.startswith("ENTRY:") or 
+                                 node.source_text.startswith("EXIT:"))
+            is_else_text = "else" in node.source_text.lower()
+            
+            if is_entry_exit_type or is_entry_exit_text or is_else_text:
+                special_nodes.append(node_id)
+                
+        # For each special node, create direct connections between predecessors and successors
+        # and then prepare to remove the node
+        nodes_to_remove = []
+        for node_id in special_nodes:
+            node = self.cfg.nodes[node_id]
+            preds = list(node.predecessors)
+            succs = list(node.successors)
+            
+            # Connect each predecessor to each successor with proper edge labels
+            for pred_id in preds:
+                # Get the label for the edge coming into this node (if any)
+                pred_node = self.cfg.nodes[pred_id]
+                # Check if pred_node has a labeled edge to our node
+                pred_to_node_label = pred_node.get_edge_label(node_id)
+                
+                for succ_id in succs:
+                    # Get the label for the edge going out from this node (if any)
+                    node_to_succ_label = node.get_edge_label(succ_id)
+                    
+                    # Choose which label to propagate:
+                    # - If both edges have labels, prioritize the outgoing label (true/false)
+                    # - Otherwise use whichever label exists
+                    edge_label = node_to_succ_label if node_to_succ_label else pred_to_node_label
+                    
+                    # Create a direct connection with the appropriate label
+                    self.cfg.add_edge(pred_id, succ_id, edge_label)
+            
+            # Mark node for removal
+            nodes_to_remove.append(node_id)
+        
+        # Remove all marked nodes from the CFG
+        for node_id in nodes_to_remove:
+            node = self.cfg.nodes[node_id]
+            
+            # Remove all incoming edges
+            for pred_id in list(node.predecessors):
+                pred_node = self.cfg.nodes[pred_id]
+                if node_id in pred_node.successors:
+                    pred_node.successors.remove(node_id)
+                    if node_id in pred_node.edge_labels:
+                        del pred_node.edge_labels[node_id]
+            
+            # Remove all outgoing edges
+            for succ_id in list(node.successors):
+                succ_node = self.cfg.nodes[succ_id]
+                if node_id in succ_node.predecessors:
+                    succ_node.predecessors.remove(node_id)
+            
+            # Remove the node from the graph
+            del self.cfg.nodes[node_id]
+
     def generic_visit(self, node: Node) -> CFGTraversalResult:
         """Generic visitor for unhandled node types"""
         # For leaf nodes or unhandled nodes, create a statement node

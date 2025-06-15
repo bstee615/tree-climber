@@ -159,7 +159,7 @@ class CCFGVisitor(CFGVisitor):
             cond_id = self.cfg.create_node(
                 NodeType.CONDITION, 
                 condition_node, 
-                f"COND: if stmt: {condition_text}"
+                condition_text
             )
         else:
             cond_id = self.cfg.create_node(
@@ -170,7 +170,7 @@ class CCFGVisitor(CFGVisitor):
 
         # Create an explicit exit node for the if statement
         if_exit_id = self.cfg.create_node(
-            NodeType.STATEMENT, source_text="EXIT: if stmt"
+            NodeType.EXIT, source_text="EXIT: if stmt"
         )
 
         # Process then branch with "true" label
@@ -219,7 +219,7 @@ class CCFGVisitor(CFGVisitor):
             loop_header_id = self.cfg.create_node(
                 NodeType.LOOP_HEADER,
                 condition_node,
-                f"COND: while loop: {condition_text}",
+                condition_text
             )
         else:
             loop_header_id = self.cfg.create_node(
@@ -228,7 +228,7 @@ class CCFGVisitor(CFGVisitor):
 
         # Create exit node for the loop
         loop_exit_id = self.cfg.create_node(
-            NodeType.STATEMENT, source_text="EXIT: while loop"
+            NodeType.EXIT, source_text="EXIT: while loop"
         )
 
         # Set up loop context
@@ -285,15 +285,15 @@ class CCFGVisitor(CFGVisitor):
         init_id = self.cfg.create_node(
             NodeType.STATEMENT, 
             init_expr, 
-            f"INIT: for loop: {init_text}"
+            init_text
         )
 
         # Create condition node with actual condition code
-        condition_text = self.get_source_text(condition_expr) if condition_expr else "COND: for loop"
+        condition_text = self.get_source_text(condition_expr) if condition_expr else "for loop"
         condition_id = self.cfg.create_node(
             NodeType.LOOP_HEADER, 
             condition_expr, 
-            f"COND: for loop: {condition_text}"
+            condition_text
         )
 
         # Create update node with actual update code
@@ -301,12 +301,12 @@ class CCFGVisitor(CFGVisitor):
         update_id = self.cfg.create_node(
             NodeType.STATEMENT, 
             update_expr, 
-            f"UPDATE: for loop: {update_text}"
+            update_text
         )
 
         # Create exit node
         exit_id = self.cfg.create_node(
-            NodeType.STATEMENT, 
+            NodeType.EXIT, 
             source_text="EXIT: for loop"
         )
 
@@ -402,7 +402,7 @@ class CCFGVisitor(CFGVisitor):
             loop_header_id = self.cfg.create_node(
                 NodeType.LOOP_HEADER,
                 condition_node,
-                f"COND: do-while loop: {condition_text}",
+                condition_text
             )
         else:
             loop_header_id = self.cfg.create_node(
@@ -411,14 +411,14 @@ class CCFGVisitor(CFGVisitor):
         
         # Create exit node for the loop
         loop_exit_id = self.cfg.create_node(
-            NodeType.STATEMENT, source_text="EXIT: do-while loop"
+            NodeType.EXIT, source_text="EXIT: do-while loop"
         )
         
         # Create entry node for do-while loop
         do_entry_id = self.cfg.create_node(
-            NodeType.STATEMENT, source_text="ENTRY: do-while loop"
+            NodeType.ENTRY, source_text="ENTRY: do-while loop"
         )
-        
+
         # Set up loop context for break/continue
         self.context.push_loop_context(loop_exit_id, loop_header_id)
         
@@ -482,7 +482,7 @@ class CCFGVisitor(CFGVisitor):
             
         # Create exit node for the switch
         switch_exit_id = self.cfg.create_node(
-            NodeType.STATEMENT, source_text="EXIT: switch"
+            NodeType.EXIT, source_text="EXIT: switch"
         )
         
         # Set up switch context for break statements
