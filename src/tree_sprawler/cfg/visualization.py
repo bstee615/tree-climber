@@ -1,6 +1,6 @@
 import graphviz
 
-from tree_sprawler.cfg.types import NodeType
+from tree_sprawler.cfg.cfg_types import NodeType
 from tree_sprawler.cfg.visitor import CFG
 
 
