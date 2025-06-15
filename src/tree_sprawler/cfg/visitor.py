@@ -2,12 +2,12 @@ from typing import Dict, List, Optional
 
 from tree_sitter import Node
 
-from tree_sprawler.cfg_parser.ast_utils import (
+from tree_sprawler.ast_utils import (
     get_calls,
     get_definitions,
     get_source_text,
 )
-from tree_sprawler.cfg_parser.cfg_types import CFGNode, CFGTraversalResult, NodeType
+from tree_sprawler.cfg.types import CFGNode, CFGTraversalResult, NodeType
 
 
 class ControlFlowContext:
