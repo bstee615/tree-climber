@@ -30,6 +30,11 @@ class NodeType(Enum):
     BREAK = "break"
     CONTINUE = "continue"
     RETURN = "return"
+    SWITCH_HEAD = "switch_head"
+    CASE = "case"
+    DEFAULT = "default"
+    LABEL = "label"
+    GOTO = "goto"
 
 
 @dataclass
@@ -105,6 +110,9 @@ class ControlFlowContext:
         self.break_targets: List[int] = []  # Stack of break targets
         self.continue_targets: List[int] = []  # Stack of continue targets
         self.current_nodes: List[int] = []  # Current active nodes
+        self.switch_head: Optional[int] = None  # Current switch statement head
+        self.labels: Dict[str, int] = {}  # Map of label names to node IDs
+        self.forward_goto_refs: Dict[str, List[int]] = {}  # Forward references to labels
 
     def push_loop_context(self, break_target: int, continue_target: int):
         """Push a new loop context"""
@@ -118,6 +126,17 @@ class ControlFlowContext:
         if self.continue_targets:
             self.continue_targets.pop()
 
+    def push_switch_context(self, break_target: int, switch_head: int):
+        """Push a new switch context"""
+        self.break_targets.append(break_target)
+        self.switch_head = switch_head
+
+    def pop_switch_context(self):
+        """Pop the current switch context"""
+        if self.break_targets:
+            self.break_targets.pop()
+        self.switch_head = None
+
     def get_break_target(self) -> Optional[int]:
         """Get the current break target"""
         return self.break_targets[-1] if self.break_targets else None
@@ -125,6 +144,32 @@ class ControlFlowContext:
     def get_continue_target(self) -> Optional[int]:
         """Get the current continue target"""
         return self.continue_targets[-1] if self.continue_targets else None
+        
+    def get_switch_head(self) -> Optional[int]:
+        """Get the current switch head"""
+        return self.switch_head
+        
+    def add_label(self, label: str, node_id: int):
+        """Register a label with its node ID"""
+        self.labels[label] = node_id
+        # Process any forward references to this label
+        if label in self.forward_goto_refs:
+            for goto_node_id in self.forward_goto_refs[label]:
+                # Connect all forward references to this label
+                return self.forward_goto_refs.pop(label)
+        return []
+        
+    def add_goto_ref(self, label: str, goto_node_id: int):
+        """Add a goto reference to a label, possibly before the label is defined"""
+        if label in self.labels:
+            # Label already exists, return its node ID
+            return self.labels[label]
+        else:
+            # Label not yet defined, store as forward reference
+            if label not in self.forward_goto_refs:
+                self.forward_goto_refs[label] = []
+            self.forward_goto_refs[label].append(goto_node_id)
+            return None
 
 
 class CFGVisitor:
@@ -154,7 +199,7 @@ class CFGVisitor:
         # Skip comments
         if node.type == "comment":
             return None
-            
+        
         # For leaf nodes or unhandled nodes, create a statement node
         if node.child_count == 0:
             node_id = self.cfg.create_node(
@@ -524,10 +569,14 @@ class CCFGVisitor(CFGVisitor):
         break_target = self.context.get_break_target()
         if break_target is not None:
             self.cfg.add_edge(break_id, break_target)
-
+            
+            # The break statement terminates the current control flow
+            # No normal successors, and an empty exit node list indicates
+            # that control flow doesn't continue within the current block
+        
         return CFGTraversalResult(
             entry_node_id=break_id, exit_node_ids=[]
-        )  # Break statements don't have normal successors
+        )  # Break statements don't have normal successors within their context
 
     def visit_continue_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a continue statement"""
@@ -557,6 +606,313 @@ class CCFGVisitor(CFGVisitor):
         return CFGTraversalResult(
             entry_node_id=return_id, exit_node_ids=[]
         )  # Return statements don't have normal successors
+
+    def visit_do_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a do-while loop"""
+        condition_node = None
+        body_stmt = None
+        
+        # Parse do-while statement
+        for child in node.children:
+            if child.type == "parenthesized_expression":
+                condition_node = child
+            elif child.type != "do" and child.type != "while" and child.type != ";":
+                body_stmt = child
+        
+        # Create loop header (condition) with actual condition text
+        if condition_node:
+            condition_text = self.get_source_text(condition_node)
+            loop_header_id = self.cfg.create_node(
+                NodeType.LOOP_HEADER,
+                condition_node,
+                f"COND: do-while loop: {condition_text}",
+            )
+        else:
+            loop_header_id = self.cfg.create_node(
+                NodeType.LOOP_HEADER, source_text="COND: do-while loop"
+            )
+        
+        # Create exit node for the loop
+        loop_exit_id = self.cfg.create_node(
+            NodeType.STATEMENT, source_text="EXIT: do-while loop"
+        )
+        
+        # Create entry node for do-while loop
+        do_entry_id = self.cfg.create_node(
+            NodeType.STATEMENT, source_text="ENTRY: do-while loop"
+        )
+        
+        # Set up loop context for break/continue
+        self.context.push_loop_context(loop_exit_id, loop_header_id)
+        
+        # Process loop body 
+        body_entry_id = None
+        if body_stmt:
+            body_result = self.visit(body_stmt)
+            body_entry_id = body_result.entry_node_id
+            
+            # Connect entry node to body entry
+            self.cfg.add_edge(do_entry_id, body_entry_id)
+            
+            # Connect body exits to condition
+            for body_exit in body_result.exit_node_ids:
+                self.cfg.add_edge(body_exit, loop_header_id)
+        else:
+            # Empty body, create a placeholder node
+            body_entry_id = self.cfg.create_node(
+                NodeType.STATEMENT, source_text="do-while body (empty)"
+            )
+            self.cfg.add_edge(do_entry_id, body_entry_id)
+            self.cfg.add_edge(body_entry_id, loop_header_id)
+        
+        # Connect condition back to body entry with "true" label (looping back)
+        self.cfg.add_edge(loop_header_id, body_entry_id, "true")
+        
+        # Connect condition to exit with "false" label
+        self.cfg.add_edge(loop_header_id, loop_exit_id, "false")
+        
+        # Clean up loop context
+        self.context.pop_loop_context()
+        
+        return CFGTraversalResult(
+            entry_node_id=do_entry_id, exit_node_ids=[loop_exit_id]
+        )
+
+    def visit_switch_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a switch statement"""
+        condition_node = None
+        body_node = None
+        
+        # Parse switch statement
+        for child in node.children:
+            if child.type == "parenthesized_expression":
+                condition_node = child
+            elif child.type == "compound_statement":
+                body_node = child
+        
+        # Create switch head node with condition
+        if condition_node:
+            condition_text = self.get_source_text(condition_node)
+            switch_head_id = self.cfg.create_node(
+                NodeType.SWITCH_HEAD,
+                condition_node,
+                f"SWITCH: {condition_text}"
+            )
+        else:
+            switch_head_id = self.cfg.create_node(
+                NodeType.SWITCH_HEAD, source_text="SWITCH"
+            )
+            
+        # Create exit node for the switch
+        switch_exit_id = self.cfg.create_node(
+            NodeType.STATEMENT, source_text="EXIT: switch"
+        )
+        
+        # Set up switch context for break statements
+        self.context.push_switch_context(switch_exit_id, switch_head_id)
+        
+        # Process switch body, which should contain case statements
+        if body_node:
+            body_result = self.visit(body_node)
+            
+            # Connect switch head to body entry
+            self.cfg.add_edge(switch_head_id, body_result.entry_node_id)
+            
+            # Connect body exits to switch exit
+            for exit_node in body_result.exit_node_ids:
+                self.cfg.add_edge(exit_node, switch_exit_id)
+        else:
+            # Empty switch, connect head directly to exit
+            self.cfg.add_edge(switch_head_id, switch_exit_id)
+        
+        # Clean up switch context
+        self.context.pop_switch_context()
+        
+        return CFGTraversalResult(
+            entry_node_id=switch_head_id, exit_node_ids=[switch_exit_id]
+        )
+
+    def visit_case_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a case statement within a switch"""
+        value_expr = None
+        body_stmts = []
+        
+        # Parse case statement
+        for child in node.children:
+            if child.type != "case" and child.type != ":" and value_expr is None:
+                value_expr = child
+            elif child.type != "case" and child.type != ":" and value_expr is not None:
+                body_stmts.append(child)
+                # We don't break here since there may be multiple statements
+        
+        # Create case node with the case value
+        if value_expr:
+            value_text = self.get_source_text(value_expr)
+            case_id = self.cfg.create_node(
+                NodeType.CASE,
+                value_expr,
+                f"CASE: {value_text}"
+            )
+        else:
+            case_id = self.cfg.create_node(
+                NodeType.CASE, source_text="CASE"
+            )
+        
+        # Connect case to switch head if available
+        switch_head = self.context.get_switch_head()
+        if switch_head is not None:
+            self.cfg.add_edge(switch_head, case_id)
+        
+        exit_nodes = [case_id]  # Default exit is case node itself for fall-through
+
+        # Process all body statements in sequence if present
+        if body_stmts:
+            last_exits = [case_id]  # Start with the case node
+            
+            # Process each statement in the body sequentially
+            for body_stmt in body_stmts:
+                stmt_result = self.visit(body_stmt)
+                if stmt_result:  # Make sure we got a valid result
+                    # Connect last statement's exits to this statement's entry
+                    for exit_id in last_exits:
+                        self.cfg.add_edge(exit_id, stmt_result.entry_node_id)
+                    
+                    # Update the current exits
+                    last_exits = stmt_result.exit_node_ids
+                    
+                    # If it's a break or other control flow statement (like return/goto)
+                    if not last_exits:  # Empty exit nodes list
+                        # No fall-through to the next case
+                        exit_nodes = []
+                        break
+            
+            # If we went through all statements and still have exit nodes,
+            # those become the exit nodes for the whole case
+            if last_exits:
+                exit_nodes = last_exits
+        
+        return CFGTraversalResult(
+            entry_node_id=case_id, exit_node_ids=exit_nodes
+        )
+
+    def visit_default_case(self, node: Node) -> CFGTraversalResult:
+        """Visit a default case within a switch"""
+        body_stmts = []
+        
+        # Parse default statement
+        for child in node.children:
+            if child.type != "default" and child.type != ":":
+                body_stmts.append(child)
+        
+        # Create default case node
+        default_id = self.cfg.create_node(
+            NodeType.DEFAULT, 
+            source_text="DEFAULT"
+        )
+        
+        # Connect default to switch head if available
+        switch_head = self.context.get_switch_head()
+        if switch_head is not None:
+            self.cfg.add_edge(switch_head, default_id)
+        
+        exit_nodes = [default_id]  # Default exit is the default node itself
+        
+        # Process all body statements in sequence if present
+        if body_stmts:
+            last_exits = [default_id]  # Start with the default node
+            
+            # Process each statement in the body sequentially
+            for body_stmt in body_stmts:
+                stmt_result = self.visit(body_stmt)
+                if stmt_result:  # Make sure we got a valid result
+                    # Connect last statement's exits to this statement's entry
+                    for exit_id in last_exits:
+                        self.cfg.add_edge(exit_id, stmt_result.entry_node_id)
+                    
+                    # Update the current exits
+                    last_exits = stmt_result.exit_node_ids
+                    
+                    # If it's a break or other control flow statement (like return/goto)
+                    if not last_exits:  # Empty exit nodes list
+                        # No fall-through after the default case
+                        exit_nodes = []
+                        break
+            
+            # If we went through all statements and still have exit nodes,
+            # those become the exit nodes for the default case
+            if last_exits:
+                exit_nodes = last_exits
+        
+        return CFGTraversalResult(
+            entry_node_id=default_id, exit_node_ids=exit_nodes
+        )
+
+    def visit_labeled_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a labeled statement - target for goto statements"""
+        label_name = None
+        body_stmt = None
+        
+        # Parse labeled statement
+        for child in node.children:
+            if child.type == "statement_identifier":
+                label_name = self.get_source_text(child)
+            elif child.type != ":" and label_name is not None:
+                body_stmt = child
+                break
+        
+        # Create label node
+        label_id = self.cfg.create_node(
+            NodeType.LABEL, 
+            source_text=f"LABEL: {label_name}" if label_name else "LABEL"
+        )
+        
+        # Register label in context
+        if label_name:
+            goto_refs = self.context.add_label(label_name, label_id)
+            # Connect any forward goto references to this label
+            for goto_id in goto_refs:
+                self.cfg.add_edge(goto_id, label_id)
+        
+        # Process body statement
+        if body_stmt:
+            body_result = self.visit(body_stmt)
+            self.cfg.add_edge(label_id, body_result.entry_node_id)
+            return CFGTraversalResult(
+                entry_node_id=label_id, exit_node_ids=body_result.exit_node_ids
+            )
+        
+        return CFGTraversalResult(
+            entry_node_id=label_id, exit_node_ids=[label_id]
+        )
+
+    def visit_goto_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a goto statement - unconditional jump to a label"""
+        target_label = None
+        
+        # Parse goto statement to find target label
+        for child in node.children:
+            if child.type == "statement_identifier":
+                target_label = self.get_source_text(child)
+                break
+        
+        # Create goto node
+        goto_id = self.cfg.create_node(
+            NodeType.GOTO, 
+            node, 
+            f"GOTO: {target_label}" if target_label else "GOTO"
+        )
+        
+        # Try to connect to label if it exists
+        if target_label:
+            target_id = self.context.add_goto_ref(target_label, goto_id)
+            if target_id:
+                # If label already defined, connect goto to label
+                self.cfg.add_edge(goto_id, target_id)
+        
+        # Goto statements don't have normal successors (control flow is transferred)
+        return CFGTraversalResult(
+            entry_node_id=goto_id, exit_node_ids=[]
+        )
 
 
 class CFGBuilder:
@@ -616,6 +972,21 @@ class CFGBuilder:
             elif node.node_type == NodeType.LOOP_HEADER:
                 shape = "diamond"
                 color = "lightcyan"
+            elif node.node_type == NodeType.SWITCH_HEAD:
+                shape = "diamond"
+                color = "lightpink"
+            elif node.node_type == NodeType.CASE:
+                shape = "box"
+                color = "lightsalmon"
+            elif node.node_type == NodeType.DEFAULT:
+                shape = "box"
+                color = "orange"
+            elif node.node_type == NodeType.LABEL:
+                shape = "box"
+                color = "lavender"
+            elif node.node_type == NodeType.GOTO:
+                shape = "box"
+                color = "violet"
 
             label = f"{node_id}: {node.source_text[:50]}"
             dot.node(str(node_id), label, shape=shape, style="filled", fillcolor=color)
@@ -638,10 +1009,11 @@ class CFGBuilder:
 if __name__ == "__main__":
     # Example C code
     c_code = """
-    int factorial(int n) {
+    int test_cfg_constructs(int n) {
         int a = 0;
         int b = 1;
         int c = 3;
+        int result = 1;
         
         /* Test conditional branching with
         true/false labels
@@ -653,18 +1025,47 @@ if __name__ == "__main__":
         }
         
         c = 10;
-        int result = 1;
         
-        // Test loop with true/false labels
+        // Test for loop with true/false labels
         for (int i = 2; i <= n; i++) {
             result *= i;
         }
         
-        // Test while loop with true/false labels
+        // Test while loop
         while (n > 0) {
             n--;
-            n -= 1;
         }
+        
+        // Test do-while loop
+        do {
+            result += 1;
+            n -= 1;
+        } while (n > 0);
+        
+        // Test switch statement
+        switch (result % 3) {
+            case 0:
+                result *= 2;
+                break;
+            case 1:
+                result += 10;
+                // Fall through to case 2
+            case 2:
+                result -= 5;
+                break;
+            default:
+                result = 0;
+        }
+        
+        // Test labeled statements and goto
+        if (result > 100) {
+            goto too_large;
+        }
+        
+        result += 1;
+        
+        too_large:
+            result = 100;
         
         return result;
     }
