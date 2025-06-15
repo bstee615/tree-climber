@@ -144,8 +144,17 @@ class CFGVisitor:
         visitor = getattr(self, method_name, self.generic_visit)
         return visitor(node)
 
+    def visit_comment(self, node: Node) -> None:
+        """Skip comment nodes entirely"""
+        # Return None to indicate that this node should be ignored
+        return None
+
     def generic_visit(self, node: Node) -> CFGTraversalResult:
         """Generic visitor for unhandled node types"""
+        # Skip comments
+        if node.type == "comment":
+            return None
+            
         # For leaf nodes or unhandled nodes, create a statement node
         if node.child_count == 0:
             node_id = self.cfg.create_node(
@@ -158,8 +167,13 @@ class CFGVisitor:
         current_exits = []
 
         for child in node.children:
+            # Skip comment nodes
+            if child.type == "comment":
+                continue
+                
             child_result = self.visit(child)
 
+            # Skip if the child node returns None (like comments)
             if child_result:
                 if entry_node is None:
                     # First child becomes the entry point
@@ -277,11 +291,16 @@ class CCFGVisitor(CFGVisitor):
 
         # Process each statement in the block
         for child in node.children:
-            if child.type in ["{", "}"]:
-                continue  # Skip braces
+            # Skip braces and comments
+            if child.type in ["{", "}"] or child.type == "comment":
+                continue
 
             # Visit each child
             child_result = self.visit(child)
+            
+            # Skip if the child returns None (comments or empty nodes)
+            if not child_result:
+                continue
 
             if first_entry is None:
                 # First statement becomes the entry point for the block
@@ -624,7 +643,9 @@ if __name__ == "__main__":
         int b = 1;
         int c = 3;
         
-        // Test conditional branching with true/false labels
+        /* Test conditional branching with
+        true/false labels
+        */
         if (n <= 1) {
             return 1;
         } else {
