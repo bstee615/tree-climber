@@ -1,10 +1,9 @@
+import graphviz
+from tree_sitter_languages import get_parser
+
 from tree_sprawler.cfg_parser.cfg_types import NodeType
 from tree_sprawler.cfg_parser.cfg_visitor import CFG
 from tree_sprawler.cfg_parser.languages.c import CCFGVisitor
-import graphviz
-
-
-from tree_sitter_languages import get_parser
 
 
 def get_visitor(language: str) -> CCFGVisitor:
@@ -45,7 +44,7 @@ class CFGBuilder:
         for child in root_node.children:
             if child.type == "function_definition":
                 visitor.visit(child)
-        
+
         visitor.postprocess_cfg()
 
         return visitor.cfg

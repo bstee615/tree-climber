@@ -1,0 +1,9 @@
+{
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            // https://github.com/astral-sh/ruff-vscode/issues/363#issuecomment-2958936767
+            "source.organizeImports.ruff": "explicit"
+        },
+        "editor.formatOnSave": true
+    }
+}
