@@ -183,10 +183,9 @@ class CFGTraversalResult:
 class CFGVisitor:
     """Base visitor class for CFG construction using visitor pattern"""
 
-    def __init__(self, source_code: str):
+    def __init__(self):
         self.cfg = CFG()
         self.context = ControlFlowContext()
-        self.source_code = source_code
 
     def visit(self, node: Node) -> CFGTraversalResult:
         """
@@ -287,7 +286,7 @@ class CFGVisitor:
         # For leaf nodes or unhandled nodes, create a statement node
         if node.child_count == 0:
             node_id = self.cfg.create_node(
-                NodeType.STATEMENT, node, self.get_source_text(node)
+                NodeType.STATEMENT, node, get_source_text(node)
             )
             return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
 
@@ -320,11 +319,3 @@ class CFGVisitor:
             )
 
         return CFGTraversalResult(entry_node_id=entry_node, exit_node_ids=current_exits)
-
-    def get_source_text(self, node: Node) -> str:
-        """Extract source text for a node"""
-        if hasattr(node, "start_byte") and hasattr(node, "end_byte"):
-            return self.source_code[node.start_byte : node.end_byte]
-        return str(node.type)
-
-
