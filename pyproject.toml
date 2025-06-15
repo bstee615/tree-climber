@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "graphviz>=0.20.3",
+    "pytest>=8.4.0",
     "tree-sitter<0.21.0",
     "tree-sitter-languages>=1.10.2",
 ]
@@ -19,3 +20,8 @@ tree-sprawler = "tree_sprawler:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
