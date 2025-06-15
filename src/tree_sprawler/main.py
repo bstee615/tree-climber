@@ -5,6 +5,10 @@ from tree_sprawler.cfg_parser.cfg_builder import CFGBuilder
 if __name__ == "__main__":
     # Example C code
     c_code = """
+    int foo() {
+        return 42;
+    }
+
     int test_cfg_constructs(int n) {
         int a = 0;
         int b = 1;

@@ -70,13 +70,15 @@ class CCFGVisitor(CFGVisitor):
         entry_id = self.cfg.create_node(
             NodeType.ENTRY, source_text=function_name
         )
-        self.cfg.set_entry(entry_id)
+        self.cfg.entry_node_ids.append(entry_id)
+        self.context.push_entry(entry_id)
 
         # Create exit node
         exit_id = self.cfg.create_node(
             NodeType.EXIT, source_text=function_name
         )
-        self.cfg.set_exit(exit_id)
+        self.cfg.exit_node_ids.append(exit_id)
+        self.context.push_exit(exit_id)
 
         if body_node:
             # Visit function body
@@ -91,6 +93,9 @@ class CCFGVisitor(CFGVisitor):
         else:
             # Empty function
             self.cfg.add_edge(entry_id, exit_id)
+
+        self.context.pop_entry()
+        self.context.pop_exit()
 
         return CFGTraversalResult(entry_node_id=entry_id, exit_node_ids=[exit_id])
 
@@ -377,8 +382,8 @@ class CCFGVisitor(CFGVisitor):
         )
 
         # Connect to function exit
-        if self.cfg.exit_node_id is not None:
-            self.cfg.add_edge(return_id, self.cfg.exit_node_id)
+        if self.cfg.exit_node_ids:
+            self.cfg.add_edge(return_id, self.cfg.exit_node_ids[-1])
 
         return CFGTraversalResult(
             entry_node_id=return_id, exit_node_ids=[]

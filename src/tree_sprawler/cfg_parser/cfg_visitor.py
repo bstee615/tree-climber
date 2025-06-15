@@ -17,6 +17,8 @@ class ControlFlowContext:
         self.switch_head: Optional[int] = None  # Current switch statement head
         self.labels: Dict[str, int] = {}  # Map of label names to node IDs
         self.forward_goto_refs: Dict[str, List[int]] = {}  # Forward references to labels
+        self.entry_node_ids: List[int] = []  # Stack of entry node IDs
+        self.exit_node_ids: List[int] = []  # Stack of exit node IDs
 
     def push_loop_context(self, break_target: int, continue_target: int):
         """Push a new loop context"""
@@ -40,6 +42,24 @@ class ControlFlowContext:
         if self.break_targets:
             self.break_targets.pop()
         self.switch_head = None
+
+    def push_entry(self, node_id: int):
+        """Set the entry node"""
+        self.entry_node_ids.append(node_id)
+
+    def push_exit(self, node_id: int):
+        """Set the exit node"""
+        self.exit_node_ids.append(node_id)
+
+    def pop_entry(self):
+        """Pop the last entry node and return its ID"""
+        if self.entry_node_ids:
+            self.entry_node_ids.pop()
+
+    def pop_exit(self):
+        """Pop the last exit node and return its ID"""
+        if self.exit_node_ids:
+            self.exit_node_ids.pop()
 
     def get_break_target(self) -> Optional[int]:
         """Get the current break target"""
@@ -125,10 +145,10 @@ class CFGNode:
 class CFG:
     """Control Flow Graph representation"""
 
-    def __init__(self, function_name: str = ""):
+    def __init__(self, function_name: Optional[str] = None):
         self.nodes: Dict[int, CFGNode] = {}
-        self.entry_node_id: Optional[int] = None
-        self.exit_node_id: Optional[int] = None
+        self.entry_node_ids: List[int] = []
+        self.exit_node_ids: List[int] = []
         self.function_name = function_name
         self._next_id = 0
 
@@ -150,14 +170,6 @@ class CFG:
         if from_id in self.nodes and to_id in self.nodes:
             self.nodes[from_id].add_successor(to_id, label)
             self.nodes[to_id].add_predecessor(from_id)
-
-    def set_entry(self, node_id: int):
-        """Set the entry node"""
-        self.entry_node_id = node_id
-
-    def set_exit(self, node_id: int):
-        """Set the exit node"""
-        self.exit_node_id = node_id
 
 
 @dataclass
@@ -207,7 +219,7 @@ class CFGVisitor:
         special_nodes = []
         for node_id, node in self.cfg.nodes.items():
             # Skip the overall function entry/exit nodes
-            if (node_id == self.cfg.entry_node_id or node_id == self.cfg.exit_node_id):
+            if (node_id in self.cfg.entry_node_ids or node_id in self.cfg.exit_node_ids):
                 continue
                 
             # Check NodeType or source_text prefixes
