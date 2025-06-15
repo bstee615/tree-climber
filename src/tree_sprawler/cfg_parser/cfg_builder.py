@@ -6,10 +6,10 @@ import graphviz
 from tree_sitter_languages import get_parser
 
 
-def get_visitor(language: str):
+def get_visitor(language: str, source_code: str) -> CCFGVisitor:
     """Get the appropriate visitor class based on the language"""
     if language == "c":
-        return CCFGVisitor()
+        return CCFGVisitor(source_code)
     else:
         raise ValueError(f"Unsupported language: {language}")
 
@@ -38,8 +38,7 @@ class CFGBuilder:
         root_node = tree.root_node
 
         # Create visitor and build CFG
-        visitor = get_visitor(self.language)
-        visitor.source_code = source_code
+        visitor = get_visitor(self.language, source_code)
 
         # Find function definitions and process them
         for child in root_node.children:
