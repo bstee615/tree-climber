@@ -44,9 +44,7 @@ class CFGBuilder:
         for child in root_node.children:
             if child.type == "function_definition":
                 visitor.visit(child)
-                break  # For now, handle only the first function
         
-        # Apply post-processing steps
         visitor.postprocess_cfg()
 
         return visitor.cfg
