@@ -19,6 +19,7 @@ class ControlFlowContext:
         self.forward_goto_refs: Dict[str, List[int]] = {}  # Forward references to labels
         self.entry_node_ids: List[int] = []  # Stack of entry node IDs
         self.exit_node_ids: List[int] = []  # Stack of exit node IDs
+        self.function_definitions: Dict[int, str] = {}  # Map of entry node IDs to function names
 
     def push_loop_context(self, break_target: int, continue_target: int):
         """Push a new loop context"""
@@ -94,6 +95,13 @@ class ControlFlowContext:
                 self.forward_goto_refs[label] = []
             self.forward_goto_refs[label].append(goto_node_id)
             return None
+    
+    def register_function_definition(self, node_id: int, function_name: str):
+        """Register a function definition with its entry node ID and name"""
+        if node_id not in self.function_definitions:
+            self.function_definitions[node_id] = function_name
+        else:
+            print(f"Warning: Function definition for {function_name} already exists with ID {node_id}")
 
 
 class NodeType(Enum):
@@ -141,16 +149,51 @@ class CFGNode:
         """Get the label for an edge to a successor, if it exists"""
         return self.edge_labels.get(successor_id)
 
+def get_source_text(node: Node) -> str:
+    """Extract source text for a node"""
+    return node.text.decode("utf-8") if node.text else ""
+
+def get_calls(ast_node: Node) -> List[str]:
+    """Extract function calls under an AST node."""
+    calls = []
+    if not ast_node:
+        return calls
+
+    # Stack for DFS traversal
+    stack = [ast_node]
+    
+    while stack:
+        current = stack.pop()
+        
+        # Check if this node is a definition we're interested in
+        if current.type == "call_expression":
+            identifier = None
+            for child in current.children:
+                if child.type == "identifier":
+                    # Assuming the function name is in an identifier node
+                    assert identifier is None, "Multiple identifiers found in call expression"
+                    identifier = get_source_text(child)
+            if identifier:
+                calls.append(identifier)
+
+        # Add all children to the stack in reverse order
+        # (to process them in the original left-to-right order)
+        for child in reversed(current.children):
+            stack.append(child)
+
+    return calls
+
 
 class CFG:
     """Control Flow Graph representation"""
 
-    def __init__(self, function_name: Optional[str] = None):
+    def __init__(self, context: ControlFlowContext, function_name: Optional[str] = None):
         self.nodes: Dict[int, CFGNode] = {}
         self.entry_node_ids: List[int] = []
         self.exit_node_ids: List[int] = []
         self.function_name = function_name
         self._next_id = 0
+        self.context = context
 
     def create_node(
         self, node_type: NodeType, ast_node: Optional[Node] = None, source_text: str = ""
@@ -162,6 +205,15 @@ class CFG:
         self.nodes[node_id] = CFGNode(
             id=node_id, node_type=node_type, ast_node=ast_node, source_text=source_text
         )
+        if ast_node is not None:
+            function_calls = get_calls(ast_node)
+            if function_calls:
+                for definition_id, definition_name in self.context.function_definitions.items():
+                    if definition_name in function_calls:
+                        self.add_edge(node_id, definition_id, label="function_call")
+                        break
+                        # NOTE: Maybe not needed
+                        # self.context.add_goto_ref(definition_name, node_id)
 
         return node_id
 
@@ -184,8 +236,8 @@ class CFGVisitor:
     """Base visitor class for CFG construction using visitor pattern"""
 
     def __init__(self):
-        self.cfg = CFG()
         self.context = ControlFlowContext()
+        self.cfg = CFG(self.context)
 
     def visit(self, node: Node) -> CFGTraversalResult:
         """

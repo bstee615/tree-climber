@@ -72,6 +72,7 @@ class CCFGVisitor(CFGVisitor):
         )
         self.cfg.entry_node_ids.append(entry_id)
         self.context.push_entry(entry_id)
+        self.context.register_function_definition(entry_id, function_name)
 
         # Create exit node
         exit_id = self.cfg.create_node(
