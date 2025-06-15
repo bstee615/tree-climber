@@ -8,8 +8,15 @@
             "name": "C CFG parser",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tree_sprawler/main.py",
+            "program": "${workspaceFolder}/src/tree_sprawler/cfg/main.py",
             "console": "integratedTerminal"
-        }
+        },
+        {
+            "name": "C dataflow parser",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/tree_sprawler/dataflow/main.py",
+            "console": "integratedTerminal"
+        },
     ]
 }
