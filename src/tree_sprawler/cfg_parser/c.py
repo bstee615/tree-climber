@@ -349,11 +349,11 @@ class CCFGVisitor(CFGVisitor):
             cond_id = self.cfg.create_node(
                 NodeType.CONDITION, 
                 condition_node, 
-                f"if condition: {condition_text}"
+                f"COND: if stmt: {condition_text}"
             )
         else:
             cond_id = self.cfg.create_node(
-                NodeType.CONDITION, source_text="if condition"
+                NodeType.CONDITION, source_text="COND: if stmt"
             )
 
         exit_nodes = []
