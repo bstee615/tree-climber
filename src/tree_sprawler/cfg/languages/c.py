@@ -3,6 +3,8 @@ Control Flow Graph (CFG) Generator Framework using py-tree-sitter for C language
 This framework uses the visitor pattern with depth-first traversal to build CFGs.
 """
 
+from typing import List
+
 from tree_sitter import Node
 
 from tree_sprawler.ast_utils import get_source_text
@@ -12,6 +14,113 @@ from tree_sprawler.cfg.visitor import CFGVisitor
 
 class CCFGVisitor(CFGVisitor):
     """C-specific CFG visitor implementation"""
+
+    # AST utilities
+    def get_calls(self, ast_node: Node) -> List[str]:
+        """Extract function calls under an AST node."""
+        calls = []
+        if not ast_node:
+            return calls
+
+        # Stack for DFS traversal
+        stack = [ast_node]
+
+        while stack:
+            current = stack.pop()
+
+            if current.type == "call_expression":
+                identifier = None
+                for child in current.children:
+                    if child.type == "identifier":
+                        # Assuming the function name is in an identifier node
+                        assert identifier is None, (
+                            "Multiple identifiers found in call expression"
+                        )
+                        identifier = get_source_text(child)
+                if identifier:
+                    calls.append(identifier)
+
+            # Add all children to the stack in reverse order
+            # (to process them in the original left-to-right order)
+            for child in reversed(current.children):
+                stack.append(child)
+
+        return calls
+
+    def get_definitions(self, ast_node: Node) -> List[str]:
+        """Extract variable definitions under an AST node."""
+        definitions = []
+        if not ast_node:
+            return definitions
+
+        # Stack for DFS traversal
+        stack = [ast_node]
+
+        while stack:
+            current = stack.pop()
+
+            if current.type == "init_declarator":
+                identifier = None
+                for child in current.children:
+                    if child.type == "identifier":
+                        identifier = child.text.decode()
+                        break
+                if identifier:
+                    definitions.append(identifier)
+            elif current.type == "assignment_expression":
+                identifier = None
+                for child in current.children:
+                    if child.type == "identifier":
+                        identifier = child.text.decode()
+                        break
+                if identifier:
+                    definitions.append(identifier)
+
+            # Add all children to the stack in reverse order
+            # (to process them in the original left-to-right order)
+            for child in reversed(current.children):
+                stack.append(child)
+
+        return definitions
+
+    def get_uses(self, ast_node: Node) -> List[str]:
+        """Extract variable uses under an AST node."""
+        uses = []
+
+        # Stack for DFS traversal
+        stack = [ast_node]
+        while stack:
+            current = stack.pop()
+
+            if current.type == "identifier":
+                # Skip identifiers in assignment left-hand side or function definition
+                if current.parent:
+                    # Skip identifiers that are function names in call expressions
+                    if current.parent.type == "call_expression":
+                        continue
+                    # Skip identifiers on the left side of assignment expressions
+                    if current.parent.type == "assignment_expression":
+                        continue
+                    # Skip function definition names
+                    if current.parent.type == "function_definition":
+                        continue
+                    # Skip parameter declarations
+                    if current.parent.type == "parameter_declaration":
+                        continue
+                    # Skip variable declarators
+                    if current.parent.type == "init_declarator":
+                        continue
+                    # Skip function declarators
+                    if current.parent.type == "function_declarator":
+                        continue
+                uses.append(current.text.decode())
+
+            # Add all children to the stack in reverse order
+            # (to process them in the original left-to-right order)
+            for child in reversed(current.children):
+                stack.append(child)
+
+        return uses
 
     def is_linear_statement(self, node: Node) -> bool:
         """Check if a node represents a simple linear statement"""
@@ -32,6 +141,7 @@ class CCFGVisitor(CFGVisitor):
         # Check if node type isn't one of the non-linear types
         return node.type.endswith("_statement") and node.type not in non_linear_types
 
+    # Visitor methods
     def visit_comment(self, node: Node) -> None:
         """Skip comment nodes entirely"""
         # Return None to indicate that this node should be ignored
@@ -45,7 +155,7 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_linear_statement(self, node: Node) -> CFGTraversalResult:
         # If the node is a linear statement, create a statement node
-        node_id = self.cfg.create_node(NodeType.STATEMENT, node, get_source_text(node))
+        node_id = self.create_node(NodeType.STATEMENT, node, get_source_text(node))
         return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
 
     def visit_function_definition(self, node: Node) -> CFGTraversalResult:
@@ -83,7 +193,7 @@ class CCFGVisitor(CFGVisitor):
 
         # Create entry node with function name and parameters
         param_info = function_name
-        entry_id = self.cfg.create_node(
+        entry_id = self.create_node(
             NodeType.ENTRY, source_text=param_info, ast_node=declarator
         )
         # Add parameter definitions to the entry node
@@ -94,7 +204,7 @@ class CCFGVisitor(CFGVisitor):
         self.context.register_function_definition(entry_id, function_name)
 
         # Create exit node
-        exit_id = self.cfg.create_node(
+        exit_id = self.create_node(
             NodeType.EXIT, source_text=function_name, ast_node=closing_brace
         )
         self.cfg.exit_node_ids.append(exit_id)
@@ -150,7 +260,7 @@ class CCFGVisitor(CFGVisitor):
 
         # If the block is empty, create a placeholder node
         if first_entry is None:
-            placeholder_id = self.cfg.create_node(
+            placeholder_id = self.create_node(
                 NodeType.STATEMENT, source_text="empty block"
             )
             first_entry = placeholder_id
@@ -181,18 +291,16 @@ class CCFGVisitor(CFGVisitor):
         # Create condition node with actual condition text
         if condition_node:
             condition_text = get_source_text(condition_node)
-            cond_id = self.cfg.create_node(
+            cond_id = self.create_node(
                 NodeType.CONDITION, condition_node, condition_text
             )
         else:
-            cond_id = self.cfg.create_node(
-                NodeType.CONDITION, source_text="COND: if stmt"
-            )
+            cond_id = self.create_node(NodeType.CONDITION, source_text="COND: if stmt")
 
         exit_nodes = []
 
         # Create an explicit exit node for the if statement
-        if_exit_id = self.cfg.create_node(NodeType.EXIT, source_text="EXIT: if stmt")
+        if_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: if stmt")
 
         # Process then branch with "true" label
         if then_stmt:
@@ -235,18 +343,16 @@ class CCFGVisitor(CFGVisitor):
         # Create loop header (condition) with actual condition text
         if condition_node:
             condition_text = get_source_text(condition_node)
-            loop_header_id = self.cfg.create_node(
+            loop_header_id = self.create_node(
                 NodeType.LOOP_HEADER, condition_node, condition_text
             )
         else:
-            loop_header_id = self.cfg.create_node(
+            loop_header_id = self.create_node(
                 NodeType.LOOP_HEADER, source_text="COND: while loop"
             )
 
         # Create exit node for the loop
-        loop_exit_id = self.cfg.create_node(
-            NodeType.EXIT, source_text="EXIT: while loop"
-        )
+        loop_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: while loop")
 
         # Set up loop context
         self.context.push_loop_context(loop_exit_id, loop_header_id)
@@ -302,22 +408,22 @@ class CCFGVisitor(CFGVisitor):
 
         # Create initialization node with actual initialization code
         init_text = get_source_text(init_expr) if init_expr else "INIT: for loop"
-        init_id = self.cfg.create_node(NodeType.STATEMENT, init_expr, init_text)
+        init_id = self.create_node(NodeType.STATEMENT, init_expr, init_text)
 
         # Create condition node with actual condition code
         condition_text = (
             get_source_text(condition_expr) if condition_expr else "for loop"
         )
-        condition_id = self.cfg.create_node(
+        condition_id = self.create_node(
             NodeType.LOOP_HEADER, condition_expr, condition_text
         )
 
         # Create update node with actual update code
         update_text = get_source_text(update_expr) if update_expr else "for update"
-        update_id = self.cfg.create_node(NodeType.STATEMENT, update_expr, update_text)
+        update_id = self.create_node(NodeType.STATEMENT, update_expr, update_text)
 
         # Create exit node
-        exit_id = self.cfg.create_node(NodeType.EXIT, source_text="EXIT: for loop")
+        exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: for loop")
 
         # Connect init to condition
         self.cfg.add_edge(init_id, condition_id)
@@ -347,7 +453,7 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_break_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a break statement"""
-        break_id = self.cfg.create_node(NodeType.BREAK, node, get_source_text(node))
+        break_id = self.create_node(NodeType.BREAK, node, get_source_text(node))
 
         # Connect to break target if available
         break_target = self.context.get_break_target()
@@ -364,9 +470,7 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_continue_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a continue statement"""
-        continue_id = self.cfg.create_node(
-            NodeType.CONTINUE, node, get_source_text(node)
-        )
+        continue_id = self.create_node(NodeType.CONTINUE, node, get_source_text(node))
 
         # Connect to continue target if available
         continue_target = self.context.get_continue_target()
@@ -379,7 +483,7 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_return_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a return statement"""
-        return_id = self.cfg.create_node(NodeType.RETURN, node, get_source_text(node))
+        return_id = self.create_node(NodeType.RETURN, node, get_source_text(node))
 
         # Connect to function exit
         if self.cfg.exit_node_ids:
@@ -404,21 +508,21 @@ class CCFGVisitor(CFGVisitor):
         # Create loop header (condition) with actual condition text
         if condition_node:
             condition_text = get_source_text(condition_node)
-            loop_header_id = self.cfg.create_node(
+            loop_header_id = self.create_node(
                 NodeType.LOOP_HEADER, condition_node, condition_text
             )
         else:
-            loop_header_id = self.cfg.create_node(
+            loop_header_id = self.create_node(
                 NodeType.LOOP_HEADER, source_text="COND: do-while loop"
             )
 
         # Create exit node for the loop
-        loop_exit_id = self.cfg.create_node(
+        loop_exit_id = self.create_node(
             NodeType.EXIT, source_text="EXIT: do-while loop"
         )
 
         # Create entry node for do-while loop
-        do_entry_id = self.cfg.create_node(
+        do_entry_id = self.create_node(
             NodeType.ENTRY, source_text="ENTRY: do-while loop"
         )
 
@@ -439,7 +543,7 @@ class CCFGVisitor(CFGVisitor):
                 self.cfg.add_edge(body_exit, loop_header_id)
         else:
             # Empty body, create a placeholder node
-            body_entry_id = self.cfg.create_node(
+            body_entry_id = self.create_node(
                 NodeType.STATEMENT, source_text="do-while body (empty)"
             )
             self.cfg.add_edge(do_entry_id, body_entry_id)
@@ -473,16 +577,16 @@ class CCFGVisitor(CFGVisitor):
         # Create switch head node with condition
         if condition_node:
             condition_text = get_source_text(condition_node)
-            switch_head_id = self.cfg.create_node(
+            switch_head_id = self.create_node(
                 NodeType.SWITCH_HEAD, condition_node, condition_text
             )
         else:
-            switch_head_id = self.cfg.create_node(
+            switch_head_id = self.create_node(
                 NodeType.SWITCH_HEAD, source_text="SWITCH"
             )
 
         # Create exit node for the switch
-        switch_exit_id = self.cfg.create_node(NodeType.EXIT, source_text="EXIT: switch")
+        switch_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: switch")
 
         # Set up switch context for break statements
         self.context.push_switch_context(switch_exit_id, switch_head_id)
@@ -526,12 +630,10 @@ class CCFGVisitor(CFGVisitor):
         # Create case node with the case value
         if value_expr:
             value_text = get_source_text(value_expr)
-            case_id = self.cfg.create_node(
-                NodeType.CASE, value_expr, f"CASE: {value_text}"
-            )
+            case_id = self.create_node(NodeType.CASE, value_expr, f"CASE: {value_text}")
         else:
             value_text = "case"
-            case_id = self.cfg.create_node(NodeType.CASE, source_text="CASE")
+            case_id = self.create_node(NodeType.CASE, source_text="CASE")
 
         # Connect case to switch head if available
         switch_head = self.context.get_switch_head()
@@ -580,7 +682,7 @@ class CCFGVisitor(CFGVisitor):
                 body_stmts.append(child)
 
         # Create default case node
-        default_id = self.cfg.create_node(NodeType.DEFAULT, source_text="DEFAULT")
+        default_id = self.create_node(NodeType.DEFAULT, source_text="DEFAULT")
 
         # Connect default to switch head if available
         switch_head = self.context.get_switch_head()
@@ -631,9 +733,7 @@ class CCFGVisitor(CFGVisitor):
                 break
 
         # Create label node
-        label_id = self.cfg.create_node(
-            NodeType.LABEL, source_text=label_name or "LABEL"
-        )
+        label_id = self.create_node(NodeType.LABEL, source_text=label_name or "LABEL")
 
         # Register label in context
         if label_name:
@@ -663,7 +763,7 @@ class CCFGVisitor(CFGVisitor):
                 break
 
         # Create goto node
-        goto_id = self.cfg.create_node(NodeType.GOTO, node, target_label or "GOTO")
+        goto_id = self.create_node(NodeType.GOTO, node, target_label or "GOTO")
 
         # Try to connect to label if it exists
         if target_label:

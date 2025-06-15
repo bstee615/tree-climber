@@ -1,12 +1,10 @@
+import abc
 from typing import Dict, List, Optional
 
 from tree_sitter import Node
 
 from tree_sprawler.ast_utils import (
-    get_calls,
-    get_definitions,
     get_source_text,
-    get_uses,
 )
 from tree_sprawler.cfg.cfg_types import CFGNode, CFGTraversalResult, NodeType
 
@@ -137,31 +135,12 @@ class CFG:
         node_id = self._next_id
         self._next_id += 1
 
-        call_edges = []
-        definitions = []
-        uses = []
         self.nodes[node_id] = CFGNode(
             id=node_id,
             node_type=node_type,
             ast_node=ast_node,
             source_text=source_text,
-            variable_definitions=definitions,
-            variable_uses=uses,
         )
-        if ast_node is not None:
-            function_calls = get_calls(ast_node)
-            if function_calls:
-                for (
-                    definition_id,
-                    definition_name,
-                ) in self.context.function_definitions.items():
-                    if definition_name in function_calls:
-                        call_edges.append((node_id, definition_id))
-                        break
-            definitions.extend(get_definitions(ast_node))
-            uses.extend(get_uses(ast_node))
-        for a, b in call_edges:
-            self.add_edge(a, b, label="function_call")
 
         return node_id
 
@@ -172,12 +151,52 @@ class CFG:
             self.nodes[to_id].add_predecessor(from_id)
 
 
-class CFGVisitor:
+class CFGVisitor(abc.ABC):
     """Base visitor class for CFG construction using visitor pattern"""
 
     def __init__(self):
         self.context = ControlFlowContext()
         self.cfg = CFG(self.context)
+
+    @abc.abstractmethod
+    def get_calls(self, ast_node: Node) -> List[str]:
+        """Extract function calls under an AST node."""
+        pass
+
+    @abc.abstractmethod
+    def get_definitions(self, ast_node: Node) -> List[str]:
+        """Extract variable definitions under an AST node."""
+        pass
+
+    @abc.abstractmethod
+    def get_uses(self, ast_node: Node) -> List[str]:
+        """Extract variable uses under an AST node."""
+        pass
+
+    def create_node(self, *args, **kwargs) -> int:
+        """Create a new CFG node and return its ID"""
+        node_id = self.cfg.create_node(*args, **kwargs)
+        node = self.cfg.nodes[node_id]
+
+        # Link extra node metadata
+        call_edges = []
+        if node.ast_node is not None:
+            function_calls = self.get_calls(node.ast_node)
+            if function_calls:
+                for (
+                    definition_id,
+                    definition_name,
+                ) in self.context.function_definitions.items():
+                    if definition_name in function_calls:
+                        call_edges.append((node_id, definition_id))
+                        break
+            node.variable_definitions.extend(self.get_definitions(node.ast_node))
+            node.variable_uses.extend(self.get_uses(node.ast_node))
+        # Link call edges
+        for a, b in call_edges:
+            self.cfg.add_edge(a, b, label="function_call")
+
+        return node_id
 
     def visit(self, node: Node) -> CFGTraversalResult:
         """
@@ -283,9 +302,7 @@ class CFGVisitor:
         """Generic visitor for unhandled node types"""
         # For leaf nodes or unhandled nodes, create a statement node
         if node.child_count == 0:
-            node_id = self.cfg.create_node(
-                NodeType.STATEMENT, node, get_source_text(node)
-            )
+            node_id = self.create_node(NodeType.STATEMENT, node, get_source_text(node))
             return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
 
         # For nodes with children, visit them sequentially
@@ -309,7 +326,7 @@ class CFGVisitor:
 
         if entry_node is None:
             # If no children were processed, return a placeholder
-            placeholder_id = self.cfg.create_node(
+            placeholder_id = self.create_node(
                 NodeType.STATEMENT, source_text="empty node"
             )
             return CFGTraversalResult(
