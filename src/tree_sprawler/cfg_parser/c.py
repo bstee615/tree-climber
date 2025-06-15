@@ -4,7 +4,8 @@ This framework uses the visitor pattern with depth-first traversal to build CFGs
 """
 
 from tree_sitter_languages import get_parser
-from typing import Dict, List, Set, Optional, Any
+from tree_sitter import Node
+from typing import Dict, List, Set, Optional
 from enum import Enum
 from dataclasses import dataclass, field
 import graphviz
@@ -37,7 +38,7 @@ class CFGNode:
 
     id: int
     node_type: NodeType
-    ast_node: Optional[Any] = None
+    ast_node: Optional[Node] = None
     source_text: str = ""
     successors: Set[int] = field(default_factory=set)
     predecessors: Set[int] = field(default_factory=set)
@@ -70,7 +71,7 @@ class CFG:
         self._next_id = 0
 
     def create_node(
-        self, node_type: NodeType, ast_node: Any = None, source_text: str = ""
+        self, node_type: NodeType, ast_node: Optional[Node] = None, source_text: str = ""
     ) -> int:
         """Create a new CFG node and return its ID"""
         node_id = self._next_id
@@ -134,7 +135,7 @@ class CFGVisitor:
         self.context = ControlFlowContext()
         self.source_code = ""
 
-    def visit(self, node: Any) -> CFGTraversalResult:
+    def visit(self, node: Node) -> CFGTraversalResult:
         """
         Visit a node and return a CFGTraversalResult containing the entry node ID and list of exit node IDs.
         This is the main entry point for the visitor pattern.
@@ -143,7 +144,7 @@ class CFGVisitor:
         visitor = getattr(self, method_name, self.generic_visit)
         return visitor(node)
 
-    def generic_visit(self, node: Any) -> CFGTraversalResult:
+    def generic_visit(self, node: Node) -> CFGTraversalResult:
         """Generic visitor for unhandled node types"""
         # For leaf nodes or unhandled nodes, create a statement node
         if node.child_count == 0:
@@ -181,7 +182,7 @@ class CFGVisitor:
 
         return CFGTraversalResult(entry_node_id=entry_node, exit_node_ids=current_exits)
 
-    def get_source_text(self, node: Any) -> str:
+    def get_source_text(self, node: Node) -> str:
         """Extract source text for a node"""
         if hasattr(node, "start_byte") and hasattr(node, "end_byte"):
             return self.source_code[node.start_byte : node.end_byte]
@@ -191,7 +192,7 @@ class CFGVisitor:
 class CCFGVisitor(CFGVisitor):
     """C-specific CFG visitor implementation"""
 
-    def is_linear_statement(self, node: Any) -> bool:
+    def is_linear_statement(self, node: Node) -> bool:
         """Check if a node represents a simple linear statement"""
         # Control flow statements that create branches or edges
         non_linear_types = [
@@ -210,20 +211,20 @@ class CCFGVisitor(CFGVisitor):
         # Check if node type isn't one of the non-linear types
         return node.type.endswith("_statement") and node.type not in non_linear_types
 
-    def visit_expression_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_expression_statement(self, node: Node) -> CFGTraversalResult:
         return self.visit_linear_statement(node)
 
-    def visit_declaration(self, node: Any) -> CFGTraversalResult:
+    def visit_declaration(self, node: Node) -> CFGTraversalResult:
         return self.visit_linear_statement(node)
 
-    def visit_linear_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_linear_statement(self, node: Node) -> CFGTraversalResult:
         # If the node is a linear statement, create a statement node
         node_id = self.cfg.create_node(
             NodeType.STATEMENT, node, self.get_source_text(node)
         )
         return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
 
-    def visit_function_definition(self, node: Any) -> CFGTraversalResult:
+    def visit_function_definition(self, node: Node) -> CFGTraversalResult:
         """Visit a function definition"""
         # Find function name and body
         function_name = ""
@@ -269,7 +270,7 @@ class CCFGVisitor(CFGVisitor):
 
         return CFGTraversalResult(entry_node_id=entry_id, exit_node_ids=[exit_id])
 
-    def visit_compound_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_compound_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a compound statement (block)"""
         first_entry = None
         current_exits = []
@@ -305,7 +306,7 @@ class CCFGVisitor(CFGVisitor):
             entry_node_id=first_entry, exit_node_ids=current_exits
         )
 
-    def visit_if_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_if_statement(self, node: Node) -> CFGTraversalResult:
         """Visit an if statement"""
         condition_node = None
         then_stmt = None
@@ -359,7 +360,7 @@ class CCFGVisitor(CFGVisitor):
             entry_node_id=cond_id, exit_node_ids=exit_nodes if exit_nodes else [cond_id]
         )
 
-    def visit_while_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_while_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a while loop"""
         condition_node = None
         body_stmt = None
@@ -377,16 +378,16 @@ class CCFGVisitor(CFGVisitor):
             loop_header_id = self.cfg.create_node(
                 NodeType.LOOP_HEADER,
                 condition_node,
-                f"while condition: {condition_text}",
+                f"COND: while loop: {condition_text}",
             )
         else:
             loop_header_id = self.cfg.create_node(
-                NodeType.LOOP_HEADER, source_text="while condition"
+                NodeType.LOOP_HEADER, source_text="COND: while loop"
             )
 
         # Create exit node for the loop
         loop_exit_id = self.cfg.create_node(
-            NodeType.STATEMENT, source_text="while exit"
+            NodeType.STATEMENT, source_text="EXIT: while loop"
         )
 
         # Set up loop context
@@ -411,7 +412,7 @@ class CCFGVisitor(CFGVisitor):
             entry_node_id=loop_header_id, exit_node_ids=[loop_exit_id]
         )
 
-    def visit_for_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_for_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a for loop"""
         body_stmt = None
         init_expr = None
@@ -439,19 +440,19 @@ class CCFGVisitor(CFGVisitor):
                     update_expr = child
 
         # Create initialization node with actual initialization code
-        init_text = self.get_source_text(init_expr) if init_expr else "for init"
+        init_text = self.get_source_text(init_expr) if init_expr else "INIT: for loop"
         init_id = self.cfg.create_node(
             NodeType.STATEMENT, 
             init_expr, 
-            f"for init: {init_text}"
+            f"INIT: for loop: {init_text}"
         )
 
         # Create condition node with actual condition code
-        condition_text = self.get_source_text(condition_expr) if condition_expr else "for condition"
+        condition_text = self.get_source_text(condition_expr) if condition_expr else "COND: for loop"
         condition_id = self.cfg.create_node(
             NodeType.LOOP_HEADER, 
             condition_expr, 
-            f"for condition: {condition_text}"
+            f"COND: for loop: {condition_text}"
         )
 
         # Create update node with actual update code
@@ -459,13 +460,13 @@ class CCFGVisitor(CFGVisitor):
         update_id = self.cfg.create_node(
             NodeType.STATEMENT, 
             update_expr, 
-            f"for update: {update_text}"
+            f"UPDATE: for loop: {update_text}"
         )
 
         # Create exit node
         exit_id = self.cfg.create_node(
             NodeType.STATEMENT, 
-            source_text="for exit"
+            source_text="EXIT: for loop"
         )
 
         # Connect init to condition
@@ -494,7 +495,7 @@ class CCFGVisitor(CFGVisitor):
 
         return CFGTraversalResult(entry_node_id=init_id, exit_node_ids=[exit_id])
 
-    def visit_break_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_break_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a break statement"""
         break_id = self.cfg.create_node(
             NodeType.BREAK, node, self.get_source_text(node)
@@ -509,7 +510,7 @@ class CCFGVisitor(CFGVisitor):
             entry_node_id=break_id, exit_node_ids=[]
         )  # Break statements don't have normal successors
 
-    def visit_continue_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_continue_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a continue statement"""
         continue_id = self.cfg.create_node(
             NodeType.CONTINUE, node, self.get_source_text(node)
@@ -524,7 +525,7 @@ class CCFGVisitor(CFGVisitor):
             entry_node_id=continue_id, exit_node_ids=[]
         )  # Continue statements don't have normal successors
 
-    def visit_return_statement(self, node: Any) -> CFGTraversalResult:
+    def visit_return_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a return statement"""
         return_id = self.cfg.create_node(
             NodeType.RETURN, node, self.get_source_text(node)
