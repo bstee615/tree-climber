@@ -3,11 +3,11 @@ Control Flow Graph (CFG) Generator Framework using py-tree-sitter for C language
 This framework uses the visitor pattern with depth-first traversal to build CFGs.
 """
 
-from typing import List
+from typing import List, Optional
 
 from tree_sitter import Node
 
-from tree_sprawler.ast_utils import get_source_text
+from tree_sprawler.ast_utils import dfs, get_source_text
 from tree_sprawler.cfg.cfg_types import CFGTraversalResult, NodeType
 from tree_sprawler.cfg.visitor import CFGVisitor
 
@@ -18,109 +18,58 @@ class CCFGVisitor(CFGVisitor):
     # AST utilities
     def get_calls(self, ast_node: Node) -> List[str]:
         """Extract function calls under an AST node."""
-        calls = []
-        if not ast_node:
-            return calls
 
-        # Stack for DFS traversal
-        stack = [ast_node]
-
-        while stack:
-            current = stack.pop()
-
-            if current.type == "call_expression":
+        def process_call(node: Node) -> Optional[str]:
+            if node.type == "call_expression":
                 identifier = None
-                for child in current.children:
+                for child in node.children:
                     if child.type == "identifier":
-                        # Assuming the function name is in an identifier node
                         assert identifier is None, (
                             "Multiple identifiers found in call expression"
                         )
                         identifier = get_source_text(child)
-                if identifier:
-                    calls.append(identifier)
+                return identifier
+            return None
 
-            # Add all children to the stack in reverse order
-            # (to process them in the original left-to-right order)
-            for child in reversed(current.children):
-                stack.append(child)
-
-        return calls
+        return dfs(ast_node, process_call)
 
     def get_definitions(self, ast_node: Node) -> List[str]:
         """Extract variable definitions under an AST node."""
-        definitions = []
-        if not ast_node:
-            return definitions
 
-        # Stack for DFS traversal
-        stack = [ast_node]
-
-        while stack:
-            current = stack.pop()
-
-            if current.type == "init_declarator":
-                identifier = None
-                for child in current.children:
+        def process_definition(node: Node) -> Optional[str]:
+            if node.type == "init_declarator":
+                for child in node.children:
                     if child.type == "identifier":
-                        identifier = child.text.decode()
-                        break
-                if identifier:
-                    definitions.append(identifier)
-            elif current.type == "assignment_expression":
-                identifier = None
-                for child in current.children:
+                        return child.text.decode()
+            elif node.type == "assignment_expression":
+                for child in node.children:
                     if child.type == "identifier":
-                        identifier = child.text.decode()
-                        break
-                if identifier:
-                    definitions.append(identifier)
+                        return child.text.decode()
+            return None
 
-            # Add all children to the stack in reverse order
-            # (to process them in the original left-to-right order)
-            for child in reversed(current.children):
-                stack.append(child)
-
-        return definitions
+        return dfs(ast_node, process_definition)
 
     def get_uses(self, ast_node: Node) -> List[str]:
         """Extract variable uses under an AST node."""
-        uses = []
 
-        # Stack for DFS traversal
-        stack = [ast_node]
-        while stack:
-            current = stack.pop()
-
-            if current.type == "identifier":
+        def process_use(node: Node) -> Optional[str]:
+            if node.type == "identifier":
                 # Skip identifiers in assignment left-hand side or function definition
-                if current.parent:
-                    # Skip identifiers that are function names in call expressions
-                    if current.parent.type == "call_expression":
-                        continue
-                    # Skip identifiers on the left side of assignment expressions
-                    if current.parent.type == "assignment_expression":
-                        continue
-                    # Skip function definition names
-                    if current.parent.type == "function_definition":
-                        continue
-                    # Skip parameter declarations
-                    if current.parent.type == "parameter_declaration":
-                        continue
-                    # Skip variable declarators
-                    if current.parent.type == "init_declarator":
-                        continue
-                    # Skip function declarators
-                    if current.parent.type == "function_declarator":
-                        continue
-                uses.append(current.text.decode())
+                if node.parent:
+                    # Skip identifiers in various contexts where they're not "uses"
+                    if node.parent.type in [
+                        "call_expression",  # Function names in calls
+                        "assignment_expression",  # Left side of assignments
+                        "function_definition",  # Function names in definitions
+                        "parameter_declaration",  # Parameter declarations
+                        "init_declarator",  # Variable declarations
+                        "function_declarator",  # Function declarations
+                    ]:
+                        return None
+                return node.text.decode()
+            return None
 
-            # Add all children to the stack in reverse order
-            # (to process them in the original left-to-right order)
-            for child in reversed(current.children):
-                stack.append(child)
-
-        return uses
+        return dfs(ast_node, process_use)
 
     def is_linear_statement(self, node: Node) -> bool:
         """Check if a node represents a simple linear statement"""
