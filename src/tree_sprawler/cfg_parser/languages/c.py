@@ -68,13 +68,13 @@ class CCFGVisitor(CFGVisitor):
 
         # Create entry node
         entry_id = self.cfg.create_node(
-            NodeType.ENTRY, source_text=f"ENTRY: {function_name}"
+            NodeType.ENTRY, source_text=function_name
         )
         self.cfg.set_entry(entry_id)
 
         # Create exit node
         exit_id = self.cfg.create_node(
-            NodeType.EXIT, source_text=f"EXIT: {function_name}"
+            NodeType.EXIT, source_text=function_name
         )
         self.cfg.set_exit(exit_id)
 
@@ -473,7 +473,7 @@ class CCFGVisitor(CFGVisitor):
             switch_head_id = self.cfg.create_node(
                 NodeType.SWITCH_HEAD,
                 condition_node,
-                f"SWITCH: {condition_text}"
+                condition_text
             )
         else:
             switch_head_id = self.cfg.create_node(
@@ -645,7 +645,7 @@ class CCFGVisitor(CFGVisitor):
         # Create label node
         label_id = self.cfg.create_node(
             NodeType.LABEL, 
-            source_text=f"LABEL: {label_name}" if label_name else "LABEL"
+            source_text=label_name or "LABEL"
         )
         
         # Register label in context
@@ -681,7 +681,7 @@ class CCFGVisitor(CFGVisitor):
         goto_id = self.cfg.create_node(
             NodeType.GOTO, 
             node, 
-            f"GOTO: {target_label}" if target_label else "GOTO"
+            target_label or "GOTO"
         )
         
         # Try to connect to label if it exists
