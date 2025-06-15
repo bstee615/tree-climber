@@ -195,13 +195,13 @@ class CFGVisitor:
 
     def _passthrough_entry_exit_nodes(self):
         """
-        For ENTRY, EXIT, and ELSE nodes (except the main function entry/exit):
+        For ENTRY, EXIT, ELSE, CASE, and DEFAULT nodes (except the main function entry/exit):
         1. Create direct connections from predecessors to successors
         2. Remove the nodes and all their connections
         
         This applies to:
-        1. Nodes with NodeType.ENTRY or NodeType.EXIT 
-        2. Nodes whose source_text starts with "ENTRY:", "EXIT:", or contains "else"
+        1. Nodes with NodeType.ENTRY, NodeType.EXIT, NodeType.CASE, or NodeType.DEFAULT
+        2. Nodes whose source_text starts with "ENTRY:", "EXIT:", "CASE:", or contains "else"
         """
         # Find all ENTRY, EXIT and ELSE nodes (except for the overall function entry/exit)
         special_nodes = []
@@ -215,8 +215,10 @@ class CFGVisitor:
             is_entry_exit_text = (node.source_text.startswith("ENTRY:") or 
                                  node.source_text.startswith("EXIT:"))
             is_else_text = "else" in node.source_text.lower()
+            is_case_node = (node.node_type == NodeType.CASE) or node.source_text.startswith("CASE:")
+            is_default_node = (node.node_type == NodeType.DEFAULT) or (node.source_text == "DEFAULT")
             
-            if is_entry_exit_type or is_entry_exit_text or is_else_text:
+            if is_entry_exit_type or is_entry_exit_text or is_else_text or is_case_node or is_default_node:
                 special_nodes.append(node_id)
                 
         # For each special node, create direct connections between predecessors and successors

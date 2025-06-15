@@ -493,6 +493,8 @@ class CCFGVisitor(CFGVisitor):
             body_result = self.visit(body_node)
             
             # Connect switch head to body entry
+            # Note: We don't add edge labels here as the individual case statements
+            # will connect to the switch head with appropriate case value labels
             self.cfg.add_edge(switch_head_id, body_result.entry_node_id)
             
             # Connect body exits to switch exit
@@ -531,6 +533,7 @@ class CCFGVisitor(CFGVisitor):
                 f"CASE: {value_text}"
             )
         else:
+            value_text = "case"
             case_id = self.cfg.create_node(
                 NodeType.CASE, source_text="CASE"
             )
@@ -538,7 +541,9 @@ class CCFGVisitor(CFGVisitor):
         # Connect case to switch head if available
         switch_head = self.context.get_switch_head()
         if switch_head is not None:
-            self.cfg.add_edge(switch_head, case_id)
+            # Add edge with case value as label
+            value_label = value_text
+            self.cfg.add_edge(switch_head, case_id, value_label)
         
         exit_nodes = [case_id]  # Default exit is case node itself for fall-through
 
@@ -590,7 +595,7 @@ class CCFGVisitor(CFGVisitor):
         # Connect default to switch head if available
         switch_head = self.context.get_switch_head()
         if switch_head is not None:
-            self.cfg.add_edge(switch_head, default_id)
+            self.cfg.add_edge(switch_head, default_id, "default")
         
         exit_nodes = [default_id]  # Default exit is the default node itself
         
