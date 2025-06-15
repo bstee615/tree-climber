@@ -40,5 +40,30 @@ if __name__ == "__main__":
     solver = RoundRobinSolver()
     result = solver.solve(cfg, problem)
     print("Reaching definitions:")
-    print("IN Facts:", result.in_facts)
-    print("OUT Facts:", result.out_facts)
+    print("In facts:")
+    for node_id, facts in result.in_facts.items():
+        print(f"Node {node_id}:")
+        for fact in facts:
+            print(f"\t* {fact}")
+    for node_id, facts in result.out_facts.items():
+        print(f"Node {node_id}:")
+        for fact in facts:
+            print(f"\t* {fact}")
+
+    # Analyze use-def chains
+    use_def_analyzer = UseDefSolver()
+    use_def_result = use_def_analyzer.solve(cfg, result)
+    print("Use-Def Chains:")
+    for var, chains in use_def_result.chains.items():
+        print(f"Variable: {var}")
+        for chain in chains:
+            print(f"\t* Use: {chain.use}: Definitions {chain.definitions}")
+
+    # Analyze def-use chains
+    def_use_analyzer = DefUseSolver()
+    def_use_result = def_use_analyzer.solve(cfg, result)
+    print("Def-Use Chains:")
+    for var, chains in def_use_result.chains.items():
+        print(f"Variable: {var}")
+        for chain in chains:
+            print(f"\t* Definition: {chain.definition}: Uses {chain.uses}")

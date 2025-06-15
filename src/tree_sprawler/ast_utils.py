@@ -75,3 +75,24 @@ def get_definitions(ast_node: Node) -> List[str]:
             stack.append(child)
 
     return definitions
+
+
+def get_uses(ast_node: Node) -> List[str]:
+    """Extract variable uses under an AST node."""
+    uses = []
+
+    # Stack for DFS traversal
+    stack = [ast_node]
+    while stack:
+        current = stack.pop()
+
+        # TODO: Handle assignments and function calls differently
+        if current.type == "identifier":
+            uses.append(current.text.decode())
+
+        # Add all children to the stack in reverse order
+        # (to process them in the original left-to-right order)
+        for child in reversed(current.children):
+            stack.append(child)
+
+    return uses
