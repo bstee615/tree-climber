@@ -1,6 +1,5 @@
 # Example usage
-from tree_sprawler.cfg_parser.cfg_builder import CFGBuilder
-
+from tree_sprawler.cfg.builder import CFGBuilder
 
 if __name__ == "__main__":
     # Example C code
