@@ -5,7 +5,7 @@ This framework uses the visitor pattern with depth-first traversal to build CFGs
 
 from tree_sitter import Node
 
-from tree_sprawler.cfg_parser.cfg_visitor import CFGTraversalResult, CFGVisitor, NodeType
+from tree_sprawler.cfg_parser.cfg_visitor import CFGTraversalResult, CFGVisitor, NodeType, get_source_text
 
 
 class CCFGVisitor(CFGVisitor):
@@ -44,7 +44,7 @@ class CCFGVisitor(CFGVisitor):
     def visit_linear_statement(self, node: Node) -> CFGTraversalResult:
         # If the node is a linear statement, create a statement node
         node_id = self.cfg.create_node(
-            NodeType.STATEMENT, node, self.get_source_text(node)
+            NodeType.STATEMENT, node, get_source_text(node)
         )
         return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
 
@@ -59,7 +59,7 @@ class CCFGVisitor(CFGVisitor):
                 # Extract function name
                 for subchild in child.children:
                     if subchild.type == "identifier":
-                        function_name = self.get_source_text(subchild)
+                        function_name = get_source_text(subchild)
                         break
             elif child.type == "compound_statement":
                 body_node = child
@@ -160,7 +160,7 @@ class CCFGVisitor(CFGVisitor):
 
         # Create condition node with actual condition text
         if condition_node:
-            condition_text = self.get_source_text(condition_node)
+            condition_text = get_source_text(condition_node)
             cond_id = self.cfg.create_node(
                 NodeType.CONDITION, 
                 condition_node, 
@@ -220,7 +220,7 @@ class CCFGVisitor(CFGVisitor):
 
         # Create loop header (condition) with actual condition text
         if condition_node:
-            condition_text = self.get_source_text(condition_node)
+            condition_text = get_source_text(condition_node)
             loop_header_id = self.cfg.create_node(
                 NodeType.LOOP_HEADER,
                 condition_node,
@@ -286,7 +286,7 @@ class CCFGVisitor(CFGVisitor):
                     update_expr = child
 
         # Create initialization node with actual initialization code
-        init_text = self.get_source_text(init_expr) if init_expr else "INIT: for loop"
+        init_text = get_source_text(init_expr) if init_expr else "INIT: for loop"
         init_id = self.cfg.create_node(
             NodeType.STATEMENT, 
             init_expr, 
@@ -294,7 +294,7 @@ class CCFGVisitor(CFGVisitor):
         )
 
         # Create condition node with actual condition code
-        condition_text = self.get_source_text(condition_expr) if condition_expr else "for loop"
+        condition_text = get_source_text(condition_expr) if condition_expr else "for loop"
         condition_id = self.cfg.create_node(
             NodeType.LOOP_HEADER, 
             condition_expr, 
@@ -302,7 +302,7 @@ class CCFGVisitor(CFGVisitor):
         )
 
         # Create update node with actual update code
-        update_text = self.get_source_text(update_expr) if update_expr else "for update"
+        update_text = get_source_text(update_expr) if update_expr else "for update"
         update_id = self.cfg.create_node(
             NodeType.STATEMENT, 
             update_expr, 
@@ -344,7 +344,7 @@ class CCFGVisitor(CFGVisitor):
     def visit_break_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a break statement"""
         break_id = self.cfg.create_node(
-            NodeType.BREAK, node, self.get_source_text(node)
+            NodeType.BREAK, node, get_source_text(node)
         )
 
         # Connect to break target if available
@@ -363,7 +363,7 @@ class CCFGVisitor(CFGVisitor):
     def visit_continue_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a continue statement"""
         continue_id = self.cfg.create_node(
-            NodeType.CONTINUE, node, self.get_source_text(node)
+            NodeType.CONTINUE, node, get_source_text(node)
         )
 
         # Connect to continue target if available
@@ -378,7 +378,7 @@ class CCFGVisitor(CFGVisitor):
     def visit_return_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a return statement"""
         return_id = self.cfg.create_node(
-            NodeType.RETURN, node, self.get_source_text(node)
+            NodeType.RETURN, node, get_source_text(node)
         )
 
         # Connect to function exit
@@ -403,7 +403,7 @@ class CCFGVisitor(CFGVisitor):
         
         # Create loop header (condition) with actual condition text
         if condition_node:
-            condition_text = self.get_source_text(condition_node)
+            condition_text = get_source_text(condition_node)
             loop_header_id = self.cfg.create_node(
                 NodeType.LOOP_HEADER,
                 condition_node,
@@ -474,7 +474,7 @@ class CCFGVisitor(CFGVisitor):
         
         # Create switch head node with condition
         if condition_node:
-            condition_text = self.get_source_text(condition_node)
+            condition_text = get_source_text(condition_node)
             switch_head_id = self.cfg.create_node(
                 NodeType.SWITCH_HEAD,
                 condition_node,
@@ -531,7 +531,7 @@ class CCFGVisitor(CFGVisitor):
         
         # Create case node with the case value
         if value_expr:
-            value_text = self.get_source_text(value_expr)
+            value_text = get_source_text(value_expr)
             case_id = self.cfg.create_node(
                 NodeType.CASE,
                 value_expr,
@@ -642,7 +642,7 @@ class CCFGVisitor(CFGVisitor):
         # Parse labeled statement
         for child in node.children:
             if child.type == "statement_identifier":
-                label_name = self.get_source_text(child)
+                label_name = get_source_text(child)
             elif child.type != ":" and label_name is not None:
                 body_stmt = child
                 break
@@ -679,7 +679,7 @@ class CCFGVisitor(CFGVisitor):
         # Parse goto statement to find target label
         for child in node.children:
             if child.type == "statement_identifier":
-                target_label = self.get_source_text(child)
+                target_label = get_source_text(child)
                 break
         
         # Create goto node
