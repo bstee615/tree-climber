@@ -189,17 +189,8 @@ class CFGVisitor:
         visitor = getattr(self, method_name, self.generic_visit)
         return visitor(node)
 
-    def visit_comment(self, node: Node) -> None:
-        """Skip comment nodes entirely"""
-        # Return None to indicate that this node should be ignored
-        return None
-
     def generic_visit(self, node: Node) -> CFGTraversalResult:
         """Generic visitor for unhandled node types"""
-        # Skip comments
-        if node.type == "comment":
-            return None
-        
         # For leaf nodes or unhandled nodes, create a statement node
         if node.child_count == 0:
             node_id = self.cfg.create_node(
@@ -212,10 +203,6 @@ class CFGVisitor:
         current_exits = []
 
         for child in node.children:
-            # Skip comment nodes
-            if child.type == "comment":
-                continue
-                
             child_result = self.visit(child)
 
             # Skip if the child node returns None (like comments)
@@ -269,6 +256,11 @@ class CCFGVisitor(CFGVisitor):
         
         # Check if node type isn't one of the non-linear types
         return node.type.endswith("_statement") and node.type not in non_linear_types
+
+    def visit_comment(self, node: Node) -> None:
+        """Skip comment nodes entirely"""
+        # Return None to indicate that this node should be ignored
+        return None
 
     def visit_expression_statement(self, node: Node) -> CFGTraversalResult:
         return self.visit_linear_statement(node)
@@ -419,6 +411,9 @@ class CCFGVisitor(CFGVisitor):
             # We'll add the condition itself as an exit node with a "false" label
             # This represents the path where the condition is false but there's no explicit else branch
             exit_nodes.append(cond_id)
+            # Add a self-edge with "false" label to represent the implicit fall-through
+            # (This is for visualization purposes only, it doesn't change the control flow)
+            self.cfg.add_edge(cond_id, cond_id, "false")
 
         return CFGTraversalResult(
             entry_node_id=cond_id, exit_node_ids=exit_nodes if exit_nodes else [cond_id]
