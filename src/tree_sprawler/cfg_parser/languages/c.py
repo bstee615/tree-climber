@@ -168,28 +168,37 @@ class CCFGVisitor(CFGVisitor):
 
         exit_nodes = []
 
+        # Create an explicit exit node for the if statement
+        if_exit_id = self.cfg.create_node(
+            NodeType.STATEMENT, source_text="EXIT: if stmt"
+        )
+
         # Process then branch with "true" label
         if then_stmt:
             then_result = self.visit(then_stmt)
             self.cfg.add_edge(cond_id, then_result.entry_node_id, "true")
-            exit_nodes.extend(then_result.exit_node_ids)
+            
+            # Connect then-branch exits to the if's exit node
+            for exit_node in then_result.exit_node_ids:
+                self.cfg.add_edge(exit_node, if_exit_id)
 
         # Process else branch with "false" label
         if else_stmt:
             else_result = self.visit(else_stmt)
             self.cfg.add_edge(cond_id, else_result.entry_node_id, "false")
-            exit_nodes.extend(else_result.exit_node_ids)
+            
+            # Connect else-branch exits to the if's exit node
+            for exit_node in else_result.exit_node_ids:
+                self.cfg.add_edge(exit_node, if_exit_id)
         else:
-            # No else branch, condition can fall through (implicit else)
-            # We'll add the condition itself as an exit node with a "false" label
-            # This represents the path where the condition is false but there's no explicit else branch
-            exit_nodes.append(cond_id)
-            # Add a self-edge with "false" label to represent the implicit fall-through
-            # (This is for visualization purposes only, it doesn't change the control flow)
-            self.cfg.add_edge(cond_id, cond_id, "false")
+            # No else branch, direct false path to the exit node
+            self.cfg.add_edge(cond_id, if_exit_id, "false")
+            
+        # The if statement has a single exit node now
+        exit_nodes = [if_exit_id]
 
         return CFGTraversalResult(
-            entry_node_id=cond_id, exit_node_ids=exit_nodes if exit_nodes else [cond_id]
+            entry_node_id=cond_id, exit_node_ids=exit_nodes
         )
 
     def visit_while_statement(self, node: Node) -> CFGTraversalResult:
