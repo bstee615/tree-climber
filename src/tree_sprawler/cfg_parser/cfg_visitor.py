@@ -1,11 +1,9 @@
 from typing import Dict, List, Optional
 
-
 from tree_sitter import Node
 
-from tree_sprawler.cfg_parser.cfg_types import CFGNode, CFGTraversalResult, NodeType
 from tree_sprawler.cfg_parser.ast_utils import get_calls, get_source_text
-
+from tree_sprawler.cfg_parser.cfg_types import CFGNode, CFGTraversalResult, NodeType
 
 
 class ControlFlowContext:
@@ -17,10 +15,14 @@ class ControlFlowContext:
         self.current_nodes: List[int] = []  # Current active nodes
         self.switch_head: Optional[int] = None  # Current switch statement head
         self.labels: Dict[str, int] = {}  # Map of label names to node IDs
-        self.forward_goto_refs: Dict[str, List[int]] = {}  # Forward references to labels
+        self.forward_goto_refs: Dict[
+            str, List[int]
+        ] = {}  # Forward references to labels
         self.entry_node_ids: List[int] = []  # Stack of entry node IDs
         self.exit_node_ids: List[int] = []  # Stack of exit node IDs
-        self.function_definitions: Dict[int, str] = {}  # Map of entry node IDs to function names
+        self.function_definitions: Dict[
+            int, str
+        ] = {}  # Map of entry node IDs to function names
 
     def push_loop_context(self, break_target: int, continue_target: int):
         """Push a new loop context"""
@@ -96,19 +98,23 @@ class ControlFlowContext:
                 self.forward_goto_refs[label] = []
             self.forward_goto_refs[label].append(goto_node_id)
             return None
-    
+
     def register_function_definition(self, node_id: int, function_name: str):
         """Register a function definition with its entry node ID and name"""
         if node_id not in self.function_definitions:
             self.function_definitions[node_id] = function_name
         else:
-            print(f"Warning: Function definition for {function_name} already exists with ID {node_id}")
+            print(
+                f"Warning: Function definition for {function_name} already exists with ID {node_id}"
+            )
 
 
 class CFG:
     """Control Flow Graph representation"""
 
-    def __init__(self, context: ControlFlowContext, function_name: Optional[str] = None):
+    def __init__(
+        self, context: ControlFlowContext, function_name: Optional[str] = None
+    ):
         self.nodes: Dict[int, CFGNode] = {}
         self.entry_node_ids: List[int] = []
         self.exit_node_ids: List[int] = []
@@ -117,7 +123,10 @@ class CFG:
         self.context = context
 
     def create_node(
-        self, node_type: NodeType, ast_node: Optional[Node] = None, source_text: str = ""
+        self,
+        node_type: NodeType,
+        ast_node: Optional[Node] = None,
+        source_text: str = "",
     ) -> int:
         """Create a new CFG node and return its ID"""
         node_id = self._next_id
@@ -129,7 +138,10 @@ class CFG:
         if ast_node is not None:
             function_calls = get_calls(ast_node)
             if function_calls:
-                for definition_id, definition_name in self.context.function_definitions.items():
+                for (
+                    definition_id,
+                    definition_name,
+                ) in self.context.function_definitions.items():
                     if definition_name in function_calls:
                         self.add_edge(node_id, definition_id, label="function_call")
                         break
@@ -174,7 +186,7 @@ class CFGVisitor:
         For ENTRY, EXIT, ELSE, CASE, and DEFAULT nodes (except the main function entry/exit):
         1. Create direct connections from predecessors to successors
         2. Remove the nodes and all their connections
-        
+
         This applies to:
         1. Nodes with NodeType.ENTRY, NodeType.EXIT, NodeType.CASE, or NodeType.DEFAULT
         2. Nodes whose source_text starts with "ENTRY:", "EXIT:", "CASE:", or contains "else"
@@ -183,18 +195,22 @@ class CFGVisitor:
         special_nodes = []
         for node_id, node in self.cfg.nodes.items():
             # Skip the overall function entry/exit nodes
-            if (node_id in self.cfg.entry_node_ids or node_id in self.cfg.exit_node_ids):
+            if node_id in self.cfg.entry_node_ids or node_id in self.cfg.exit_node_ids:
                 continue
-                
+
             # Check NodeType or source_text prefixes
             is_entry_exit_type = node.node_type in [NodeType.ENTRY, NodeType.EXIT]
             is_else_text = "else" in node.source_text.lower()
-            is_case_node = (node.node_type == NodeType.CASE) or node.source_text.startswith("CASE:")
-            is_default_node = (node.node_type == NodeType.DEFAULT) or (node.source_text == "DEFAULT")
+            is_case_node = (
+                node.node_type == NodeType.CASE
+            ) or node.source_text.startswith("CASE:")
+            is_default_node = (node.node_type == NodeType.DEFAULT) or (
+                node.source_text == "DEFAULT"
+            )
 
             if any([is_entry_exit_type, is_else_text, is_case_node, is_default_node]):
                 special_nodes.append(node_id)
-                
+
         # For each special node, create direct connections between predecessors and successors
         # and then prepare to remove the node
         nodes_to_remove = []
@@ -202,33 +218,35 @@ class CFGVisitor:
             node = self.cfg.nodes[node_id]
             preds = list(node.predecessors)
             succs = list(node.successors)
-            
+
             # Connect each predecessor to each successor with proper edge labels
             for pred_id in preds:
                 # Get the label for the edge coming into this node (if any)
                 pred_node = self.cfg.nodes[pred_id]
                 # Check if pred_node has a labeled edge to our node
                 pred_to_node_label = pred_node.get_edge_label(node_id)
-                
+
                 for succ_id in succs:
                     # Get the label for the edge going out from this node (if any)
                     node_to_succ_label = node.get_edge_label(succ_id)
-                    
+
                     # Choose which label to propagate:
                     # - If both edges have labels, prioritize the outgoing label (true/false)
                     # - Otherwise use whichever label exists
-                    edge_label = node_to_succ_label if node_to_succ_label else pred_to_node_label
-                    
+                    edge_label = (
+                        node_to_succ_label if node_to_succ_label else pred_to_node_label
+                    )
+
                     # Create a direct connection with the appropriate label
                     self.cfg.add_edge(pred_id, succ_id, edge_label)
-            
+
             # Mark node for removal
             nodes_to_remove.append(node_id)
-        
+
         # Remove all marked nodes from the CFG
         for node_id in nodes_to_remove:
             node = self.cfg.nodes[node_id]
-            
+
             # Remove all incoming edges
             for pred_id in list(node.predecessors):
                 pred_node = self.cfg.nodes[pred_id]
@@ -236,13 +254,13 @@ class CFGVisitor:
                     pred_node.successors.remove(node_id)
                     if node_id in pred_node.edge_labels:
                         del pred_node.edge_labels[node_id]
-            
+
             # Remove all outgoing edges
             for succ_id in list(node.successors):
                 succ_node = self.cfg.nodes[succ_id]
                 if node_id in succ_node.predecessors:
                     succ_node.predecessors.remove(node_id)
-            
+
             # Remove the node from the graph
             del self.cfg.nodes[node_id]
 

@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Dict, List, Optional, Set
 
 from tree_sitter import Node
-from typing import Dict, List, Optional, Set
 
 
 class NodeType(Enum):

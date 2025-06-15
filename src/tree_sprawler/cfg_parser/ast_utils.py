@@ -1,4 +1,5 @@
 from typing import List
+
 from tree_sitter import Node
 
 
@@ -25,7 +26,9 @@ def get_calls(ast_node: Node) -> List[str]:
             for child in current.children:
                 if child.type == "identifier":
                     # Assuming the function name is in an identifier node
-                    assert identifier is None, "Multiple identifiers found in call expression"
+                    assert identifier is None, (
+                        "Multiple identifiers found in call expression"
+                    )
                     identifier = get_source_text(child)
             if identifier:
                 calls.append(identifier)
