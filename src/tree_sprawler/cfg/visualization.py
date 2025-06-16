@@ -42,7 +42,15 @@ def visualize_cfg(cfg: CFG, output_file: str = "cfg"):
             shape = "box"
             color = "violet"
 
-        label = f"{node_id}: {node.source_text[:50]}{'\ndefinitions: ' + ', '.join(node.variable_definitions) if node.variable_definitions else ''}"
+        label = (
+            f"{node_id}: {node.source_text[:50]}"
+            + (
+                "\ndefines: " + ", ".join(node.variable_definitions)
+                if node.variable_definitions
+                else ""
+            )
+            + ("\nuses: " + ", ".join(node.variable_uses) if node.variable_uses else "")
+        )
         dot.node(str(node_id), label, shape=shape, style="filled", fillcolor=color)
 
     # Add edges with labels
