@@ -11,7 +11,6 @@ from tree_sprawler.ast_utils import (
     dfs,
     get_child_by_field_name,
     get_required_child_by_field_name,
-    get_required_child_by_type,
     get_source_text,
 )
 from tree_sprawler.cfg.cfg_types import CFGTraversalResult, NodeType
