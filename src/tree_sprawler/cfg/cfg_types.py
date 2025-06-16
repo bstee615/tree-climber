@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from typing import Dict, List, Optional, Set
 
 from tree_sitter import Node
@@ -8,19 +8,19 @@ from tree_sitter import Node
 class NodeType(Enum):
     """Types of CFG nodes"""
 
-    ENTRY = "entry"
-    EXIT = "exit"
-    STATEMENT = "statement"
-    CONDITION = "condition"
-    LOOP_HEADER = "loop_header"
-    BREAK = "break"
-    CONTINUE = "continue"
-    RETURN = "return"
-    SWITCH_HEAD = "switch_head"
-    CASE = "case"
-    DEFAULT = "default"
-    LABEL = "label"
-    GOTO = "goto"
+    ENTRY = auto()
+    EXIT = auto()
+    STATEMENT = auto()
+    CONDITION = auto()
+    LOOP_HEADER = auto()
+    BREAK = auto()
+    CONTINUE = auto()
+    RETURN = auto()
+    SWITCH_HEAD = auto()
+    CASE = auto()
+    DEFAULT = auto()
+    LABEL = auto()
+    GOTO = auto()
 
 
 @dataclass
