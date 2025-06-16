@@ -27,9 +27,32 @@ if __name__ == "__main__":
         }
     }
     """
-    builder = CFGBuilder("c")
+    java_code = """
+    public class Example {
+        public static int exampleFunction(int n) {
+            int result = 0;
+
+            // Test if-else statement
+            if (n > 0) {
+                result = result * 2;
+            } else if (n < 0) {
+                result = -result;
+                System.out.println(result, foo);
+            }
+
+            if (n == 0) {
+                System.out.println(result);
+            }
+            return result;
+        }
+    }
+    """
+    # builder = CFGBuilder("c")
+    # builder.setup_parser()
+    # cfg = builder.build_cfg(c_code)
+    builder = CFGBuilder("java")
     builder.setup_parser()
-    cfg = builder.build_cfg(c_code)
+    cfg = builder.build_cfg(java_code)
 
     # Visualize the CFG
     visualize_cfg(cfg)
