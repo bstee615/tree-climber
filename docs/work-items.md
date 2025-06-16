@@ -7,3 +7,4 @@
 7. [ ] Handle forward declarations of function calls.
 8. [ ] Raise warnings throughout the code and handle gracefully where nodes are missing.
 9. [ ] Avoid hardcoded constants in language specific code, preferring predicates, such as "comment" vs. "line_comment/block_comment" -> is_comment.
+10. [ ] Detect potentially undefined variables
