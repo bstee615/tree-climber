@@ -65,13 +65,19 @@ class CCFGVisitor(CFGVisitor):
                     # Skip identifiers in various contexts where they're not "uses"
                     if node.parent.type in [
                         "call_expression",  # Function names in calls
-                        "assignment_expression",  # Left side of assignments
                         "function_definition",  # Function names in definitions
                         "parameter_declaration",  # Parameter declarations
                         "init_declarator",  # Variable declarations
                         "function_declarator",  # Function declarations
                     ]:
                         return None
+                    if node.parent.type == "assignment_expression":
+                        if node.parent.children[1].type in ("-=", "+=", "*=", "/="):
+                            # This is a compound assignment, treat it as a use
+                            return node.text.decode()
+                        else:
+                            # Otherwise, it's an assignment target, not a use
+                            return None
                 return node.text.decode()
             return None
 
