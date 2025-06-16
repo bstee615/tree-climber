@@ -27,6 +27,7 @@ class NodeType(Enum):
 class CFGNodeMetadata:
     """Metadata for a CFG node, used for debugging and analysis"""
 
+    function_calls: List[str] = field(default_factory=list)
     variable_definitions: List[str] = field(default_factory=list)
     variable_uses: List[str] = field(default_factory=list)
 

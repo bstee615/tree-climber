@@ -45,6 +45,11 @@ def visualize_cfg(cfg: CFG, output_file: str = "cfg"):
         label = (
             f"{node_id}: {node.source_text[:50]}"
             + (
+                "\nfunction calls: " + ", ".join(node.metadata.function_calls)
+                if node.metadata.function_calls
+                else ""
+            )
+            + (
                 "\ndefines: " + ", ".join(node.metadata.variable_definitions)
                 if node.metadata.variable_definitions
                 else ""
