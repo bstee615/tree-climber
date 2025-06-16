@@ -15,6 +15,12 @@ from tree_sprawler.cfg.visitor import CFGVisitor
 class CCFGVisitor(CFGVisitor):
     """C-specific CFG visitor implementation"""
 
+    # Helper methods
+    def _create_condition_node(self, condition_node: Node, node_type: NodeType) -> int:
+        """Create a condition/header node with proper text."""
+        condition_text = get_source_text(condition_node)
+        return self.create_node(node_type, condition_node, condition_text)
+
     # AST utilities
     def get_calls(self, ast_node: Node) -> List[str]:
         """Extract function calls under an AST node."""
@@ -237,14 +243,9 @@ class CCFGVisitor(CFGVisitor):
                 else_stmt = child
             i += 1
 
-        # Create condition node with actual condition text
-        if condition_node:
-            condition_text = get_source_text(condition_node)
-            cond_id = self.create_node(
-                NodeType.CONDITION, condition_node, condition_text
-            )
-        else:
-            cond_id = self.create_node(NodeType.CONDITION, source_text="COND: if stmt")
+        # Create condition node
+        assert condition_node is not None, "If statement must have a condition"
+        cond_id = self._create_condition_node(condition_node, NodeType.CONDITION)
 
         exit_nodes = []
 
@@ -289,16 +290,11 @@ class CCFGVisitor(CFGVisitor):
             elif child.type != "while":
                 body_stmt = child
 
-        # Create loop header (condition) with actual condition text
-        if condition_node:
-            condition_text = get_source_text(condition_node)
-            loop_header_id = self.create_node(
-                NodeType.LOOP_HEADER, condition_node, condition_text
-            )
-        else:
-            loop_header_id = self.create_node(
-                NodeType.LOOP_HEADER, source_text="COND: while loop"
-            )
+        # Create loop header node
+        assert condition_node is not None, "While statement must have a condition"
+        loop_header_id = self._create_condition_node(
+            condition_node, NodeType.LOOP_HEADER
+        )
 
         # Create exit node for the loop
         loop_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: while loop")
@@ -359,13 +355,9 @@ class CCFGVisitor(CFGVisitor):
         init_text = get_source_text(init_expr) if init_expr else "INIT: for loop"
         init_id = self.create_node(NodeType.STATEMENT, init_expr, init_text)
 
-        # Create condition node with actual condition code
-        condition_text = (
-            get_source_text(condition_expr) if condition_expr else "for loop"
-        )
-        condition_id = self.create_node(
-            NodeType.LOOP_HEADER, condition_expr, condition_text
-        )
+        # Create condition node
+        assert condition_expr is not None, "For loop must have a condition"
+        condition_id = self._create_condition_node(condition_expr, NodeType.LOOP_HEADER)
 
         # Create update node with actual update code
         update_text = get_source_text(update_expr) if update_expr else "for update"
@@ -523,16 +515,11 @@ class CCFGVisitor(CFGVisitor):
             elif child.type == "compound_statement":
                 body_node = child
 
-        # Create switch head node with condition
-        if condition_node:
-            condition_text = get_source_text(condition_node)
-            switch_head_id = self.create_node(
-                NodeType.SWITCH_HEAD, condition_node, condition_text
-            )
-        else:
-            switch_head_id = self.create_node(
-                NodeType.SWITCH_HEAD, source_text="SWITCH"
-            )
+        # Create switch head node
+        assert condition_node is not None, "Switch statement must have a condition"
+        switch_head_id = self._create_condition_node(
+            condition_node, NodeType.SWITCH_HEAD
+        )
 
         # Create exit node for the switch
         switch_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: switch")
