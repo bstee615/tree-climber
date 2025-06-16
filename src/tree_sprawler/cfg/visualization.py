@@ -45,11 +45,15 @@ def visualize_cfg(cfg: CFG, output_file: str = "cfg"):
         label = (
             f"{node_id}: {node.source_text[:50]}"
             + (
-                "\ndefines: " + ", ".join(node.variable_definitions)
-                if node.variable_definitions
+                "\ndefines: " + ", ".join(node.metadata.variable_definitions)
+                if node.metadata.variable_definitions
                 else ""
             )
-            + ("\nuses: " + ", ".join(node.variable_uses) if node.variable_uses else "")
+            + (
+                "\nuses: " + ", ".join(node.metadata.variable_uses)
+                if node.metadata.variable_uses
+                else ""
+            )
         )
         dot.node(str(node_id), label, shape=shape, style="filled", fillcolor=color)
 
