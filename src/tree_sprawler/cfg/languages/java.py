@@ -153,6 +153,7 @@ class JavaCFGVisitor(CFGVisitor):
             if not child.is_named or child.type.endswith("comment"):
                 continue
             self.visit(child)
+        return CFGTraversalResult(entry_node_id=None, exit_node_ids=[])
 
     def visit_method_declaration(self, node: Node) -> CFGTraversalResult:
         """Visit a method declaration"""
