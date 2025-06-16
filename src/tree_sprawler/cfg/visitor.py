@@ -188,6 +188,7 @@ class CFGVisitor(abc.ABC):
         if node.ast_node is not None:
             function_calls = self.get_calls(node.ast_node)
             if function_calls:
+                # TODO: Forward declare methods in Java
                 for (
                     definition_id,
                     definition_name,
@@ -196,6 +197,7 @@ class CFGVisitor(abc.ABC):
                         call_edges.append((node_id, definition_id))
                         break
             node.metadata = CFGNodeMetadata(
+                function_calls=function_calls,
                 variable_definitions=self.get_definitions(node.ast_node),
                 variable_uses=self.get_uses(node.ast_node),
             )
@@ -317,6 +319,8 @@ class CFGVisitor(abc.ABC):
         current_exits = []
 
         for child in node.children:
+            if not child.is_named or child.type.endswith("comment"):
+                continue
             child_result = self.visit(child)
 
             # Skip if the child node returns None (like comments)

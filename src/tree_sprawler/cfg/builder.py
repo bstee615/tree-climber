@@ -7,7 +7,13 @@ from tree_sprawler.cfg.visitor import CFG
 def get_visitor(language: str) -> CCFGVisitor:
     """Get the appropriate visitor class based on the language"""
     if language == "c":
+        from tree_sprawler.cfg.languages.c import CCFGVisitor
+
         return CCFGVisitor()
+    elif language == "java":
+        from tree_sprawler.cfg.languages.java import JavaCFGVisitor
+
+        return JavaCFGVisitor()
     else:
         raise ValueError(f"Unsupported language: {language}")
 

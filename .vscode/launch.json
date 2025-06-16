@@ -18,5 +18,12 @@
             "program": "${workspaceFolder}/src/tree_sprawler/dataflow/main.py",
             "console": "integratedTerminal"
         },
+        {
+            "name": "Java CFG parser",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/tree_sprawler/cfg/test_java.py",
+            "console": "integratedTerminal"
+        },
     ]
 }
