@@ -27,6 +27,23 @@ class CCFGVisitor(CFGVisitor):
         condition_text = get_source_text(condition_node)
         return self.create_node(node_type, condition_node, condition_text)
 
+    def _create_body_node(
+        self,
+        body_node: Node,
+        cfg_predecessor: int,
+        cfg_successor: int,
+        edge_label: Optional[str] = None,
+    ) -> CFGTraversalResult:
+        visit_result = self.visit(body_node)
+
+        # Connect entry to body entry
+        self.cfg.add_edge(cfg_predecessor, visit_result.entry_node_id, label=edge_label)
+
+        # Connect body exits to function exit
+        for exit_node in visit_result.exit_node_ids:
+            self.cfg.add_edge(exit_node, cfg_successor)
+        return visit_result
+
     # AST utilities
     def get_calls(self, ast_node: Node) -> List[str]:
         """Extract function calls under an AST node."""
@@ -191,19 +208,7 @@ class CCFGVisitor(CFGVisitor):
         self.cfg.exit_node_ids.append(exit_id)
         self.context.push_exit(exit_id)
 
-        if body_node:
-            # Visit function body
-            body_result = self.visit(body_node)
-
-            # Connect entry to body entry
-            self.cfg.add_edge(entry_id, body_result.entry_node_id)
-
-            # Connect body exits to function exit
-            for exit_node in body_result.exit_node_ids:
-                self.cfg.add_edge(exit_node, exit_id)
-        else:
-            # Empty function
-            self.cfg.add_edge(entry_id, exit_id)
+        self._create_body_node(body_node, entry_id, exit_id)
 
         self.context.pop_entry()
         self.context.pop_exit()
@@ -265,21 +270,11 @@ class CCFGVisitor(CFGVisitor):
         if_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: if stmt")
 
         # Process then branch with "true" label
-        then_result = self.visit(then_stmt)
-        self.cfg.add_edge(cond_id, then_result.entry_node_id, "true")
-
-        # Connect then-branch exits to the if's exit node
-        for exit_node in then_result.exit_node_ids:
-            self.cfg.add_edge(exit_node, if_exit_id)
+        self._create_body_node(then_stmt, cond_id, if_exit_id, edge_label="true")
 
         # Process else branch with "false" label
         if else_clause:
-            else_result = self.visit(else_clause)
-            self.cfg.add_edge(cond_id, else_result.entry_node_id, "false")
-
-            # Connect else-branch exits to the if's exit node
-            for exit_node in else_result.exit_node_ids:
-                self.cfg.add_edge(exit_node, if_exit_id)
+            self._create_body_node(else_clause, cond_id, if_exit_id, edge_label="false")
         else:
             # No else branch, direct false path to the exit node
             self.cfg.add_edge(cond_id, if_exit_id, "false")
@@ -306,12 +301,9 @@ class CCFGVisitor(CFGVisitor):
 
         # Process loop body
         if body_stmt:
-            body_result = self.visit(body_stmt)
-            # Connect condition to body entry with "true" label
-            self.cfg.add_edge(loop_header_id, body_result.entry_node_id, "true")
-            # Connect body exits back to condition
-            for body_exit in body_result.exit_node_ids:
-                self.cfg.add_edge(body_exit, loop_header_id)
+            self._create_body_node(
+                body_stmt, loop_header_id, loop_header_id, edge_label="true"
+            )
 
         # Connect condition to exit (false branch) with "false" label
         self.cfg.add_edge(loop_header_id, loop_exit_id, "false")
@@ -356,12 +348,9 @@ class CCFGVisitor(CFGVisitor):
 
         # Process body
         if body_stmt:
-            body_result = self.visit(body_stmt)
-            # Connect condition to body entry with "true" label
-            self.cfg.add_edge(condition_id, body_result.entry_node_id, "true")
-            # Connect body exits to update
-            for body_exit in body_result.exit_node_ids:
-                self.cfg.add_edge(body_exit, update_id)
+            self._create_body_node(
+                body_stmt, condition_id, update_id, edge_label="true"
+            )
 
         # Connect update back to condition
         self.cfg.add_edge(update_id, condition_id)
@@ -444,15 +433,8 @@ class CCFGVisitor(CFGVisitor):
         # Process loop body
         body_entry_id = None
         if body_stmt:
-            body_result = self.visit(body_stmt)
+            body_result = self._create_body_node(body_stmt, do_entry_id, loop_header_id)
             body_entry_id = body_result.entry_node_id
-
-            # Connect entry node to body entry
-            self.cfg.add_edge(do_entry_id, body_entry_id)
-
-            # Connect body exits to condition
-            for body_exit in body_result.exit_node_ids:
-                self.cfg.add_edge(body_exit, loop_header_id)
         else:
             # Empty body, create a placeholder node
             body_entry_id = self.create_node(
@@ -494,15 +476,9 @@ class CCFGVisitor(CFGVisitor):
 
         # Process switch body, which should contain case statements
         if body_node:
-            body_result = self.visit(body_node)
-            # Connect switch head to body entry
+            self._create_body_node(body_node, switch_head_id, switch_exit_id)
             # Note: We don't add edge labels here as the individual case statements
             # will connect to the switch head with appropriate case value labels
-            self.cfg.add_edge(switch_head_id, body_result.entry_node_id)
-
-            # Connect body exits to switch exit
-            for exit_node in body_result.exit_node_ids:
-                self.cfg.add_edge(exit_node, switch_exit_id)
         else:
             # Empty switch, connect head directly to exit
             self.cfg.add_edge(switch_head_id, switch_exit_id)
