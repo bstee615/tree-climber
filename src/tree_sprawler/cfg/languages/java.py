@@ -149,11 +149,19 @@ class JavaCFGVisitor(CFGVisitor):
 
     def visit_class_body(self, node: Node) -> CFGTraversalResult:
         """Visit a class body"""
+        first_entry = None
+        last_exits = None
         for child in node.children:
             if not child.is_named or child.type.endswith("comment"):
                 continue
-            self.visit(child)
-        return CFGTraversalResult(entry_node_id=None, exit_node_ids=[])
+            result = self.visit(child)
+            if first_entry is None:
+                first_entry = result.entry_node_id
+            if last_exits is None:
+                last_exits = result.exit_node_ids
+        assert first_entry is not None, "Class body must have at least one entry node"
+        assert last_exits is not None, "Class body must have at least one exit node"
+        return CFGTraversalResult(entry_node_id=first_entry, exit_node_ids=last_exits)
 
     def visit_method_declaration(self, node: Node) -> CFGTraversalResult:
         """Visit a method declaration"""
