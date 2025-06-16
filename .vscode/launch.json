@@ -8,7 +8,7 @@
             "name": "C CFG parser",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tree_sprawler/cfg/main.py",
+            "program": "${workspaceFolder}/src/tree_sprawler/cfg/test_c.py",
             "console": "integratedTerminal"
         },
         {
