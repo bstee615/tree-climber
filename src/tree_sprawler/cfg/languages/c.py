@@ -142,6 +142,28 @@ class CCFGVisitor(CFGVisitor):
     def visit_declaration(self, node: Node) -> CFGTraversalResult:
         return self._visit_linear_statement(node)
 
+    def visit_translation_unit(self, node: Node) -> CFGTraversalResult:
+        """Visit the root translation unit node"""
+        first_entry = None
+        last_exits = None
+        for child in node.children:
+            if child.type == "function_definition":
+                result = self.visit(child)
+                if first_entry is None:
+                    first_entry = result.entry_node_id
+                last_exits = result.exit_node_ids
+
+        assert first_entry is not None, (
+            "Translation unit must have at least one entry node"
+        )
+        assert last_exits is not None, (
+            "Translation unit must have at least one exit node"
+        )
+        return CFGTraversalResult(
+            entry_node_id=first_entry,
+            exit_node_ids=last_exits,
+        )
+
     def visit_function_definition(self, node: Node) -> CFGTraversalResult:
         """Visit a function definition"""
         # Get components via named fields

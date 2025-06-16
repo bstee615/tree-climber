@@ -1,10 +1,10 @@
 from tree_sitter_languages import get_parser
 
 from tree_sprawler.cfg.languages.c import CCFGVisitor
-from tree_sprawler.cfg.visitor import CFG
+from tree_sprawler.cfg.visitor import CFG, CFGVisitor
 
 
-def get_visitor(language: str) -> CCFGVisitor:
+def get_visitor(language: str) -> CFGVisitor:
     """Get the appropriate visitor class based on the language"""
     if language == "c":
         from tree_sprawler.cfg.languages.c import CCFGVisitor
@@ -43,11 +43,7 @@ class CFGBuilder:
 
         # Create visitor and build CFG
         visitor = get_visitor(self.language)
-
-        # Find function definitions and process them
-        for child in root_node.children:
-            if child.type == "function_definition":
-                visitor.visit(child)
+        visitor.visit(root_node)
 
         visitor.postprocess_cfg()
 
