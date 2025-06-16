@@ -24,6 +24,14 @@ class NodeType(Enum):
 
 
 @dataclass
+class CFGNodeMetadata:
+    """Metadata for a CFG node, used for debugging and analysis"""
+
+    variable_definitions: List[str] = field(default_factory=list)
+    variable_uses: List[str] = field(default_factory=list)
+
+
+@dataclass
 class CFGNode:
     """Represents a node in the Control Flow Graph"""
 
@@ -33,10 +41,8 @@ class CFGNode:
     source_text: str = ""
     successors: Set[int] = field(default_factory=set)
     predecessors: Set[int] = field(default_factory=set)
-    # Dictionary to store edge labels: {successor_id: label}
     edge_labels: Dict[int, str] = field(default_factory=dict)
-    variable_definitions: List[str] = field(default_factory=list)
-    variable_uses: List[str] = field(default_factory=list)
+    metadata: CFGNodeMetadata = field(default_factory=CFGNodeMetadata)
 
     def add_successor(self, node_id: int, label: Optional[str] = None):
         """Add a successor node with an optional label"""

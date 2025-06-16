@@ -30,7 +30,7 @@ class Union(MeetOperation):
 class ReachingDefinitionsGenKill(TransferFunction):
     def __call__(self, node: CFGNode, in_facts: Set[DataflowFact]) -> Set[DataflowFact]:
         node_id = node.id
-        defined_variables = node.variable_definitions if node.ast_node else []
+        defined_variables = node.metadata.variable_definitions if node.ast_node else []
         gen_facts = {
             ReachingDefinition(variable=var, node_id=node_id)
             for var in defined_variables

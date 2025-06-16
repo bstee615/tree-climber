@@ -153,7 +153,7 @@ class CCFGVisitor(CFGVisitor):
         )
         # Add parameter definitions to the entry node
         if parameters:
-            self.cfg.nodes[entry_id].variable_definitions.extend(parameters)
+            self.cfg.nodes[entry_id].metadata.variable_definitions.extend(parameters)
         self.cfg.entry_node_ids.append(entry_id)
         self.context.push_entry(entry_id)
         self.context.register_function_definition(entry_id, function_name)

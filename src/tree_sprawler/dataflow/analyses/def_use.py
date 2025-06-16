@@ -42,7 +42,7 @@ class UseDefSolver:
         for node_id, node in cfg.nodes.items():
             if not node.ast_node:
                 continue  # Skip nodes without AST nodes
-            uses_by_node[node_id] = set(node.variable_uses)
+            uses_by_node[node_id] = set(node.metadata.variable_uses)
 
         # Second pass: create chains for each unique use
         for node_id, var_names in uses_by_node.items():
@@ -92,7 +92,7 @@ class DefUseSolver:
                 continue  # Skip nodes without AST nodes
 
             # For each variable used in this node
-            for variable_name in node.variable_uses:
+            for variable_name in node.metadata.variable_uses:
                 # Find all reaching definitions for this use
                 in_at_point = dataflow_result.in_facts[node_id]
                 definitions = [

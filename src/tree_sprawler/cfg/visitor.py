@@ -6,7 +6,12 @@ from tree_sitter import Node
 from tree_sprawler.ast_utils import (
     get_source_text,
 )
-from tree_sprawler.cfg.cfg_types import CFGNode, CFGTraversalResult, NodeType
+from tree_sprawler.cfg.cfg_types import (
+    CFGNode,
+    CFGNodeMetadata,
+    CFGTraversalResult,
+    NodeType,
+)
 
 
 class ControlFlowContext:
@@ -190,8 +195,10 @@ class CFGVisitor(abc.ABC):
                     if definition_name in function_calls:
                         call_edges.append((node_id, definition_id))
                         break
-            node.variable_definitions.extend(self.get_definitions(node.ast_node))
-            node.variable_uses.extend(self.get_uses(node.ast_node))
+            node.metadata = CFGNodeMetadata(
+                variable_definitions=self.get_definitions(node.ast_node),
+                variable_uses=self.get_uses(node.ast_node),
+            )
         # Link call edges
         for a, b in call_edges:
             self.cfg.add_edge(a, b, label="function_call")
