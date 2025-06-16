@@ -92,8 +92,8 @@ class JavaCFGVisitor(CFGVisitor):
                 # Skip identifiers in various contexts where they're not "uses"
                 if node.parent:
                     if node.parent.type in [
-                        "method_invocation",  # Method names in calls
-                        "method_declaration",  # Method names in declarations
+                        "method_invocation",  # Function calls
+                        "field_access",  # Method names in calls
                         "variable_declarator",  # Variable declarations
                         "parameter",  # Parameter declarations
                         "class_declaration",  # Class names
@@ -131,6 +131,28 @@ class JavaCFGVisitor(CFGVisitor):
         return node.type.endswith("_statement") and node.type not in non_linear_types
 
     # Basic visitor methods
+    def visit_program(self, node: Node) -> CFGTraversalResult:
+        """Visit the root program node"""
+        first_entry = None
+        last_exits = None
+        for child in node.children:
+            if child.type == "class_declaration":
+                result = self.visit(child)
+                if first_entry is None:
+                    first_entry = result.entry_node_id
+                last_exits = result.exit_node_ids
+
+        assert first_entry is not None, (
+            "Translation unit must have at least one entry node"
+        )
+        assert last_exits is not None, (
+            "Translation unit must have at least one exit node"
+        )
+        return CFGTraversalResult(
+            entry_node_id=first_entry,
+            exit_node_ids=last_exits,
+        )
+
     def visit_comment(self, node: Node) -> None:
         """Skip comment nodes entirely"""
         return None

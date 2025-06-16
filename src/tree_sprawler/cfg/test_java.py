@@ -1,14 +1,11 @@
 """Test program to visualize Java CFG"""
 
 import os
-import sys
 
-from tree_sitter_languages import get_parser
-
-from tree_sprawler.cfg.builder import get_visitor
+from tree_sprawler.cfg.builder import CFGBuilder
 from tree_sprawler.cfg.visualization import visualize_cfg
 
-try:
+if __name__ == "__main__":
     # Read the test file
     test_file = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
@@ -20,27 +17,10 @@ try:
         source_code = f.read()
         print(f"Successfully read {len(source_code)} bytes")
 
-    # Parse the file using the Java parser
-    print("Creating Java parser...")
-    parser = get_parser("java")
-    print("Parsing source code...")
-    tree = parser.parse(bytes(source_code, "utf8"))
-    print("Successfully parsed source code")
+    builder = CFGBuilder("java")
+    builder.setup_parser()
 
-    # Create CFG visitor and visit the tree
-    print("Creating CFG visitor...")
-    visitor = get_visitor("java")
-    print("Visiting AST...")
-    result = visitor.visit(tree.root_node)
-    print("Successfully visited AST")
-
-    # Post-process the CFG to clean up nodes
-    print("Post-processing CFG...")
-    visitor.postprocess_cfg()
-    print("Post-processing complete")
-
-    # Print detailed CFG information
-    cfg = visitor.cfg
+    cfg = builder.build_cfg(source_code)
     # print("\nCFG Analysis for Java code")
     # print("-" * 50)
     # print(f"Method name: {cfg.function_name}")
@@ -67,14 +47,5 @@ try:
 
     # Visualize the CFG
     output_file = "java_cfg"
-    print(f"\nGenerating visualization...")
-    visualize_cfg(visitor.cfg, output_file)
+    visualize_cfg(cfg, output_file)
     print(f"CFG visualization saved to: {output_file}")
-
-except Exception as e:
-    print("\nError:", str(e))
-    print("\nTraceback:")
-    import traceback
-
-    traceback.print_exc()
-    sys.exit(1)
