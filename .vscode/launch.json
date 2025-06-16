@@ -12,7 +12,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "C dataflow parser",
+            "name": "Dataflow parser",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/tree_sprawler/dataflow/main.py",
