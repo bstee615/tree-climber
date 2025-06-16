@@ -233,27 +233,14 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_if_statement(self, node: Node) -> CFGTraversalResult:
         """Visit an if statement"""
-        condition_node = None
-        then_stmt = None
-        else_stmt = None
-
-        # Parse if statement structure
-        i = 0
-        while i < len(node.children):
-            child = node.children[i]
-            if child.type == "parenthesized_expression":
-                condition_node = child
-            elif child.type != "if" and child.type != "else" and then_stmt is None:
-                then_stmt = child
-            elif child.type != "else" and then_stmt is not None:
-                else_stmt = child
-            i += 1
+        # Get components via named fields
+        condition_node = node.child_by_field_name("condition")
+        then_stmt = node.child_by_field_name("consequence")
+        else_clause = node.child_by_field_name("alternative")
 
         # Create condition node
         assert condition_node is not None, "If statement must have a condition"
         cond_id = self._create_condition_node(condition_node, NodeType.CONDITION)
-
-        exit_nodes = []
 
         # Create an explicit exit node for the if statement
         if_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: if stmt")
@@ -268,8 +255,8 @@ class CCFGVisitor(CFGVisitor):
                 self.cfg.add_edge(exit_node, if_exit_id)
 
         # Process else branch with "false" label
-        if else_stmt:
-            else_result = self.visit(else_stmt)
+        if else_clause:
+            else_result = self.visit(else_clause)
             self.cfg.add_edge(cond_id, else_result.entry_node_id, "false")
 
             # Connect else-branch exits to the if's exit node
@@ -279,22 +266,13 @@ class CCFGVisitor(CFGVisitor):
             # No else branch, direct false path to the exit node
             self.cfg.add_edge(cond_id, if_exit_id, "false")
 
-        # The if statement has a single exit node now
-        exit_nodes = [if_exit_id]
-
-        return CFGTraversalResult(entry_node_id=cond_id, exit_node_ids=exit_nodes)
+        return CFGTraversalResult(entry_node_id=cond_id, exit_node_ids=[if_exit_id])
 
     def visit_while_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a while loop"""
-        condition_node = None
-        body_stmt = None
-
-        # Parse while statement
-        for child in node.children:
-            if child.type == "parenthesized_expression":
-                condition_node = child
-            elif child.type != "while":
-                body_stmt = child
+        # Get components via named fields
+        condition_node = node.child_by_field_name("condition")
+        body_stmt = node.child_by_field_name("body")
 
         # Create loop header node
         assert condition_node is not None, "While statement must have a condition"
@@ -329,41 +307,21 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_for_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a for loop"""
-        body_stmt = None
-        init_expr = None
-        condition_expr = None
-        update_expr = None
-
-        # Parse for statement to find the different components
-        for child in node.children:
-            if child.type == "for":
-                continue
-            elif child.type == "(" or child.type == ")":
-                continue
-            elif (
-                child.type == "compound_statement"
-                or child.type == "expression_statement"
-            ):
-                body_stmt = child
-            elif child.type == ";":
-                continue
-            else:
-                # The for loop format is: for (init; condition; update) body
-                # We need to find these three components based on their position
-                if init_expr is None:
-                    init_expr = child
-                elif condition_expr is None:
-                    condition_expr = child
-                elif update_expr is None:
-                    update_expr = child
+        # Get components via named fields
+        init_expr = node.child_by_field_name("initializer")
+        condition_expr = node.child_by_field_name("condition")
+        update_expr = node.child_by_field_name("update")
+        body_stmt = node.child_by_field_name("body")
 
         # Create initialization node with actual initialization code
         init_text = get_source_text(init_expr) if init_expr else "INIT: for loop"
         init_id = self.create_node(NodeType.STATEMENT, init_expr, init_text)
 
         # Create condition node
-        assert condition_expr is not None, "For loop must have a condition"
-        condition_id = self._create_condition_node(condition_expr, NodeType.LOOP_HEADER)
+        condition_text = get_source_text(condition_expr) if condition_expr else "true"
+        condition_id = self.create_node(
+            NodeType.LOOP_HEADER, condition_expr, condition_text
+        )
 
         # Create update node with actual update code
         update_text = get_source_text(update_expr) if update_expr else "for update"
@@ -442,26 +400,15 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_do_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a do-while loop"""
-        condition_node = None
-        body_stmt = None
-
-        # Parse do-while statement
-        for child in node.children:
-            if child.type == "parenthesized_expression":
-                condition_node = child
-            elif child.type != "do" and child.type != "while" and child.type != ";":
-                body_stmt = child
+        # Get components via named fields
+        condition_node = node.child_by_field_name("condition")
+        body_stmt = node.child_by_field_name("body")
 
         # Create loop header (condition) with actual condition text
-        if condition_node:
-            condition_text = get_source_text(condition_node)
-            loop_header_id = self.create_node(
-                NodeType.LOOP_HEADER, condition_node, condition_text
-            )
-        else:
-            loop_header_id = self.create_node(
-                NodeType.LOOP_HEADER, source_text="COND: do-while loop"
-            )
+        condition_text = get_source_text(condition_node) if condition_node else "true"
+        loop_header_id = self.create_node(
+            NodeType.LOOP_HEADER, condition_node, condition_text
+        )
 
         # Create exit node for the loop
         loop_exit_id = self.create_node(
@@ -511,15 +458,9 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_switch_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a switch statement"""
-        condition_node = None
-        body_node = None
-
-        # Parse switch statement
-        for child in node.children:
-            if child.type == "parenthesized_expression":
-                condition_node = child
-            elif child.type == "compound_statement":
-                body_node = child
+        # Get components via named fields
+        condition_node = node.child_by_field_name("condition")
+        body_node = node.child_by_field_name("body")
 
         # Create switch head node
         assert condition_node is not None, "Switch statement must have a condition"
@@ -536,7 +477,6 @@ class CCFGVisitor(CFGVisitor):
         # Process switch body, which should contain case statements
         if body_node:
             body_result = self.visit(body_node)
-
             # Connect switch head to body entry
             # Note: We don't add edge labels here as the individual case statements
             # will connect to the switch head with appropriate case value labels
@@ -558,16 +498,8 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_case_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a case statement within a switch"""
-        value_expr = None
-        body_stmts = []
-
-        # Parse case statement
-        for child in node.children:
-            if child.type != "case" and child.type != ":" and value_expr is None:
-                value_expr = child
-            elif child.type != "case" and child.type != ":" and value_expr is not None:
-                body_stmts.append(child)
-                # We don't break here since there may be multiple statements
+        # Get value via named field
+        value_expr = node.child_by_field_name("value")
 
         # Create case node with the case value
         if value_expr:
@@ -587,6 +519,14 @@ class CCFGVisitor(CFGVisitor):
         exit_nodes = [case_id]  # Default exit is case node itself for fall-through
 
         # Process all body statements in sequence if present
+        # Remaining statements after the value become the body
+        body_stmts = []
+        for child in node.children:
+            # Skip case, value expr, and colons
+            if child.type == "case" or child == value_expr or child.type == ":":
+                continue
+            body_stmts.append(child)
+
         if body_stmts:
             last_exits = [case_id]  # Start with the case node
 
@@ -663,26 +603,25 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_labeled_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a labeled statement - target for goto statements"""
-        label_name = None
-        body_stmt = None
+        # Get components via named fields
+        label_node = node.child_by_field_name("label")
+        label_name = get_source_text(label_node) if label_node else "LABEL"
 
-        # Parse labeled statement
+        # Get the statement after label (assuming it's the first non-label child)
+        body_stmt = None
         for child in node.children:
-            if child.type == "statement_identifier":
-                label_name = get_source_text(child)
-            elif child.type != ":" and label_name is not None:
+            if child != label_node and child.type != ":":
                 body_stmt = child
                 break
 
         # Create label node
-        label_id = self.create_node(NodeType.LABEL, source_text=label_name or "LABEL")
+        label_id = self.create_node(NodeType.LABEL, source_text=label_name)
 
         # Register label in context
-        if label_name:
-            goto_refs = self.context.add_label(label_name, label_id)
-            # Connect any forward goto references to this label
-            for goto_id in goto_refs:
-                self.cfg.add_edge(goto_id, label_id)
+        goto_refs = self.context.add_label(label_name, label_id)
+        # Connect any forward goto references to this label
+        for goto_id in goto_refs:
+            self.cfg.add_edge(goto_id, label_id)
 
         # Process body statement
         if body_stmt:
@@ -696,23 +635,18 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_goto_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a goto statement - unconditional jump to a label"""
-        target_label = None
-
-        # Parse goto statement to find target label
-        for child in node.children:
-            if child.type == "statement_identifier":
-                target_label = get_source_text(child)
-                break
+        # Get label via named field
+        label_node = node.child_by_field_name("label")
+        target_label = get_source_text(label_node) if label_node else "GOTO"
 
         # Create goto node
-        goto_id = self.create_node(NodeType.GOTO, node, target_label or "GOTO")
+        goto_id = self.create_node(NodeType.GOTO, node, target_label)
 
         # Try to connect to label if it exists
-        if target_label:
-            target_id = self.context.add_goto_ref(target_label, goto_id)
-            if target_id:
-                # If label already defined, connect goto to label
-                self.cfg.add_edge(goto_id, target_id)
+        target_id = self.context.add_goto_ref(target_label, goto_id)
+        if target_id:
+            # If label already defined, connect goto to label
+            self.cfg.add_edge(goto_id, target_id)
 
         # Goto statements don't have normal successors (control flow is transferred)
         return CFGTraversalResult(entry_node_id=goto_id, exit_node_ids=[])
