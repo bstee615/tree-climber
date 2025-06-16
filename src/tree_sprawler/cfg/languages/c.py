@@ -7,7 +7,13 @@ from typing import List, Optional
 
 from tree_sitter import Node
 
-from tree_sprawler.ast_utils import dfs, get_source_text
+from tree_sprawler.ast_utils import (
+    dfs,
+    get_child_by_field_name,
+    get_required_child_by_field_name,
+    get_required_child_by_type,
+    get_source_text,
+)
 from tree_sprawler.cfg.cfg_types import CFGTraversalResult, NodeType
 from tree_sprawler.cfg.visitor import CFGVisitor
 
@@ -121,34 +127,48 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_function_definition(self, node: Node) -> CFGTraversalResult:
         """Visit a function definition"""
-        # Find function name, parameters and body
+        # Get components via named fields
+        declarator = get_required_child_by_field_name(node, "declarator")
+        body_node = get_required_child_by_field_name(node, "body")
+
+        # Extract function name and parameters from the declarator
         function_name = ""
         parameters = []
-        body_node = None
-        declarator = None
         closing_brace = None
 
-        for child in node.children:
-            if child.type == "function_declarator":
-                declarator = child
-                # Extract function name and parameters
-                for subchild in child.children:
-                    if subchild.type == "identifier":
-                        function_name = get_source_text(subchild)
-                    elif subchild.type == "parameter_list":
-                        for param in subchild.children:
-                            if param.type == "parameter_declaration":
-                                # Find the parameter name
-                                for param_child in param.children:
-                                    if param_child.type == "identifier":
-                                        param_name = get_source_text(param_child)
-                                        parameters.append(param_name)
-                                        break
-            elif child.type == "compound_statement":
-                body_node = child
-                for subchild in child.children:
-                    if subchild.type == "}":
-                        closing_brace = subchild
+        # Look for identifier (function name) and parameter_list in declarator
+        function_identifier = get_required_child_by_field_name(declarator, "declarator")
+        function_name = get_source_text(function_identifier)
+        parameter_list = get_required_child_by_field_name(declarator, "parameters")
+        for param in parameter_list.children:
+            match param.type:
+                case "parameter_declaration":
+                    parameter_identifier = get_required_child_by_field_name(
+                        param, "declarator", "identifier"
+                    )
+                    parameters.append(get_source_text(parameter_identifier))
+                case _:
+                    # TODO: Raise warning
+                    parameters.append(get_source_text(param))
+            break
+
+        for subchild in declarator.children:
+            if subchild.type == "identifier":
+                function_name = get_source_text(subchild)
+            elif subchild.type == "parameter_list":
+                for param in subchild.children:
+                    if param.type == "parameter_declaration":
+                        # Find the parameter name
+                        for param_child in param.children:
+                            if param_child.type == "identifier":
+                                param_name = get_source_text(param_child)
+                                parameters.append(param_name)
+                                break
+
+        # Find closing brace in body for exit node location
+        for child in body_node.children:
+            if child.type == "}":
+                closing_brace = child
 
         self.cfg.function_name = function_name
 
@@ -234,25 +254,23 @@ class CCFGVisitor(CFGVisitor):
     def visit_if_statement(self, node: Node) -> CFGTraversalResult:
         """Visit an if statement"""
         # Get components via named fields
-        condition_node = node.child_by_field_name("condition")
-        then_stmt = node.child_by_field_name("consequence")
-        else_clause = node.child_by_field_name("alternative")
+        condition_node = get_required_child_by_field_name(node, "condition")
+        then_stmt = get_required_child_by_field_name(node, "consequence")
+        else_clause = get_child_by_field_name(node, "alternative")
 
         # Create condition node
-        assert condition_node is not None, "If statement must have a condition"
         cond_id = self._create_condition_node(condition_node, NodeType.CONDITION)
 
         # Create an explicit exit node for the if statement
         if_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: if stmt")
 
         # Process then branch with "true" label
-        if then_stmt:
-            then_result = self.visit(then_stmt)
-            self.cfg.add_edge(cond_id, then_result.entry_node_id, "true")
+        then_result = self.visit(then_stmt)
+        self.cfg.add_edge(cond_id, then_result.entry_node_id, "true")
 
-            # Connect then-branch exits to the if's exit node
-            for exit_node in then_result.exit_node_ids:
-                self.cfg.add_edge(exit_node, if_exit_id)
+        # Connect then-branch exits to the if's exit node
+        for exit_node in then_result.exit_node_ids:
+            self.cfg.add_edge(exit_node, if_exit_id)
 
         # Process else branch with "false" label
         if else_clause:
@@ -271,8 +289,8 @@ class CCFGVisitor(CFGVisitor):
     def visit_while_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a while loop"""
         # Get components via named fields
-        condition_node = node.child_by_field_name("condition")
-        body_stmt = node.child_by_field_name("body")
+        condition_node = get_required_child_by_field_name(node, "condition")
+        body_stmt = get_required_child_by_field_name(node, "body")
 
         # Create loop header node
         assert condition_node is not None, "While statement must have a condition"
@@ -308,10 +326,10 @@ class CCFGVisitor(CFGVisitor):
     def visit_for_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a for loop"""
         # Get components via named fields
-        init_expr = node.child_by_field_name("initializer")
-        condition_expr = node.child_by_field_name("condition")
-        update_expr = node.child_by_field_name("update")
-        body_stmt = node.child_by_field_name("body")
+        init_expr = get_required_child_by_field_name(node, "initializer")
+        condition_expr = get_required_child_by_field_name(node, "condition")
+        update_expr = get_required_child_by_field_name(node, "update")
+        body_stmt = get_required_child_by_field_name(node, "body")
 
         # Create initialization node with actual initialization code
         init_text = get_source_text(init_expr) if init_expr else "INIT: for loop"
@@ -401,8 +419,8 @@ class CCFGVisitor(CFGVisitor):
     def visit_do_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a do-while loop"""
         # Get components via named fields
-        condition_node = node.child_by_field_name("condition")
-        body_stmt = node.child_by_field_name("body")
+        condition_node = get_required_child_by_field_name(node, "condition")
+        body_stmt = get_required_child_by_field_name(node, "body")
 
         # Create loop header (condition) with actual condition text
         condition_text = get_source_text(condition_node) if condition_node else "true"
@@ -459,8 +477,8 @@ class CCFGVisitor(CFGVisitor):
     def visit_switch_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a switch statement"""
         # Get components via named fields
-        condition_node = node.child_by_field_name("condition")
-        body_node = node.child_by_field_name("body")
+        condition_node = get_required_child_by_field_name(node, "condition")
+        body_node = get_required_child_by_field_name(node, "body")
 
         # Create switch head node
         assert condition_node is not None, "Switch statement must have a condition"
@@ -499,15 +517,21 @@ class CCFGVisitor(CFGVisitor):
     def visit_case_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a case statement within a switch"""
         # Get value via named field
-        value_expr = node.child_by_field_name("value")
+        value_expr = get_child_by_field_name(node, "value")
 
         # Create case node with the case value
         if value_expr:
             value_text = get_source_text(value_expr)
             case_id = self.create_node(NodeType.CASE, value_expr, f"CASE: {value_text}")
         else:
-            value_text = "case"
-            case_id = self.create_node(NodeType.CASE, source_text="CASE")
+            # Default case without value
+            value_text = "default"
+            default_label = get_required_child_by_type(node, "default")
+            case_id = self.create_node(
+                NodeType.CASE,
+                source_text=get_source_text(default_label),
+                ast_node=default_label,
+            )
 
         # Connect case to switch head if available
         switch_head = self.context.get_switch_head()
@@ -522,6 +546,8 @@ class CCFGVisitor(CFGVisitor):
         # Remaining statements after the value become the body
         body_stmts = []
         for child in node.children:
+            if child.type == "default":
+                continue
             # Skip case, value expr, and colons
             if child.type == "case" or child == value_expr or child.type == ":":
                 continue
@@ -554,57 +580,10 @@ class CCFGVisitor(CFGVisitor):
 
         return CFGTraversalResult(entry_node_id=case_id, exit_node_ids=exit_nodes)
 
-    def visit_default_case(self, node: Node) -> CFGTraversalResult:
-        """Visit a default case within a switch"""
-        body_stmts = []
-
-        # Parse default statement
-        for child in node.children:
-            if child.type != "default" and child.type != ":":
-                body_stmts.append(child)
-
-        # Create default case node
-        default_id = self.create_node(NodeType.DEFAULT, source_text="DEFAULT")
-
-        # Connect default to switch head if available
-        switch_head = self.context.get_switch_head()
-        if switch_head is not None:
-            self.cfg.add_edge(switch_head, default_id, "default")
-
-        exit_nodes = [default_id]  # Default exit is the default node itself
-
-        # Process all body statements in sequence if present
-        if body_stmts:
-            last_exits = [default_id]  # Start with the default node
-
-            # Process each statement in the body sequentially
-            for body_stmt in body_stmts:
-                stmt_result = self.visit(body_stmt)
-                if stmt_result:  # Make sure we got a valid result
-                    # Connect last statement's exits to this statement's entry
-                    for exit_id in last_exits:
-                        self.cfg.add_edge(exit_id, stmt_result.entry_node_id)
-
-                    # Update the current exits
-                    last_exits = stmt_result.exit_node_ids
-
-                    # If it's a break or other control flow statement (like return/goto)
-                    if not last_exits:  # Empty exit nodes list
-                        # No fall-through after the default case
-                        exit_nodes = []
-                        break
-
-            # If we went through all statements and still have exit nodes,
-            # those become the exit nodes for the default case
-            if last_exits:
-                exit_nodes = last_exits
-
-        return CFGTraversalResult(entry_node_id=default_id, exit_node_ids=exit_nodes)
-
     def visit_labeled_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a labeled statement - target for goto statements"""
         # Get components via named fields
-        label_node = node.child_by_field_name("label")
+        label_node = get_required_child_by_field_name(node, "label")
         label_name = get_source_text(label_node) if label_node else "LABEL"
 
         # Get the statement after label (assuming it's the first non-label child)
@@ -636,7 +615,7 @@ class CCFGVisitor(CFGVisitor):
     def visit_goto_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a goto statement - unconditional jump to a label"""
         # Get label via named field
-        label_node = node.child_by_field_name("label")
+        label_node = get_required_child_by_field_name(node, "label")
         target_label = get_source_text(label_node) if label_node else "GOTO"
 
         # Create goto node
