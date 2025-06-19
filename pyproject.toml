@@ -9,9 +9,14 @@ authors = [
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "graphviz>=0.20.3",
+"networkx>=3.5",
+    "plotly>=6.1.2",
     "pytest>=8.4.0",
+"scipy>=1.15.3",
     "streamlit>=1.46.0",
     "streamlit-agraph>=0.0.45",
+"streamlit-cytoscapejs>=0.0.2",
+    "streamlit-plotly-events>=0.0.6",
     "tree-sitter<0.21.0",
     "tree-sitter-languages>=1.10.2",
 ]

@@ -1,19 +1,17 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional, Tuple
 
+import networkx as nx
+import plotly.graph_objects as go
 import streamlit as st
-from streamlit_agraph import Config, Edge, Node, agraph
 from tree_sitter import Tree
 
 from tree_sprawler.ast_utils import get_source_text
 from tree_sprawler.cfg.builder import CFGBuilder
 from tree_sprawler.cfg.visitor import CFG
-from tree_sprawler.cfg.visualization import make_node_label, make_node_style
+from tree_sprawler.cfg.visualization import make_node_style
 from tree_sprawler.dataflow.analyses.def_use import DefUseResult, DefUseSolver
-from tree_sprawler.dataflow.analyses.reaching_definitions import (
-    ReachingDefinitionsProblem,
-)
-from tree_sprawler.dataflow.dataflow_types import DataflowResult
+from tree_sprawler.dataflow.analyses.reaching_definitions import ReachingDefinitionsProblem
 from tree_sprawler.dataflow.solver import RoundRobinSolver
 
 
@@ -37,82 +35,65 @@ class GraphData:
 
 def compose_graph(
     options: GraphOptions, data: GraphData
-) -> tuple[list[Node], list[Edge]]:
+) -> Tuple[List[dict], List[Tuple[str, str, Optional[str], Optional[str]]]]:
+    """
+    Compose graph data in a format suitable for plotly visualization.
+    Returns:
+        - List of node dictionaries with attributes
+        - List of edge tuples (source, target, label, color)
+    """
     nodes = []
     edges = []
-    # Add AST nodes and edges
+
     if options.show_ast:
         assert data.tree is not None, "AST tree must be provided when show_ast is True"
-        # TODO implement
+        # TODO implement AST visualization
+
     if options.show_cfg:
         assert data.cfg is not None, "CFG must be provided when show_cfg is True"
         for node_id, node in data.cfg.nodes.items():
-            # label = make_node_label(node)
-            label = node.source_text
             shape, color = make_node_style(node)
-            shape = "ellipse"
-            nodes.append(
-                Node(
-                    id=str(node_id),
-                    title=label.strip(),
-                    shape=shape,
-                    color=color,
-                    label=get_source_text(node.ast_node)
-                    if node.ast_node
-                    else f"{node.node_type.name} (no AST node)",
-                )
+            display_label = (
+                get_source_text(node.ast_node)
+                if node.ast_node
+                else f"{node.node_type.name} (no AST node)"
             )
+
+            nodes.append(
+                {
+                    "id": str(node_id),
+                    "label": display_label,
+                    "color": color,
+                    "shape": shape,
+                }
+            )
+
             for successor in node.successors:
                 edges.append(
-                    Edge(
-                        source=str(node_id),
-                        target=str(successor),
-                        label=node.get_edge_label(successor) or None,
+                    (
+                        str(node_id),
+                        str(successor),
+                        node.get_edge_label(successor),
+                        None,  # Default color for CFG edges
                     )
                 )
+
     if options.show_dataflow:
         assert data.def_use is not None, (
             "Def-Use result must be provided when show_dataflow is True"
         )
         for variable_name, chains in data.def_use.chains.items():
             for chain in chains:
-                # Link CFG nodes with dataflow facts in a different color
                 for use in chain.uses:
                     edges.append(
-                        Edge(
-                            source=str(chain.definition),
-                            target=str(use),
-                            label="uses",
-                            color="blue",
+                        (
+                            str(chain.definition),
+                            str(use),
+                            "uses",
+                            "blue",  # Color for dataflow edges
                         )
                     )
 
-    # Example:
-    # nodes.append(
-    #     Node(
-    #         id="Spiderman",
-    #         label="Peter Parker",
-    #         size=25,
-    #         shape="circularImage",
-    #         image="http://marvel-force-chart.surge.sh/marvel_force_chart_img/top_spiderman.png",
-    #     )
-    # )  # includes **kwargs
-    # nodes.append(
-    #     Node(
-    #         id="Captain_Marvel",
-    #         size=25,
-    #         shape="circularImage",
-    #         image="http://marvel-force-chart.surge.sh/marvel_force_chart_img/top_captainmarvel.png",
-    #     )
-    # )
-    # edges.append(
-    #     Edge(
-    #         source="Captain_Marvel",
-    #         label="friend_of",
-    #         target="Spiderman",
-    #         # **kwargs
-    #     )
-    # )
     return nodes, edges
 
 
@@ -136,71 +117,29 @@ if not st.session_state.get("analysis_data"):
         }
     }
     """
-    # java_code = """
-    # public class Example {
-    #     public static int exampleFunction(int n) {
-    #         int result = 0;
-
-    #         // Test if-else statement
-    #         if (n > 0) {
-    #             result = result * 2;
-    #         } else if (n < 0) {
-    #             result = -result;
-    #             System.out.println(result, foo);
-    #         }
-
-    #         if (n == 0) {
-    #             System.out.println(result);
-    #         }
-    #         return result;
-    #     }
-    # }
-    # """
     builder = CFGBuilder("c")
     builder.setup_parser()
     cfg = builder.build_cfg(c_code)
-    # builder = CFGBuilder("java")
-    # builder.setup_parser()
-    # cfg = builder.build_cfg(java_code)
-
-    # Visualize the CFG
-    # visualize_cfg(cfg)
 
     # Analyze reaching definitions
     problem = ReachingDefinitionsProblem()
-
     solver = RoundRobinSolver()
     result = solver.solve(cfg, problem)
-    # print("Reaching definitions:")
-    # print("In facts:")
-    # for node_id, facts in result.in_facts.items():
-    #     print(f"Node {node_id}:")
-    #     for fact in facts:
-    #         print(f"\t* {fact}")
-    # for node_id, facts in result.out_facts.items():
-    #     print(f"Node {node_id}:")
-    #     for fact in facts:
-    #         print(f"\t* {fact}")
 
     # Analyze def-use chains
     def_use_analyzer = DefUseSolver()
     def_use_result = def_use_analyzer.solve(cfg, result)
+
     analysis_data = GraphData(
-        # tree=builder.tree,
         tree=None,
         cfg=cfg,
         def_use=def_use_result,
     )
     st.session_state.graph = analysis_data
+
 assert isinstance(analysis_data, GraphData), "analysis_data must be initialized"
 
 st.title("Tree-Sprawler Graph")
-with st.container():
-    config = Config(
-        directed=True,
-        physics=True,
-        hierarchical=True,
-    )
 
 with st.sidebar:
     st.title("Graph Visualization Options")
@@ -216,4 +155,102 @@ nodes, edges = compose_graph(
     ),
     data=analysis_data,
 )
-return_value = agraph(nodes=nodes, edges=edges, config=config)
+
+# Create a networkx graph for layout
+G = nx.DiGraph()
+
+# Add nodes to the graph
+for node in nodes:
+    G.add_node(node["id"])
+
+# Add edges to the graph
+for source, target, label, color in edges:
+    G.add_edge(source, target)
+
+# Use networkx's layout algorithm
+node_positions = nx.kamada_kawai_layout(G)
+
+# Create separate edge traces for different colors
+edge_by_color = {}
+
+for source, target, label, color in edges:
+    x0, y0 = node_positions[source]
+    x1, y1 = node_positions[target]
+
+    color = color or "gray"
+    if color not in edge_by_color:
+        edge_by_color[color] = {"x": [], "y": [], "labels": []}
+
+    edge_by_color[color]["x"].extend([x0, x1, None])
+    edge_by_color[color]["y"].extend([y0, y1, None])
+    edge_by_color[color]["labels"].extend([label or "", None, None])
+
+# Create edge traces for each color
+edge_traces = []
+for color, data in edge_by_color.items():
+    edge_trace = go.Scatter(
+        x=data["x"],
+        y=data["y"],
+        line=dict(width=1.5, color=color),
+        hoverinfo="text",
+        text=data["labels"],
+        mode="lines",
+        name=f"{color} edges",
+    )
+    edge_traces.append(edge_trace)
+
+# Create node trace
+node_x = []
+node_y = []
+node_labels = []
+node_colors = []
+node_shapes = []
+
+# Map CFG shapes to plotly shapes
+shape_map = {
+    "ellipse": "circle",
+    "box": "square",
+    "diamond": "diamond",
+}
+
+for node in nodes:
+    x, y = node_positions[node["id"]]
+    node_x.append(x)
+    node_y.append(y)
+    node_labels.append(node["label"])
+    node_colors.append(node["color"])
+    node_shapes.append(shape_map.get(node["shape"], "circle"))
+
+node_trace = go.Scatter(
+    x=node_x,
+    y=node_y,
+    mode="markers+text",
+    hoverinfo="text",
+    text=node_labels,
+    textposition="bottom center",
+    marker=dict(
+        color=node_colors,
+        size=30,
+        line=dict(width=2, color="white"),
+        symbol=node_shapes,
+    ),
+)
+
+# Create the figure with all traces
+fig = go.Figure(
+    data=[*edge_traces, node_trace],
+    layout=go.Layout(
+        title="Control Flow Graph",
+        showlegend=True,
+        hovermode="closest",
+        margin=dict(b=20, l=5, r=5, t=40),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        plot_bgcolor="white",
+        width=800,
+        height=800,
+    ),
+)
+
+# Display the graph in Streamlit
+st.plotly_chart(fig, use_container_width=True)
