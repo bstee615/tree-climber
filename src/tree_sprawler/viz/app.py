@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-import streamlit
+import streamlit as st
 from streamlit_agraph import Config, Edge, Node, agraph
 from tree_sitter import Tree
 
@@ -116,8 +116,8 @@ def compose_graph(
     return nodes, edges
 
 
-analysis_data = streamlit.session_state.get("analysis_data")
-if not streamlit.session_state.get("analysis_data"):
+analysis_data = st.session_state.get("analysis_data")
+if not st.session_state.get("analysis_data"):
     # Example C code snippet for testing
     c_code = """
     int example_function(int n) {
@@ -191,21 +191,29 @@ if not streamlit.session_state.get("analysis_data"):
         cfg=cfg,
         def_use=def_use_result,
     )
-    streamlit.session_state.graph = analysis_data
+    st.session_state.graph = analysis_data
 assert isinstance(analysis_data, GraphData), "analysis_data must be initialized"
 
+st.title("Tree-Sprawler Graph")
+with st.container():
+    config = Config(
+        directed=True,
+        physics=True,
+        hierarchical=True,
+    )
+
+with st.sidebar:
+    st.title("Graph Visualization Options")
+    settings = st.pills(
+        "Layers", ["AST", "CFG", "Def-Use"], default=["CFG"], selection_mode="multi"
+    )
 
 nodes, edges = compose_graph(
-    options=GraphOptions(show_ast=False, show_cfg=True, show_dataflow=False),
+    options=GraphOptions(
+        show_ast="AST" in settings,
+        show_cfg="CFG" in settings,
+        show_dataflow="Def-Use" in settings,
+    ),
     data=analysis_data,
 )
-
-config = Config(
-    width=750,
-    height=950,
-    directed=True,
-    physics=True,
-    hierarchical=True,
-)
-
 return_value = agraph(nodes=nodes, edges=edges, config=config)
