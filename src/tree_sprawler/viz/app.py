@@ -227,22 +227,45 @@ for source, target, label, color in edges:
 
     edge_by_color[color]["x"].extend([x0, x1, None])
     edge_by_color[color]["y"].extend([y0, y1, None])
-    edge_by_color[color]["labels"].extend([label or "", None, None])
+    edge_by_color[color]["labels"].append(label)
     edge_by_color[color]["name"] = "Control flow" if color == "gray" else "Def-Use"
 
 # Create edge traces for each color
 edge_traces = []
+eweights_traces = []
 for color, data in edge_by_color.items():
     edge_trace = go.Scatter(
         x=data["x"],
         y=data["y"],
         line=dict(width=1.5, color=color),
-        hoverinfo="text",
-        text=data["labels"],
         mode="lines",
-        name=data["name"],
+        # mode="lines+markers",
+        # marker=dict(
+        #     symbol="arrow",
+        #     size=10,
+        #     angleref="previous",
+        # ),
     )
     edge_traces.append(edge_trace)
+
+    xtexts = []
+    ytexts = []
+    for i in range(0, len(data["x"]), 3):
+        x0, y0 = data["x"][i], data["y"][i]
+        x1, y1 = data["x"][i + 1], data["y"][i + 1]
+        xtexts.append((x0 + x1) / 2)
+        ytexts.append((y0 + y1) / 2)
+
+    eweights_trace = go.Scatter(
+        x=xtexts,
+        y=ytexts,
+        mode="text",
+        marker_size=0.5,
+        text=data["labels"],
+        textposition="top center",
+        hovertemplate="weight: %{text}<extra></extra>",
+    )
+    eweights_traces.append(eweights_trace)
 
 # Create node trace
 node_x = []
@@ -304,7 +327,7 @@ for color in reversed(sorted(set(node_colors))):
 
 # Create the figure with all traces
 fig = go.Figure(
-    data=[*edge_traces, *node_traces],
+    data=[*edge_traces, *eweights_traces, *node_traces],
     layout=go.Layout(
         # title="Control Flow Graph", # TODO show filename
         showlegend=True,
