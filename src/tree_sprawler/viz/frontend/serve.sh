@@ -1,0 +1,1 @@
+uv run -m http.server 3005 --directory public
