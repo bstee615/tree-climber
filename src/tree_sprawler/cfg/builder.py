@@ -1,3 +1,6 @@
+from typing import Optional
+
+from tree_sitter import Tree
 from tree_sitter_languages import get_parser
 
 from tree_sprawler.cfg.languages.c import CCFGVisitor
@@ -32,14 +35,26 @@ class CFGBuilder:
         self.parser = get_parser(self.language)
         pass
 
-    def build_cfg(self, source_code: str) -> CFG:
+    def build_cfg(
+        self, source_code: Optional[str] = None, tree: Optional[Tree] = None
+    ) -> CFG:
         """Build CFG from source code"""
         if not self.parser:
             raise RuntimeError("Parser not set up. Call setup_parser() first.")
+        if source_code is not None and tree is not None:
+            raise ValueError("Only one of source_code or tree should be provided.")
 
-        # Parse the source code
-        tree = self.parser.parse(bytes(source_code, "utf8"))
-        root_node = tree.root_node
+        if source_code is not None:
+            # Parse the source code
+            tree = self.parser.parse(bytes(source_code, "utf8"))
+            root_node = tree.root_node
+        elif tree is not None:
+            # Use the provided tree
+            root_node = tree.root_node
+        else:
+            raise ValueError(
+                "Either source_code or tree must be provided, but both are None."
+            )
 
         # Create visitor and build CFG
         visitor = get_visitor(self.language)
