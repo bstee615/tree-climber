@@ -41,7 +41,6 @@ function App() {
 
   return (
     <>
-      {/* <h1>Tree Sprawler Visualization</h1> */}
       <LanguageSelector language={language} onLanguageChange={setLanguage} />
       <div className="app-container">
         <Editor language={language} onTextChange={handleCodeChange} />
