@@ -124,27 +124,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasGraph, setHasGraph] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const cyRef = useRef<cytoscape.Core | null>(null);
-  const savedZoom = useRef<{ zoom: number; pan: { x: number; y: number } } | null>(null);
-
-  // Save current zoom and pan state
-  const saveZoomState = () => {
-    if (cyRef.current) {
-      savedZoom.current = {
-        zoom: cyRef.current.zoom(),
-        pan: cyRef.current.pan()
-      };
-    }
-  };
-
-  // Restore saved zoom and pan state
-  const restoreZoomState = () => {
-    if (cyRef.current && savedZoom.current) {
-      cyRef.current.zoom(savedZoom.current.zoom);
-      cyRef.current.pan(savedZoom.current.pan);
-    }
-  };
 
   // Convert CFG data to Cytoscape elements
   const convertCFGToElements = (cfgData: CFGData) => {
@@ -223,17 +203,11 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     if (!code.trim()) {
       setElements([]);
       setHasGraph(false);
-      setIsFirstLoad(true);
       return;
     }
 
     setIsLoading(true);
     setError(null);
-
-    // Save current zoom state before updating
-    if (hasGraph) {
-      saveZoomState();
-    }
 
     try {
       const cfgData = await parseCode(code, language);
@@ -241,22 +215,15 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       setElements(newElements);
       setHasGraph(true);
       
-      // Apply layout after elements are updated
+      // Always apply layout after elements are updated to ensure consistent positioning
       setTimeout(() => {
         if (cyRef.current) {
-          // Only run layout for first load or if we don't have saved zoom state
-          if (isFirstLoad || !savedZoom.current) {
-            cyRef.current.layout({ 
-              name: 'dagre',
-              rankSep: 20,
-              nodeSep: 80,
-              ranker: 'tight-tree'
-            } as any).run();
-            setIsFirstLoad(false);
-          } else {
-            // Just restore the zoom without running layout
-            restoreZoomState();
-          }
+          cyRef.current.layout({ 
+            name: 'dagre',
+            rankSep: 50,
+            nodeSep: 80,
+            ranker: 'tight-tree'
+          } as any).run();
         }
       }, 100);
     } catch (err) {
@@ -264,7 +231,6 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setElements([]);
       setHasGraph(false);
-      setIsFirstLoad(true);
     } finally {
       setIsLoading(false);
     }
@@ -298,7 +264,6 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   const resetZoom = () => {
     if (cyRef.current) {
       cyRef.current.fit();
-      saveZoomState();
     }
   };
 
@@ -310,10 +275,6 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
         nodeSep: 80,
         ranker: 'tight-tree'
       } as any).run();
-      // Save the new layout state
-      setTimeout(() => {
-        saveZoomState();
-      }, 200);
     }
   };
 
@@ -348,7 +309,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
             display: 'flex', 
             justifyContent: 'center', 
             alignItems: 'center', 
-            height: '400px', 
+            height: '500px', 
             fontSize: '18px', 
             color: '#666' 
           }}>
@@ -359,7 +320,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
             elements={elements}
             stylesheet={CYTOSCAPE_STYLE}
             // https://stackoverflow.com/a/55872886
-            style={{ width: "100%", height: "400px", textAlign: "initial" }}
+            style={{ width: "100%", height: "500px", textAlign: "initial" }}
             cy={(cy) => {
               cyRef.current = cy;
 
@@ -367,13 +328,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
               cy.on('select', 'node', handleNodeSelection);
               cy.on('unselect', 'node', handleNodeUnselection);
 
-              // Save zoom state when user interacts with the graph
-              cy.on('zoom pan', () => {
-                saveZoomState();
-              });
-
-              // Only apply layout on first render or when explicitly needed
-              // The layout will be applied by updateGraph function when needed
+              // Layout will be applied by updateGraph function when needed
             }}
           />
         )}
