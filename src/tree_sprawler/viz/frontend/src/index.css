@@ -104,3 +104,11 @@ button:focus-visible {
   border: 1px solid #333;
   border-radius: 8px;
 }
+
+.error-message {
+  background-color: lightpink;
+  color: darkred;
+  border: darkred 1px solid;
+  padding: 1em;
+  border-radius: 8px;
+}
