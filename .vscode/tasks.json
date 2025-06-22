@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run FastAPI Server",
+			"type": "shell",
+			"command": "cd /home/benjis/Code/tree-sprawler && python -m uvicorn src.tree_sprawler.viz.app:app --reload --host 0.0.0.0 --port 8000",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		}
+	]
+}
