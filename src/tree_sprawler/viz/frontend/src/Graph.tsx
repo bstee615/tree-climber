@@ -44,7 +44,7 @@ const CYTOSCAPE_STYLE = [
       'text-wrap': 'wrap',
       'text-max-width': '120px',
       'width': '140px',
-      'height': '80px',
+      'height': '40px',
       'color': '#fff',
       'text-valign': 'center',
       'text-halign': 'center',
@@ -248,7 +248,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
           if (isFirstLoad || !savedZoom.current) {
             cyRef.current.layout({ 
               name: 'dagre',
-              rankSep: 100,
+              rankSep: 20,
               nodeSep: 80,
               ranker: 'tight-tree'
             } as any).run();
