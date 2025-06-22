@@ -183,10 +183,10 @@ const parseCode = async (code: string, language: string): Promise<CFGData> => {
 };
 
 const Graph = forwardRef<GraphRef>((_props, ref) => {
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const selectedNode = useRef<string | null>(null);
   const [elements, setElements] = useState<any[]>([]);
   const cyRef = useRef<cytoscape.Core | null>(null);
-  const [nodeSelection, setNodeSelection] = useState<string>('');
+  const nodeSelection = useRef<string>('');
 
   // Update graph with new code
   const updateGraph = async (code: string, language: string = 'c') => {
@@ -212,12 +212,12 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 
   const handleNodeSelection = (event: cytoscape.EventObject) => {
     const nodeId = event.target.id();
-    setSelectedNode(nodeId);
+    selectedNode.current = nodeId;
     console.log('Node selected:', nodeId);
   };
 
   const handleNodeUnselection = () => {
-    setSelectedNode(null);
+    selectedNode.current = null;
     console.log('Node unselected');
   };
 
@@ -229,15 +229,15 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   }
 
   const selectNode = () => {
-    if (!cyRef.current || !nodeSelection) {
+    if (!cyRef.current || !nodeSelection.current) {
       console.warn('Cytoscape instance not available or no node selected');
       return;
     }
-    console.log('Selecting node:', nodeSelection);
+    console.log('Selecting node:', nodeSelection.current);
     // Unselect all nodes first
     cyRef.current.nodes().unselect();
     // Select the specified node
-    cyRef.current.getElementById(nodeSelection).select();
+    cyRef.current.getElementById(nodeSelection.current).select();
   };
 
   const resetZoom = () => {
@@ -262,11 +262,11 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '1em' }}>
         <h2>Graph Visualization</h2>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <span>Selected Node: <strong>{selectedNode || 'none'}</strong></span>
+          <span>Select a node: <strong>{selectedNode ? selectedNode.current : 'none'}</strong></span>
           <input
             type="text"
-            value={nodeSelection}
-            onChange={(e) => setNodeSelection(e.target.value)}
+            defaultValue={nodeSelection.current}
+            onChange={(e) => nodeSelection.current = e.target.value}
             placeholder="Enter node ID to select"
           />
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
