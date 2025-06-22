@@ -183,8 +183,9 @@ const parseCode = async (code: string, language: string): Promise<CFGData> => {
 };
 
 const Graph = forwardRef<GraphRef>((_props, ref) => {
-  const selectedNode = useRef<string | null>(null);
   const [elements, setElements] = useState<any[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const selectedNode = useRef<string | null>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const nodeSelection = useRef<string>('');
 
@@ -199,9 +200,14 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       const cfgData = await parseCode(code, language);
       const cfgElements = convertCFGToElements(cfgData);
       setElements(cfgElements);
+      setErrorMessage(null);
     } catch (err) {
-      console.error('Error parsing code:', err);
-      setElements([]);
+      if (err instanceof Error) {
+        setErrorMessage(err.toString());
+        setElements([]);
+      } else {
+        console.error('Unhandled error:', err);
+      }
     }
   };
 
@@ -283,7 +289,12 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
         </div>
       </span>
       <div className="cytoscape-container">
-        <CytoscapeComponent
+        {errorMessage ? (
+          <div className="error-message">
+            <div><strong>Could not generate graph.</strong></div>
+            <div>{errorMessage}</div>
+          </div>
+        ) : <CytoscapeComponent
           elements={elements}
           stylesheet={CYTOSCAPE_STYLE}
           // https://stackoverflow.com/a/55872886
@@ -307,7 +318,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 
             layoutGraph(cyRef.current);
           }}
-        />
+        />}
       </div>
     </div>
   );
