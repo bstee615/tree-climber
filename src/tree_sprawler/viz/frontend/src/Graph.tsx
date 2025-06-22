@@ -222,10 +222,11 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   };
 
   const selectNode = () => {
-    if (!cyRef.current || !selectedNode) {
+    if (!cyRef.current || !nodeSelection) {
       console.warn('Cytoscape instance not available or no node selected');
       return;
     }
+    console.log('Selecting node:', nodeSelection);
     // Unselect all nodes first
     cyRef.current.nodes().unselect();
     // Select the specified node
@@ -234,18 +235,14 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 
   const resetZoom = () => {
     if (cyRef.current) {
-      cyRef.current.fit();
+      cyRef.current.fit(undefined, 30);
     }
   };
 
   const relayoutGraph = () => {
     if (cyRef.current) {
-      cyRef.current.layout({
-        name: 'dagre',
-        rankSep: 100,
-        nodeSep: 80,
-        ranker: 'tight-tree'
-      } as any).run();
+      layoutGraph(cyRef.current, () => console.log('Layout reapplied'));
+      // TODO: Don't reset zoom
     }
   };
 
@@ -294,19 +291,8 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
               elementsLength: elements.length,
             });
 
-            const layout = cyRef.current.layout({
-              name: 'dagre',
-              rankSep: 50,
-              nodeSep: 80,
-              ranker: 'tight-tree'
-            } as any);
-
-            // Hook into layout completion event
-            layout.on('layoutstop', () => {
-              console.log('Layout completed');
-            });
-
-            layout.run();
+            // TODO: Don't reset zoom
+            layoutGraph(cyRef.current, () => console.log('Layout applied'));
           }}
         />
       </div>
@@ -317,3 +303,20 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 Graph.displayName = 'Graph';
 
 export default Graph;
+function layoutGraph(cy: cytoscape.Core, callback?: () => void) {
+  const layout = cy.layout({
+    name: 'dagre',
+    rankSep: 50,
+    nodeSep: 80,
+    ranker: 'tight-tree'
+  } as any)
+
+  if (callback) {
+    layout.on('layoutstop', () => {
+      callback();
+    });
+  }
+
+  layout.run();
+}
+
