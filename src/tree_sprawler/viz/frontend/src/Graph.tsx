@@ -266,7 +266,6 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   return (
     <div className="container">
       <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '1em' }}>
-        <h2>Graph Visualization</h2>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span>Select a node: <strong>{selectedNode ? selectedNode.current : 'none'}</strong></span>
           <input
@@ -298,7 +297,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
           elements={elements}
           stylesheet={CYTOSCAPE_STYLE}
           // https://stackoverflow.com/a/55872886
-          style={{ width: "100%", height: "500px", textAlign: "initial" }}
+          style={{ width: "100%", height: "400px", textAlign: "initial" }}
           cy={(cy) => {
             // Add event listeners for node selection
             cy.on('select', 'node', handleNodeSelection);
