@@ -1,5 +1,5 @@
 import abc
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from tree_sitter import Node
 
@@ -154,6 +154,15 @@ class CFG:
         if from_id in self.nodes and to_id in self.nodes:
             self.nodes[from_id].add_successor(to_id, label)
             self.nodes[to_id].add_predecessor(from_id)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert CFG to dictionary for JSON serialization"""
+        return {
+            "function_name": self.function_name,
+            "entry_node_ids": self.entry_node_ids,
+            "exit_node_ids": self.exit_node_ids,
+            "nodes": {node_id: node.to_dict() for node_id, node in self.nodes.items()},
+        }
 
 
 class CFGVisitor(abc.ABC):

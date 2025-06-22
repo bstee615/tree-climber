@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 from tree_sitter import Node
 
@@ -31,6 +31,14 @@ class CFGNodeMetadata:
     variable_definitions: List[str] = field(default_factory=list)
     variable_uses: List[str] = field(default_factory=list)
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert metadata to dictionary for JSON serialization"""
+        return {
+            "function_calls": self.function_calls,
+            "variable_definitions": self.variable_definitions,
+            "variable_uses": self.variable_uses,
+        }
+
 
 @dataclass
 class CFGNode:
@@ -58,6 +66,18 @@ class CFGNode:
     def get_edge_label(self, successor_id: int) -> Optional[str]:
         """Get the label for an edge to a successor, if it exists"""
         return self.edge_labels.get(successor_id)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert CFG node to dictionary for JSON serialization"""
+        return {
+            "id": self.id,
+            "node_type": self.node_type.name,
+            "source_text": self.source_text,
+            "successors": list(self.successors),
+            "predecessors": list(self.predecessors),
+            "edge_labels": self.edge_labels,
+            "metadata": self.metadata.to_dict(),
+        }
 
 
 @dataclass

@@ -14,6 +14,10 @@ The `docs/` directory is the authoritative source of truth for all project docum
 The AI_Agent must read the relevant documentation from the `docs/` directory to ensure it has the most up-to-date information before proceeding with any work.
 After any change, the AI_Agent must ensure that all relevant documentation is updated to reflect the current state of the project.
 
+# Project
+
+- Frontent uses bun.
+
 # Fundamental Principles
 
 1. **External Package Research and Documentation**: For any proposed tasks that involve external packages, to avoid hallucinations, use the web to research the documentation first to ensure it's 100% clear how to use the API of the package. Then for each package, a document should be created `<task id>-<package>-guide.md` that contains a fresh cache of the information needed to use the API. It should be date-stamped and link to the original docs provided. E.g., if pg-boss is a library to add as part of task 2-1 then a file `tasks/2-1-pg-boss-guide.md` should be created. This documents foundational assumptions about how to use the package, with example snippets, in the language being used in the project.

@@ -34,7 +34,7 @@ function positionEquals(start: Position, end: Position) {
   return start.line === end.line && start.column === end.column && start.index === end.index;
 }
 
-const MonacoEditor = ({ language }: { language: string }) => {
+const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChange: (code: string) => void }) => {
   // State to manage the code in the editor
   const [code, setCode] = React.useState<string>("");
   // Load initial code from localStorage
@@ -42,14 +42,17 @@ const MonacoEditor = ({ language }: { language: string }) => {
     const storedCode = localStorage.getItem('tree_sprawler_code');
     if (storedCode) {
       setCode(storedCode);
+      // Notify parent component of the initial code load
+      onTextChange(storedCode);
     }
-  }, []);
+  }, [onTextChange]);
   // On change, update localStorage
   const handleEditorChange = (code: string | undefined) => {
     if (code !== undefined) {
       console.log("Updated code:", code.length, "characters");
       setCode(code);
       localStorage.setItem('tree_sprawler_code', code);
+      onTextChange(code); // Notify parent component of code change
     }
   };
 
