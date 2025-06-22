@@ -221,6 +221,13 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     console.log('Node unselected');
   };
 
+  const handleZoomOrPan = (cy: cytoscape.Core) => {
+    return (_event: cytoscape.EventObject) => {
+      console.log('Saving zoom and pan info');
+      saveZoomInfo(cy);
+    }
+  }
+
   const selectNode = () => {
     if (!cyRef.current || !nodeSelection) {
       console.warn('Cytoscape instance not available or no node selected');
@@ -241,8 +248,12 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 
   const relayoutGraph = () => {
     if (cyRef.current) {
-      layoutGraph(cyRef.current, () => console.log('Layout reapplied'));
-      // TODO: Don't reset zoom
+      cyRef.current.off('viewport');
+      layoutGraph(cyRef.current, () => {
+        if (cyRef.current) {
+          cyRef.current.on('viewport', handleZoomOrPan(cyRef.current));
+        }
+      });
     }
   };
 
@@ -281,18 +292,20 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
             // Add event listeners for node selection
             cy.on('select', 'node', handleNodeSelection);
             cy.on('unselect', 'node', handleNodeUnselection);
-
-            // Store the cytoscape instance in the ref
-            cyRef.current = cy;
-
-            console.log('applyLayoutWhenReady called:', {
-              cyRef: cyRef.current,
-              selectedNode,
-              elementsLength: elements.length,
+            cy.one('layoutstop', () => {
+              cy.on('viewport', handleZoomOrPan(cy));
             });
 
-            // TODO: Don't reset zoom
-            layoutGraph(cyRef.current, () => console.log('Layout applied'));
+            // Store the cytoscape instance in the ref
+            if (cyRef.current) {
+              if (cyRef.current === cy) {
+                // Remove previous event listeners to avoid memory leaks
+                cyRef.current.removeListener('viewport');
+              }
+            }
+            cyRef.current = cy;
+
+            layoutGraph(cyRef.current);
           }}
         />
       </div>
@@ -303,6 +316,24 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 Graph.displayName = 'Graph';
 
 export default Graph;
+
+const saveZoomInfo = (cy: cytoscape.Core) => {
+  const zoomInfo = {
+    zoom: cy.zoom(),
+    pan: cy.pan(),
+  };
+  localStorage.setItem('tree_sprawler_zoom', JSON.stringify(zoomInfo));
+}
+
+function loadZoomAndPanInfo(cy: cytoscape.Core) {
+  const zoomInfo = localStorage.getItem('tree_sprawler_zoom');
+  if (zoomInfo) {
+    const { zoom, pan } = JSON.parse(zoomInfo);
+    cy.zoom(zoom);
+    cy.pan(pan);
+  }
+}
+
 function layoutGraph(cy: cytoscape.Core, callback?: () => void) {
   const layout = cy.layout({
     name: 'dagre',
@@ -311,11 +342,13 @@ function layoutGraph(cy: cytoscape.Core, callback?: () => void) {
     ranker: 'tight-tree'
   } as any)
 
-  if (callback) {
-    layout.on('layoutstop', () => {
+  layout.on('layoutstop', () => {
+    // Load zoom and pan info from localStorage
+    loadZoomAndPanInfo(cy);
+    if (callback) {
       callback();
-    });
-  }
+    }
+  });
 
   layout.run();
 }
