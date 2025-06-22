@@ -37,15 +37,15 @@ const Graph = () => {
 
   return (
     <div className="container">
-      <h2>Graph Visualization</h2>
-      <div style={{ marginBottom: '10px' }}>
-        <button onClick={selectNodeTwo} style={{ marginRight: '10px' }}>
-          Select Node Two
-        </button>
-        {selectedNode && (
-          <span>Selected Node: <strong>{selectedNode}</strong></span>
-        )}
-      </div>
+      <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '1em' }}>
+        <h2>Graph Visualization</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span>Selected Node: <strong>{selectedNode || 'none'}</strong></span>
+          <button onClick={selectNodeTwo} style={{ marginRight: '10px' }}>
+            Select Node Two
+          </button>
+        </div>
+      </span>
       <div className="cytoscape-container">
         <CytoscapeComponent
           elements={elements}
