@@ -95,7 +95,7 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
     <div className="container">
       <h2>Code Editor</h2>
       <Editor
-        height="300px"
+        height="500px"
         language={language}
         value={code}
         theme="vs-dark"
