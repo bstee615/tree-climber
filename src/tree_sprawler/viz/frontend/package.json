@@ -1,33 +1,35 @@
 {
-  "name": "bun-react-template",
-  "version": "0.1.0",
+  "name": "frontend",
   "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "main": "src/index.tsx",
-  "module": "src/index.tsx",
   "scripts": {
-    "dev": "bun --hot src/index.tsx",
-    "start": "NODE_ENV=production bun src/index.tsx",
-    "build": "bun run build.ts"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@types/cytoscape-dagre": "^2.3.3",
-    "@types/lodash.debounce": "^4.0.9",
     "@types/react-cytoscapejs": "^1.2.5",
-    "bun-plugin-tailwind": "^0.0.14",
     "cytoscape": "^3.32.0",
     "cytoscape-dagre": "^2.5.0",
-    "dagre": "^0.8.5",
-    "lodash.debounce": "^4.0.8",
     "react": "^19.1.0",
     "react-cytoscapejs": "^2.0.0",
-    "react-dom": "^19.1.0",
-    "tailwindcss": "^4.0.6"
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@types/bun": "latest"
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react-swc": "^3.9.0",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5"
   }
 }
