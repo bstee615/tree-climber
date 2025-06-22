@@ -124,7 +124,27 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasGraph, setHasGraph] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const cyRef = useRef<cytoscape.Core | null>(null);
+  const savedZoom = useRef<{ zoom: number; pan: { x: number; y: number } } | null>(null);
+
+  // Save current zoom and pan state
+  const saveZoomState = () => {
+    if (cyRef.current) {
+      savedZoom.current = {
+        zoom: cyRef.current.zoom(),
+        pan: cyRef.current.pan()
+      };
+    }
+  };
+
+  // Restore saved zoom and pan state
+  const restoreZoomState = () => {
+    if (cyRef.current && savedZoom.current) {
+      cyRef.current.zoom(savedZoom.current.zoom);
+      cyRef.current.pan(savedZoom.current.pan);
+    }
+  };
 
   // Convert CFG data to Cytoscape elements
   const convertCFGToElements = (cfgData: CFGData) => {
@@ -203,11 +223,17 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     if (!code.trim()) {
       setElements([]);
       setHasGraph(false);
+      setIsFirstLoad(true);
       return;
     }
 
     setIsLoading(true);
     setError(null);
+
+    // Save current zoom state before updating
+    if (hasGraph) {
+      saveZoomState();
+    }
 
     try {
       const cfgData = await parseCode(code, language);
@@ -218,12 +244,19 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       // Apply layout after elements are updated
       setTimeout(() => {
         if (cyRef.current) {
-          cyRef.current.layout({ 
-            name: 'dagre',
-            rankSep: 100,
-            nodeSep: 80,
-            ranker: 'tight-tree'
-          } as any).run();
+          // Only run layout for first load or if we don't have saved zoom state
+          if (isFirstLoad || !savedZoom.current) {
+            cyRef.current.layout({ 
+              name: 'dagre',
+              rankSep: 100,
+              nodeSep: 80,
+              ranker: 'tight-tree'
+            } as any).run();
+            setIsFirstLoad(false);
+          } else {
+            // Just restore the zoom without running layout
+            restoreZoomState();
+          }
         }
       }, 100);
     } catch (err) {
@@ -231,6 +264,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setElements([]);
       setHasGraph(false);
+      setIsFirstLoad(true);
     } finally {
       setIsLoading(false);
     }
@@ -261,6 +295,28 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     }
   };
 
+  const resetZoom = () => {
+    if (cyRef.current) {
+      cyRef.current.fit();
+      saveZoomState();
+    }
+  };
+
+  const relayoutGraph = () => {
+    if (cyRef.current) {
+      cyRef.current.layout({ 
+        name: 'dagre',
+        rankSep: 100,
+        nodeSep: 80,
+        ranker: 'tight-tree'
+      } as any).run();
+      // Save the new layout state
+      setTimeout(() => {
+        saveZoomState();
+      }, 200);
+    }
+  };
+
   return (
     <div className="container">
       <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '1em' }}>
@@ -269,9 +325,21 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
           <span>Selected Node: <strong>{selectedNode || 'none'}</strong></span>
           {isLoading && <span>Loading...</span>}
           {error && <span style={{ color: 'red' }}>Error: {error}</span>}
-          <button onClick={selectNodeTwo} style={{ marginRight: '10px' }}>
-            Select Node Two
-          </button>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            <button onClick={selectNodeTwo} style={{ padding: '5px 10px' }}>
+              Select Node Two
+            </button>
+            {hasGraph && (
+              <>
+                <button onClick={resetZoom} style={{ padding: '5px 10px' }}>
+                  Reset Zoom
+                </button>
+                <button onClick={relayoutGraph} style={{ padding: '5px 10px' }}>
+                  Relayout
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </span>
       <div className="cytoscape-container">
@@ -299,13 +367,13 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
               cy.on('select', 'node', handleNodeSelection);
               cy.on('unselect', 'node', handleNodeUnselection);
 
-              // Apply layout with more spacing
-              cy.layout({ 
-                name: 'dagre',
-                rankSep: 100,
-                nodeSep: 80,
-                ranker: 'tight-tree'
-              } as any).run();
+              // Save zoom state when user interacts with the graph
+              cy.on('zoom pan', () => {
+                saveZoomState();
+              });
+
+              // Only apply layout on first render or when explicitly needed
+              // The layout will be applied by updateGraph function when needed
             }}
           />
         )}
