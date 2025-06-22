@@ -118,121 +118,90 @@ const CYTOSCAPE_STYLE = [
   }
 ];
 
+// Convert CFG data to Cytoscape elements
+const convertCFGToElements = (cfgData: CFGData) => {
+  const nodes = Object.values(cfgData.nodes).map(node => {
+    // Format the label with better text wrapping
+    let sourceText = node.source_text || '';
+
+    // Format the label
+    const label = sourceText
+      ? `${node.node_type}\n${sourceText}`
+      : node.node_type;
+
+    return {
+      data: {
+        id: node.id.toString(),
+        label: label,
+        nodeType: node.node_type,
+        sourceText: node.source_text,
+      }
+    };
+  });
+
+  const edges: any[] = [];
+  Object.values(cfgData.nodes).forEach(node => {
+    node.successors.forEach(successorId => {
+      const label = node.edge_labels[successorId] || '';
+      edges.push({
+        data: {
+          id: `${node.id}-${successorId}`,
+          source: node.id.toString(),
+          target: successorId.toString(),
+          label: label,
+        }
+      });
+    });
+  });
+
+  return [...nodes, ...edges];
+};
+
+// API call to parse code and get CFG
+const parseCode = async (code: string, language: string): Promise<CFGData> => {
+  const response = await fetch(`${API_BASE_URL}/parse`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      source_code: code,
+      language: language,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to parse code');
+  }
+
+  return result.cfg;
+};
+
 const Graph = forwardRef<GraphRef>((_props, ref) => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [elements, setElements] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [hasGraph, setHasGraph] = useState(false);
   const cyRef = useRef<cytoscape.Core | null>(null);
-
-  // Convert CFG data to Cytoscape elements
-  const convertCFGToElements = (cfgData: CFGData) => {
-    const nodes = Object.values(cfgData.nodes).map(node => {
-      // Format the label with better text wrapping
-      let sourceText = node.source_text || '';
-      
-      // Truncate very long source text
-      if (sourceText.length > 50) {
-        sourceText = sourceText.substring(0, 47) + '...';
-      }
-      
-      // Clean up whitespace and newlines
-      sourceText = sourceText.replace(/\s+/g, ' ').trim();
-      
-      // Format the label
-      const label = sourceText 
-        ? `${node.node_type}\n${sourceText}`
-        : node.node_type;
-
-      return {
-        data: {
-          id: node.id.toString(),
-          label: label,
-          nodeType: node.node_type,
-          sourceText: node.source_text,
-        }
-      };
-    });
-
-    const edges: any[] = [];
-    Object.values(cfgData.nodes).forEach(node => {
-      node.successors.forEach(successorId => {
-        const label = node.edge_labels[successorId] || '';
-        edges.push({
-          data: {
-            id: `${node.id}-${successorId}`,
-            source: node.id.toString(),
-            target: successorId.toString(),
-            label: label,
-          }
-        });
-      });
-    });
-
-    return [...nodes, ...edges];
-  };
-
-  // API call to parse code and get CFG
-  const parseCode = async (code: string, language: string): Promise<CFGData> => {
-    const response = await fetch(`${API_BASE_URL}/parse`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        source_code: code,
-        language: language,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to parse code');
-    }
-
-    return result.cfg;
-  };
+  const [nodeSelection, setNodeSelection] = useState<string>('');
 
   // Update graph with new code
   const updateGraph = async (code: string, language: string = 'c') => {
     if (!code.trim()) {
       setElements([]);
-      setHasGraph(false);
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
-
     try {
       const cfgData = await parseCode(code, language);
-      const newElements = convertCFGToElements(cfgData);
-      setElements(newElements);
-      setHasGraph(true);
-      
-      // Always apply layout after elements are updated to ensure consistent positioning
-      setTimeout(() => {
-        if (cyRef.current) {
-          cyRef.current.layout({ 
-            name: 'dagre',
-            rankSep: 50,
-            nodeSep: 80,
-            ranker: 'tight-tree'
-          } as any).run();
-        }
-      }, 100);
+      const cfgElements = convertCFGToElements(cfgData);
+      setElements(cfgElements);
     } catch (err) {
       console.error('Error parsing code:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
       setElements([]);
-      setHasGraph(false);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -252,13 +221,15 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     console.log('Node unselected');
   };
 
-  const selectNodeTwo = () => {
-    if (cyRef.current) {
-      // Unselect all nodes first
-      cyRef.current.nodes().unselect();
-      // Select node "two"
-      cyRef.current.getElementById('two').select();
+  const selectNode = () => {
+    if (!cyRef.current || !selectedNode) {
+      console.warn('Cytoscape instance not available or no node selected');
+      return;
     }
+    // Unselect all nodes first
+    cyRef.current.nodes().unselect();
+    // Select the specified node
+    cyRef.current.getElementById(nodeSelection).select();
   };
 
   const resetZoom = () => {
@@ -269,7 +240,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 
   const relayoutGraph = () => {
     if (cyRef.current) {
-      cyRef.current.layout({ 
+      cyRef.current.layout({
         name: 'dagre',
         rankSep: 100,
         nodeSep: 80,
@@ -284,54 +255,60 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
         <h2>Graph Visualization</h2>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <span>Selected Node: <strong>{selectedNode || 'none'}</strong></span>
-          {isLoading && <span>Loading...</span>}
-          {error && <span style={{ color: 'red' }}>Error: {error}</span>}
+          <input
+            type="text"
+            value={nodeSelection}
+            onChange={(e) => setNodeSelection(e.target.value)}
+            placeholder="Enter node ID to select"
+          />
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button onClick={selectNodeTwo} style={{ padding: '5px 10px' }}>
-              Select Node Two
+            <button onClick={selectNode} style={{ padding: '5px 10px' }}>
+              Select Node
             </button>
-            {hasGraph && (
-              <>
-                <button onClick={resetZoom} style={{ padding: '5px 10px' }}>
-                  Reset Zoom
-                </button>
-                <button onClick={relayoutGraph} style={{ padding: '5px 10px' }}>
-                  Relayout
-                </button>
-              </>
-            )}
+            <button onClick={resetZoom} style={{ padding: '5px 10px' }}>
+              Reset Zoom
+            </button>
+            <button onClick={relayoutGraph} style={{ padding: '5px 10px' }}>
+              Relayout
+            </button>
           </div>
         </div>
       </span>
       <div className="cytoscape-container">
-        {!hasGraph && !isLoading && !error ? (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            height: '500px', 
-            fontSize: '18px', 
-            color: '#666' 
-          }}>
-            Enter code in the editor to see the control flow graph
-          </div>
-        ) : (
-          <CytoscapeComponent
-            elements={elements}
-            stylesheet={CYTOSCAPE_STYLE}
-            // https://stackoverflow.com/a/55872886
-            style={{ width: "100%", height: "500px", textAlign: "initial" }}
-            cy={(cy) => {
-              cyRef.current = cy;
+        <CytoscapeComponent
+          elements={elements}
+          stylesheet={CYTOSCAPE_STYLE}
+          // https://stackoverflow.com/a/55872886
+          style={{ width: "100%", height: "500px", textAlign: "initial" }}
+          cy={(cy) => {
+            // Add event listeners for node selection
+            cy.on('select', 'node', handleNodeSelection);
+            cy.on('unselect', 'node', handleNodeUnselection);
 
-              // Add event listeners for node selection
-              cy.on('select', 'node', handleNodeSelection);
-              cy.on('unselect', 'node', handleNodeUnselection);
+            // Store the cytoscape instance in the ref
+            cyRef.current = cy;
 
-              // Layout will be applied by updateGraph function when needed
-            }}
-          />
-        )}
+            console.log('applyLayoutWhenReady called:', {
+              cyRef: cyRef.current,
+              selectedNode,
+              elementsLength: elements.length,
+            });
+
+            const layout = cyRef.current.layout({
+              name: 'dagre',
+              rankSep: 50,
+              nodeSep: 80,
+              ranker: 'tight-tree'
+            } as any);
+
+            // Hook into layout completion event
+            layout.on('layoutstop', () => {
+              console.log('Layout completed');
+            });
+
+            layout.run();
+          }}
+        />
       </div>
     </div>
   );
