@@ -276,13 +276,13 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
             placeholder="Enter node ID to select"
           />
           <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button onClick={selectNode} style={{ padding: '5px 10px' }}>
+            <button onClick={selectNode} style={{ padding: '5px 10px', marginBottom: '10px' }}>
               Select Node
             </button>
-            <button onClick={resetZoom} style={{ padding: '5px 10px' }}>
+            <button onClick={resetZoom} style={{ padding: '5px 10px', marginBottom: '10px' }}>
               Reset Zoom
             </button>
-            <button onClick={relayoutGraph} style={{ padding: '5px 10px' }}>
+            <button onClick={relayoutGraph} style={{ padding: '5px 10px', marginBottom: '10px' }}>
               Relayout
             </button>
           </div>
