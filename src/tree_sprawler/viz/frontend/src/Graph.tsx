@@ -2,7 +2,7 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { useGraph, setSelectGraphNodeCallback } from './GraphContext';
+import { useGraph, setSelectGraphNodeCallback, notifyGraphNodeSelected } from './GraphContext';
 import type { CFGData } from './GraphContext';
 
 cytoscape.use(dagre);
@@ -208,11 +208,13 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   const handleNodeSelection = (event: cytoscape.EventObject) => {
     const nodeId = event.target.id();
     selectedNode.current = nodeId;
+    notifyGraphNodeSelected(nodeId);
     console.log('Node selected:', nodeId);
   };
 
   const handleNodeUnselection = () => {
     selectedNode.current = null;
+    notifyGraphNodeSelected();
     console.log('Node unselected');
   };
 

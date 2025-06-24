@@ -193,3 +193,16 @@ function selectGraphNodeById(nodeId?: string) {
 }
 
 export { setSelectGraphNodeCallback, selectGraphNodeById };
+
+// Allow Editor to register a callback for node selection
+let onGraphNodeSelect: ((nodeId?: string) => void) | null = null;
+
+function setOnGraphNodeSelectCallback(cb: (nodeId?: string) => void) {
+  onGraphNodeSelect = cb;
+}
+
+function notifyGraphNodeSelected(nodeId?: string) {
+  if (onGraphNodeSelect) onGraphNodeSelect(nodeId);
+}
+
+export { setOnGraphNodeSelectCallback, notifyGraphNodeSelected };
