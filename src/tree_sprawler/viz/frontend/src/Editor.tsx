@@ -5,6 +5,18 @@ import { useGraph, selectGraphNodeById, setOnGraphNodeSelectCallback } from './G
 import type Graph from "graphology";
 import './highlighted-cfg-node.css'
 
+const DEFAULT_CODE = `// Example code
+int main() {
+    int a;
+    if (a > 10) {
+        for (int i = 0; i < 10; i ++) {
+            a ++;
+        }
+    }
+    return a;
+}
+`
+
 // Type definitions
 interface Position {
   line: number;
@@ -97,12 +109,13 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
   
   // Load initial code from localStorage
   React.useEffect(() => {
-    const storedCode = localStorage.getItem('tree_sprawler_code');
-    if (storedCode) {
-      setCode(storedCode);
-      // Notify parent component of the initial code load
-      onTextChange(storedCode);
+    let storedCode = localStorage.getItem('tree_sprawler_code');
+    if (!storedCode) {
+      storedCode = DEFAULT_CODE;
     }
+    setCode(storedCode);
+    // Notify parent component of the initial code load
+    onTextChange(storedCode);
   }, [onTextChange]);
   // On change, update localStorage
   const handleEditorChange = (code: string | undefined) => {
