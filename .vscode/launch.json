@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "C CFG parser",
+            "name": "CFG parser (choose language)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tree_sprawler/cfg/test_c.py",
+            "program": "${workspaceFolder}/src/tree_sprawler/cfg/test_${input:cfgLang}.py",
             "console": "integratedTerminal"
         },
         {
@@ -19,11 +19,33 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Java CFG parser",
-            "type": "debugpy",
+            "name": "Run Server and Frontend",
+            "type": "chrome",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tree_sprawler/cfg/test_java.py",
-            "console": "integratedTerminal"
+            "url": "http://localhost:5173/",
+            "preLaunchTask": "Run Server and Frontend",
+            "presentation": {
+                "reveal": "always"
+            }
         },
+        {
+            "name": "Run Server and Frontend (Browser Only)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173/",
+            "presentation": {
+                "reveal": "always"
+            },
+            "webRoot": "${workspaceFolder}/src/tree_sprawler/viz/frontend/src"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "cfgLang",
+            "type": "pickString",
+            "description": "Choose CFG language",
+            "options": ["c", "java"],
+            "default": "c"
+        }
     ]
 }
