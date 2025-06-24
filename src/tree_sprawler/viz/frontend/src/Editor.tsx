@@ -209,7 +209,6 @@ function highlightRange(range: [number, number] | null, editor: any, decorations
         const decoration = {
           range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
           options: {
-            inlineClassName: 'highlighted-cfg-node',
             className: 'highlighted-cfg-node',
             isWholeLine: false,
             stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
