@@ -1,5 +1,6 @@
 .highlighted-cfg-node {
   background-color: rgba(255, 235, 59, 0.1) !important;
-  border-bottom: 2px solid #FF6B35 !important;
   border-radius: 6px !important;
+  z-index: 10 !important;
+  position: relative;
 }
