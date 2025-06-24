@@ -120,6 +120,15 @@ const CYTOSCAPE_STYLE = [
     }
   },
   {
+    selector: 'edge[edgeType = "FUNCTION_CALL"]',
+    style: {
+      'line-style': 'dashed',
+      'width': 2,
+      'line-color': '#7ecbff', // light blue
+      'target-arrow-color': '#7ecbff',
+    }
+  },
+  {
     selector: ':selected',
     style: {
       'color': '#FF6B35',
@@ -160,12 +169,15 @@ const convertCFGToElements = (cfgData: CFGData) => {
   Object.values(cfgData.nodes).forEach(node => {
     node.successors.forEach(successorId => {
       const label = node.edge_labels[successorId] || '';
+      // Detect function call edges by label (adjust if you have a better way)
+      const isFunctionCall = label && label.toLowerCase() === 'function_call';
       edges.push({
         data: {
           id: `${node.id}-${successorId}`,
           source: node.id.toString(),
           target: successorId.toString(),
           label: label,
+          edgeType: isFunctionCall ? "FUNCTION_CALL" : null,
         }
       });
     });
@@ -186,7 +198,6 @@ const convertDFGToElements = (dfgData: DFGData) => {
       }
     });
   });
-
   return [...edges];
 }
 
