@@ -8,6 +8,7 @@ authors = [
 ]
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "debugpy>=1.8.14",
     "fastapi>=0.104.0",
     "graphviz>=0.20.3",
     "pytest>=8.4.0",

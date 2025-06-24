@@ -5,9 +5,10 @@ and return their Control Flow Graph (CFG) representation in JSON format.
 """
 
 import logging
+import os
 from dataclasses import asdict
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -160,14 +161,8 @@ async def parse_source_code(request: ParseRequest) -> ParseResponse:
         return ParseResponse(success=False, error=str(e))
 
 
-if __name__ == "__main__":
-    import uvicorn
+if os.environ.get("ENABLE_DEBUGPY", "0") == "1":
+    import debugpy
 
-    # Default port for the server
-    DEFAULT_PORT = 8001
-    DEFAULT_HOST = "0.0.0.0"
-
-    logger.info(
-        f"Starting Tree Sprawler CFG API server on {DEFAULT_HOST}:{DEFAULT_PORT}"
-    )
-    uvicorn.run(app, host=DEFAULT_HOST, port=DEFAULT_PORT)
+    debugpy.listen(("0.0.0.0", 5678))
+    logger.info("debugpy listening on 5678")
