@@ -13,6 +13,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  text-align: center;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -94,17 +101,4 @@ button:focus-visible {
   padding: 2em;
   margin: 1em;
   width: 50%;
-}
-
-.cytoscape-container {
-  border: 1px solid #333;
-  border-radius: 8px;
-}
-
-.error-message {
-  background-color: lightpink;
-  color: darkred;
-  border: darkred 1px solid;
-  padding: 1em;
-  border-radius: 8px;
 }

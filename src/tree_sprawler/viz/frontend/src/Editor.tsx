@@ -3,7 +3,7 @@ import * as monaco from "monaco-editor";
 import Editor from "@monaco-editor/react";
 import { useGraph, selectGraphNodeById, setOnGraphNodeSelectCallback } from './GraphContext';
 import type Graph from "graphology";
-import './highlighted-cfg-node.css'
+import './Editor.css'
 
 const DEFAULT_CODE = `// Example code
 int main() {

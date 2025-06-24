@@ -3,7 +3,6 @@ import Editor from './Editor'
 import Graph from './Graph'
 import LanguageSelector from './LanguageSelector'
 import { GraphProvider } from './GraphContext'
-import './App.css'
 
 // Define the interface for Graph component ref
 interface GraphRef {
