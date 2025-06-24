@@ -1,6 +1,8 @@
 import React from "react";
 import * as monaco from "monaco-editor";
 import Editor from "@monaco-editor/react";
+import { useGraph, selectGraphNodeById } from './GraphContext';
+import type Graph from "graphology";
 
 // Type definitions
 interface Position {
@@ -37,6 +39,20 @@ function positionEquals(start: Position, end: Position) {
 const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChange: (code: string) => void }) => {
   // State to manage the code in the editor
   const [code, setCode] = React.useState<string>("");
+  
+  // Access the graph context
+  const { graphologyGraph, getNodesInRange } = useGraph();
+  
+  // Use refs to store current graph state to avoid stale closures
+  const graphRef = React.useRef(graphologyGraph);
+  const getNodesInRangeRef = React.useRef(getNodesInRange);
+  
+  // Update refs when context values change
+  React.useEffect(() => {
+    graphRef.current = graphologyGraph;
+    getNodesInRangeRef.current = getNodesInRange;
+  }, [graphologyGraph, getNodesInRange]);
+  
   // Load initial code from localStorage
   React.useEffect(() => {
     const storedCode = localStorage.getItem('tree_sprawler_code');
@@ -57,10 +73,26 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
   };
 
   const handleEditorMount = (editor: any) => {
-    // Log cursor position
+    setCode(editor.getValue());
+    // Log cursor position and analyze AST/CFG nodes
     editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
       const pos = getPositionWithIndex(editor, e.position);
       console.log("Cursor Position:", pos);
+      
+      // Use the current graph reference to avoid stale closure
+      const currentGraph = graphRef.current;
+      if (currentGraph && pos) {
+        const matchingNodes: string[] = getCursorPositionNodes(currentGraph, pos, editor);
+        if (matchingNodes.length > 0) {
+          // Select the first matching node in the graph
+          selectGraphNodeById(matchingNodes[0]);
+        } else {
+          selectGraphNodeById();
+        }
+        console.log("CFG nodes at cursor position:", matchingNodes);
+      } else {
+        console.debug("Graph not yet available or position invalid");
+      }
     });
 
     // Log selection changes
@@ -88,6 +120,16 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
       };
 
       console.log("Selection:", selectionData);
+      
+      // Use the current graph reference to avoid stale closure
+      const currentGraph = graphRef.current;
+      const currentGetNodesInRange = getNodesInRangeRef.current;
+      if (currentGraph) {
+        const nodesInRange = currentGetNodesInRange(start.index, end.index);
+        console.log("CFG nodes in selection range:", nodesInRange);
+      } else {
+        console.debug("Graph not yet available for selection analysis");
+      }
     });
   };
 
@@ -106,4 +148,29 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
 };
 
 export default MonacoEditor;
+
+function getCursorPositionNodes(currentGraph: Graph, pos: Position, editor: any) {
+  // Try to match the cursor position to CFG nodes
+  // This implementation assumes that the CFG node metadata may contain source position info
+  // If not, fallback to a best-effort match using source_text
+  const matchingNodes: string[] = [];
+  currentGraph.forEachNode((nodeId, attrs) => {
+    // If node metadata has start/end index, use that
+    const meta = attrs.metadata as any;
+    if (meta && typeof meta.start_index === 'number' && typeof meta.end_index === 'number') {
+      if (pos.index >= meta.start_index && pos.index <= meta.end_index) {
+        matchingNodes.push(nodeId);
+      }
+    } else if (attrs.source_text) {
+      // Fallback: try to find the source_text in the editor and see if the cursor is inside it
+      const text = attrs.source_text;
+      const codeValue = editor.getValue();
+      const idx = codeValue.indexOf(text);
+      if (idx !== -1 && pos.index >= idx && pos.index <= idx + text.length) {
+        matchingNodes.push(nodeId);
+      }
+    }
+  });
+  return matchingNodes;
+}
 

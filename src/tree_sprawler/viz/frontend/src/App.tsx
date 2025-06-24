@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import Editor from './Editor'
 import Graph from './Graph'
 import LanguageSelector from './LanguageSelector'
+import { GraphProvider } from './GraphContext'
 import './App.css'
 
 // Define the interface for Graph component ref
@@ -40,13 +41,13 @@ function App() {
   }, [language, isInitialized]);
 
   return (
-    <>
+    <GraphProvider>
       <LanguageSelector language={language} onLanguageChange={setLanguage} />
       <div className="app-container">
         <Editor language={language} onTextChange={handleCodeChange} />
         <Graph ref={graphRef} />
       </div>
-    </>
+    </GraphProvider>
   )
 }
 

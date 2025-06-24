@@ -2,33 +2,13 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useGraph, setSelectGraphNodeCallback } from './GraphContext';
+import type { CFGData } from './GraphContext';
 
 cytoscape.use(dagre);
 
 // API endpoint URL
-const API_BASE_URL = 'http://localhost:8001';
-
-// Type definitions
-interface CFGNode {
-  id: number;
-  node_type: string;
-  source_text: string;
-  successors: number[];
-  predecessors: number[];
-  edge_labels: { [key: number]: string };
-  metadata: {
-    function_calls: string[];
-    variable_definitions: string[];
-    variable_uses: string[];
-  };
-}
-
-interface CFGData {
-  function_name: string | null;
-  entry_node_ids: number[];
-  exit_node_ids: number[];
-  nodes: { [key: number]: CFGNode };
-}
+const API_BASE_URL = 'http://localhost:8000';
 
 interface GraphRef {
   updateGraph: (code: string, language: string) => Promise<void>;
@@ -188,6 +168,9 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   const selectedNode = useRef<string | null>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const nodeSelection = useRef<string>('');
+  
+  // Use the graph context
+  const { setGraphData } = useGraph();
 
   // Update graph with new code
   const updateGraph = async (code: string, language: string = 'c') => {
@@ -198,9 +181,15 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
 
     try {
       const cfgData = await parseCode(code, language);
+      
+      // Store the graph data in the context (creates Graphology graph)
+      setGraphData(cfgData, language);
+      
+      // Create Cytoscape elements for visualization
       const cfgElements = convertCFGToElements(cfgData);
       setElements(cfgElements);
       setErrorMessage(null);
+      
     } catch (err) {
       if (err instanceof Error) {
         setErrorMessage(err.toString());
@@ -262,6 +251,16 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       });
     }
   };
+
+  // Register the selectNode callback for programmatic selection
+  setSelectGraphNodeCallback((nodeId?: string) => {
+    if (!cyRef.current) return;
+    cyRef.current.nodes().unselect();
+    if (nodeId) {
+        const node = cyRef.current.getElementById(nodeId);
+        if (node) node.select();
+    }
+  });
 
   return (
     <div className="container">

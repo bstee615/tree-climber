@@ -1,0 +1,86 @@
+/* Graph component styles */
+
+/* Main container for the graph component */
+.graph-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Header section with title and controls */
+.graph-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
+}
+
+.graph-header h2 {
+  margin: 0;
+}
+
+/* Node selection controls */
+.node-selection-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.selected-node-display {
+  margin-bottom: 0.5rem;
+}
+
+.node-selection-input {
+  margin-bottom: 0.5rem;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.control-button {
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.control-button:hover {
+  background-color: #005a9e;
+}
+
+.control-button:active {
+  background-color: #004080;
+}
+
+.cytoscape-container {
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+/* Error message styling */
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  border: 1px solid #f8bbd9;
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-family: monospace;
+}
+
+.error-message strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
