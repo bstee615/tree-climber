@@ -20,11 +20,40 @@ interface CFGNode {
   };
 }
 
+export interface GraphData {
+  ast: ASTData;
+  cfg: CFGData;
+  dfg: DFGData;
+}
+
+interface ASTNode {
+  id: number;
+  type: string;
+  start: number | null;
+  end: number | null;
+  source_text: string;
+  children: ASTNode[];
+}
+
+interface ASTData {
+  root_node: ASTNode;
+}
+
 interface CFGData {
   function_name: string | null;
   entry_node_ids: number[];
   exit_node_ids: number[];
   nodes: { [key: number]: CFGNode };
+}
+
+export interface DFGEdge {
+  source: number;
+  target: number;
+  label: string;
+}
+
+export interface DFGData {
+  edges: DFGEdge[];
 }
 
 // Node attributes for Graphology

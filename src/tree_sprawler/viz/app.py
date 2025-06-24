@@ -16,6 +16,11 @@ from pydantic import BaseModel, Field
 
 from tree_sprawler.ast_utils import ast_node_to_dict
 from tree_sprawler.cfg.builder import CFGBuilder
+from tree_sprawler.dataflow.analyses.def_use import DefUseSolver
+from tree_sprawler.dataflow.analyses.reaching_definitions import (
+    ReachingDefinitionsProblem,
+)
+from tree_sprawler.dataflow.solver import RoundRobinSolver
 
 # Constants for supported languages
 SUPPORTED_LANGUAGES = ["c", "java"]
@@ -78,6 +83,10 @@ class ParseResponse(BaseModel):
     ast: Optional[Dict[str, Any]] = Field(
         default=None, description="The Abstract Syntax Tree in JSON format"
     )
+    dfg: Optional[Dict[str, Any]] = Field(
+        default=None, description="The Data Flow Graph in JSON format"
+    )
+    # Error message if parsing failed
     error: Optional[str] = Field(
         default=None, description="Error message if parsing failed"
     )
@@ -151,10 +160,22 @@ async def parse_source_code(request: ParseRequest) -> ParseResponse:
             f"nodes={len(cfg.nodes)}"
         )
 
+        # Analyze reaching definitions
+        problem = ReachingDefinitionsProblem()
+
+        solver = RoundRobinSolver()
+        result = solver.solve(cfg, problem)
+
+        # Analyze def-use chains
+        def_use_analyzer = DefUseSolver()
+        def_use_result = def_use_analyzer.solve(cfg, result)
+
         # Convert CFG to JSON-serializable dictionary
         cfg_dict = cfg.to_dict()
 
-        return ParseResponse(success=True, cfg=cfg_dict, ast=ast_dict)
+        return ParseResponse(
+            success=True, cfg=cfg_dict, ast=ast_dict, dfg=def_use_result.to_dict()
+        )
 
     except Exception as e:
         logger.error(f"Error parsing source code: {str(e)}")
