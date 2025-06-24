@@ -7,6 +7,8 @@ import type { Attributes } from 'graphology-types';
 interface CFGNode {
   id: number;
   node_type: string;
+  start_index: number | null;
+  end_index: number | null;
   source_text: string;
   successors: number[];
   predecessors: number[];
@@ -28,6 +30,8 @@ interface CFGData {
 // Node attributes for Graphology
 interface NodeAttributes extends Attributes {
   node_type: string;
+  start_index: number | null;
+  end_index: number | null;
   source_text: string;
   metadata: {
     function_calls: string[];
@@ -76,6 +80,8 @@ export const GraphProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     Object.values(newCfgData.nodes).forEach(node => {
       graph.addNode(node.id.toString(), {
         node_type: node.node_type,
+        start_index: node.start_index,
+        end_index: node.end_index,
         source_text: node.source_text,
         metadata: node.metadata,
       });
