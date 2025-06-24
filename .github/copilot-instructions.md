@@ -16,7 +16,11 @@ After any change, the AI_Agent must ensure that all relevant documentation is up
 
 # Project
 
-- Frontent uses bun.
+- Frontend uses bun.
+- Servers run in a background task with hot reload.
+- Installing deps:
+  - Backend: `${workspaceDir}$ uv add <package>`
+  - Frontend: `${workspaceDir}/src/tree_sprawler/viz/frontend$ bun add <package>`
 
 # Fundamental Principles
 

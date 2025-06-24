@@ -15,11 +15,13 @@
     "@types/react-cytoscapejs": "^1.2.5",
     "cytoscape": "^3.32.0",
     "cytoscape-dagre": "^2.5.0",
+    "cytoscape-popper": "^4.0.1",
     "graphology": "^0.26.0",
     "graphology-types": "^0.24.8",
     "react": "^19.1.0",
     "react-cytoscapejs": "^2.0.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "tippy.js": "^6.3.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
