@@ -3,7 +3,7 @@ import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useGraph, setSelectGraphNodeCallback, notifyGraphNodeSelected } from './GraphContext';
-import type { CFGData } from './GraphContext';
+import type { GraphData, CFGData, DFGEdge, DFGData } from './GraphContext';
 
 cytoscape.use(dagre);
 
@@ -89,6 +89,15 @@ const CYTOSCAPE_STYLE = [
     }
   },
   {
+    selector: 'edge[edgeType = "DATA_DEPENDENCY"]',
+    style: {
+      'line-style': 'dashed',
+      'width': 1,
+      'line-color': '#FF6B35',
+      'target-arrow-color': '#FF6B35',
+    }
+  },
+  {
     selector: ':selected',
     style: {
       'color': '#FF6B35',
@@ -140,8 +149,24 @@ const convertCFGToElements = (cfgData: CFGData) => {
   return [...nodes, ...edges];
 };
 
+const convertDFGToElements = (dfgData: DFGData) => {
+  const edges: any[] = [];
+  Object.values(dfgData.edges).forEach((edge: DFGEdge) => {
+    edges.push({
+      data: {
+        source: edge.source.toString(),
+        target: edge.target.toString(),
+        label: edge.label,
+        edgeType: "DATA_DEPENDENCY",
+      }
+    });
+  });
+
+  return [...edges];
+}
+
 // API call to parse code and get CFG
-const parseCode = async (code: string, language: string): Promise<CFGData> => {
+const parseCode = async (code: string, language: string): Promise<GraphData> => {
   const response = await fetch(`${API_BASE_URL}/parse`, {
     method: 'POST',
     headers: {
@@ -162,7 +187,11 @@ const parseCode = async (code: string, language: string): Promise<CFGData> => {
     throw new Error(result.error || 'Failed to parse code');
   }
 
-  return result.cfg;
+  return {
+    ast: result.ast,
+    cfg: result.cfg,
+    dfg: result.dfg,
+  };
 };
 
 const Graph = forwardRef<GraphRef>((_props, ref) => {
@@ -183,14 +212,15 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     }
 
     try {
-      const cfgData = await parseCode(code, language);
+      const graphs = await parseCode(code, language);
       
       // Store the graph data in the context (creates Graphology graph)
-      setGraphData(cfgData, language);
+      setGraphData(graphs.cfg, language);
       
       // Create Cytoscape elements for visualization
-      const cfgElements = convertCFGToElements(cfgData);
-      setElements(cfgElements);
+      const cfgElements = convertCFGToElements(graphs.cfg);
+      const dfgElements = convertDFGToElements(graphs.dfg);
+      setElements([...cfgElements, ...dfgElements]);
       setErrorMessage(null);
       
     } catch (err) {

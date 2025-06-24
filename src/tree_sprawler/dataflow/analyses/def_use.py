@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from tree_sprawler.cfg.visitor import CFG
 from tree_sprawler.dataflow.analyses.reaching_definitions import ReachingDefinition
@@ -26,6 +26,27 @@ class DefUseChain:
 
 class DefUseResult:
     chains: Dict[str, List[DefUseChain]]  # Maps variable names to their def-use chains
+
+    def to_dict(self) -> Dict[str, List[Dict[str, Any]]]:
+        """
+        Convert the DefUseResult to a dictionary format suitable for JSON serialization.
+        """
+
+        edges = []
+        for name, chains in self.chains.items():
+            for chain in chains:
+                for use in chain.uses:
+                    edges.append(
+                        {
+                            "source": chain.definition,
+                            "target": use,
+                            "label": name,
+                        }
+                    )
+
+        return dict(
+            edges=edges,
+        )
 
 
 class UseDefSolver:
