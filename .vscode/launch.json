@@ -37,6 +37,23 @@
                 "reveal": "always"
             },
             "webRoot": "${workspaceFolder}/src/tree_sprawler/viz/frontend/src"
+        },
+        {
+            "name": "Attach to Backend",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "Attach to Frontend",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:5173/",
+            "webRoot": "${workspaceFolder}/src/tree_sprawler/viz/frontend/src"
         }
     ],
     "inputs": [
@@ -46,6 +63,15 @@
             "description": "Choose CFG language",
             "options": ["c", "java"],
             "default": "c"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Attach Both Backend and Frontend",
+            "configurations": [
+                "Attach to Backend",
+                "Attach to Frontend"
+            ]
         }
     ]
 }

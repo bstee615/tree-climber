@@ -4,10 +4,10 @@
 		{
 			"label": "Run FastAPI Server",
 			"type": "shell",
-			"command": "uv run -m uvicorn src.tree_sprawler.viz.app:app --reload --host 0.0.0.0 --port 8000",
+			"command": "ENABLE_DEBUGPY=1 uv run -m uvicorn src.tree_sprawler.viz.app:app --reload --host 0.0.0.0 --port 8000",
 			"group": "build",
 			"isBackground": true,
-			"problemMatcher": []
+			"problemMatcher": [],
 		},
 		{
 			"label": "Run Frontend",
@@ -23,5 +23,12 @@
 			"group": "build"
 		}
 	],
-	"default": "Run Server and Frontend"
+	"default": "Run Server and Frontend",
+	"auto": [
+		{
+			"task": "Run Server and Frontend",
+			"type": "process",
+			"event": "onFolderOpen"
+		}
+	]
 }
