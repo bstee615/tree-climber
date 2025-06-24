@@ -1,11 +1,33 @@
 import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
+import cytoscapePopper from 'cytoscape-popper';
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css';
 import dagre from 'cytoscape-dagre';
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useGraph, setSelectGraphNodeCallback, notifyGraphNodeSelected } from './GraphContext';
 import type { GraphData, CFGData, DFGEdge, DFGData } from './GraphContext';
 
+// Register popper with tippy factory
+function tippyFactory(ref: any, content: string) {
+  const dummyDomEle = document.createElement('div');
+  const tip = tippy(dummyDomEle, {
+    getReferenceClientRect: ref.getBoundingClientRect,
+    trigger: 'manual',
+    content: content,
+    allowHTML: true,
+    arrow: true,
+    placement: 'bottom',
+    hideOnClick: false,
+    // sticky: 'reference',
+    interactive: true,
+    appendTo: document.body
+  });
+  return tip;
+}
+
 cytoscape.use(dagre);
+cytoscape.use(cytoscapePopper(tippyFactory));
 
 // API endpoint URL
 const API_BASE_URL = 'http://localhost:8000';
@@ -113,20 +135,23 @@ const CYTOSCAPE_STYLE = [
 // Convert CFG data to Cytoscape elements
 const convertCFGToElements = (cfgData: CFGData) => {
   const nodes = Object.values(cfgData.nodes).map(node => {
-    // Format the label with better text wrapping
+    const definitions = (node.metadata?.variable_definitions || []).join(', ');
+    const uses = (node.metadata?.variable_uses || []).join(', ');
+    const functionCalls = (node.metadata?.function_calls || []).join(', ');
     let sourceText = node.source_text || '';
-
-    // Format the label
     const label = sourceText
       ? `${node.node_type}\n${sourceText}`
       : node.node_type;
-
     return {
       data: {
         id: node.id.toString(),
         label: label,
         nodeType: node.node_type,
         sourceText: node.source_text,
+        definitions,
+        uses,
+        functionCalls,
+        hasDefUse: definitions || uses || functionCalls ? true : false,
       }
     };
   });
@@ -297,6 +322,44 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
     }
   });
 
+  // Tooltip handler for defs/uses/calls using tippy.js and cytoscape-popper
+  const handleNodeHover = (cy: cytoscape.Core) => {
+    cy.on('mouseover', 'node', (event) => {
+      const node = event.target;
+      const defs = node.data('definitions');
+      const uses = node.data('uses');
+      const calls = node.data('functionCalls');
+      let tooltip = '';
+      if (defs && defs.trim()) tooltip += `Defs: ${defs}<br/>`;
+      if (uses && uses.trim()) tooltip += `Uses: ${uses}<br/>`;
+      if (calls && calls.trim()) tooltip += `Calls: ${calls}`;
+      if (tooltip) {
+        // Remove any previous tippy
+        if (node.data('tippyInstance')) {
+          node.data('tippyInstance').destroy();
+          node.removeData('tippyInstance');
+        }
+        const tip = node.popper({
+          content: () => {
+            const div = document.createElement('div');
+            div.innerHTML = tooltip;
+            return div;
+          }
+        });
+        tip.show();
+        node.data('tippyInstance', tip);
+      }
+    });
+    cy.on('mouseout', 'node', (event) => {
+      const node = event.target;
+      const tip = node.data('tippyInstance');
+      if (tip) {
+        tip.destroy();
+        node.removeData('tippyInstance');
+      }
+    });
+  };
+
   return (
     <div className="container">
       <span style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: '1em' }}>
@@ -348,8 +411,8 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
               }
             }
             cyRef.current = cy;
-
             layoutGraph(cyRef.current);
+            handleNodeHover(cy);
           }}
         />}
       </div>
