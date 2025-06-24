@@ -15,6 +15,7 @@
     "@types/react-cytoscapejs": "^1.2.5",
     "cytoscape": "^3.32.0",
     "cytoscape-dagre": "^2.5.0",
+    "cytoscape-node-html-label": "^1.2.2",
     "cytoscape-popper": "^4.0.1",
     "graphology": "^0.26.0",
     "graphology-types": "^0.24.8",

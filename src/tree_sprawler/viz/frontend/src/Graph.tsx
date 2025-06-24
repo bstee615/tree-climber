@@ -2,11 +2,13 @@ import CytoscapeComponent from "react-cytoscapejs";
 import cytoscape from 'cytoscape';
 import cytoscapePopper from 'cytoscape-popper';
 import tippy from 'tippy.js';
-import 'tippy.js/dist/tippy.css';
 import dagre from 'cytoscape-dagre';
+import nodeHtmlLabel from 'cytoscape-node-html-label';
 import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useGraph, setSelectGraphNodeCallback, notifyGraphNodeSelected } from './GraphContext';
 import type { GraphData, CFGData, DFGEdge, DFGData } from './GraphContext';
+import './Graph.css';
+import 'tippy.js/dist/tippy.css';
 
 // Register popper with tippy factory
 function tippyFactory(ref: any, content: string) {
@@ -27,6 +29,7 @@ function tippyFactory(ref: any, content: string) {
 }
 
 cytoscape.use(dagre);
+nodeHtmlLabel(cytoscape);
 cytoscape.use(cytoscapePopper(tippyFactory));
 
 // API endpoint URL
@@ -42,7 +45,7 @@ const CYTOSCAPE_STYLE = [
     selector: 'node',
     style: {
       'background-color': '#666',
-      'label': 'data(label)',
+      // Remove 'label': 'data(label)', so Cytoscape doesn't render a text label
       'text-wrap': 'wrap',
       'text-max-width': '120px',
       'width': '140px',
@@ -51,7 +54,7 @@ const CYTOSCAPE_STYLE = [
       'text-valign': 'center',
       'text-halign': 'center',
       'font-size': '10px',
-      'font-family': 'monospace',
+      'font-family': 'inherit',
       'border-width': '2px',
       'border-color': '#333',
       'shape': 'round-rectangle',
@@ -148,13 +151,10 @@ const convertCFGToElements = (cfgData: CFGData) => {
     const uses = (node.metadata?.variable_uses || []).join(', ');
     const functionCalls = (node.metadata?.function_calls || []).join(', ');
     let sourceText = node.source_text || '';
-    const label = sourceText
-      ? `${node.node_type}\n${sourceText}`
-      : node.node_type;
     return {
       data: {
         id: node.id.toString(),
-        label: label,
+        label: node.node_type + (sourceText ? `\n${sourceText}` : ''), // fallback for plain text
         nodeType: node.node_type,
         sourceText: node.source_text,
         definitions,
@@ -341,9 +341,9 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       const uses = node.data('uses');
       const calls = node.data('functionCalls');
       let tooltip = '';
-      if (defs && defs.trim()) tooltip += `Defs: ${defs}<br/>`;
-      if (uses && uses.trim()) tooltip += `Uses: ${uses}<br/>`;
-      if (calls && calls.trim()) tooltip += `Calls: ${calls}`;
+      if (defs && defs.trim()) tooltip += `<div class='cy-tooltip cy-tooltip-defs'><span class='cy-tooltip-label'>Defs: <code class='cy-tooltip-identifiers'>${defs}</code></span></div>`;
+      if (uses && uses.trim()) tooltip += `<div class='cy-tooltip cy-tooltip-uses'><span class='cy-tooltip-label'>Uses: <code class='cy-tooltip-identifiers'>${uses}</code></span></div>`;
+      if (calls && calls.trim()) tooltip += `<div class='cy-tooltip cy-tooltip-calls'><span class='cy-tooltip-label'>Calls: <code class='cy-tooltip-identifiers'>${calls}</code></span></div>`;
       if (tooltip) {
         // Remove any previous tippy
         if (node.data('tippyInstance')) {
@@ -413,6 +413,24 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
             cy.one('layoutstop', () => {
               cy.on('viewport', handleZoomOrPan(cy));
             });
+
+            // Setup nodeHtmlLabel for styled node labels
+            cy.nodeHtmlLabel([
+              {
+                query: 'node',
+                halign: 'center',
+                valign: 'center',
+                halignBox: 'center',
+                valignBox: 'center',
+                cssClass: 'htmlNodeLabel',
+                tpl: function(data) {
+                  // Node type (default font), source text (monospace)
+                  return data.sourceText
+                    ? `<div class='cy-html-label'><span class='cy-node-type'>${data.nodeType}</span><span class='cy-source-text'>${data.sourceText}</span></div>`
+                    : `<span class='cy-node-type'>${data.nodeType}</span>`;
+                }
+              }
+            ]);
 
             // Store the cytoscape instance in the ref
             if (cyRef.current) {
