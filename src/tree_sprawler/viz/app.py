@@ -5,13 +5,15 @@ and return their Control Flow Graph (CFG) representation in JSON format.
 """
 
 import logging
+from dataclasses import asdict
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
+from tree_sprawler.ast_utils import ast_node_to_dict
 from tree_sprawler.cfg.builder import CFGBuilder
 
 # Constants for supported languages
@@ -66,11 +68,14 @@ class ParseRequest(BaseModel):
 
 
 class ParseResponse(BaseModel):
-    """Response model for parsed CFG"""
+    """Response model for parsed CFG and AST"""
 
     success: bool = Field(description="Whether the parsing was successful")
     cfg: Optional[Dict[str, Any]] = Field(
         default=None, description="The Control Flow Graph in JSON format"
+    )
+    ast: Optional[Dict[str, Any]] = Field(
+        default=None, description="The Abstract Syntax Tree in JSON format"
     )
     error: Optional[str] = Field(
         default=None, description="Error message if parsing failed"
@@ -85,7 +90,7 @@ async def root():
         "version": "1.0.0",
         "supported_languages": SUPPORTED_LANGUAGES,
         "endpoints": {
-            "/parse": "POST - Parse source code and return CFG in JSON format",
+            "/parse": "POST - Parse source code and return CFG and AST in JSON format",
             "/health": "GET - Health check endpoint",
         },
     }
@@ -99,13 +104,13 @@ async def health_check():
 
 @app.post("/parse", response_model=ParseResponse)
 async def parse_source_code(request: ParseRequest) -> ParseResponse:
-    """Parse source code and return a CFG in JSON format.
+    """Parse source code and return a CFG and AST in JSON format.
 
     Args:
         request: ParseRequest containing source code and language
 
     Returns:
-        ParseResponse containing the CFG in JSON format or error message
+        ParseResponse containing the CFG and AST in JSON format or error message
     """
     try:
         logger.info(
@@ -123,9 +128,22 @@ async def parse_source_code(request: ParseRequest) -> ParseResponse:
         # Create and setup CFG builder
         builder = CFGBuilder(request.language.value)
         builder.setup_parser()
+        if not builder.parser:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Parser for {request.language} not set up correctly.",
+            )
 
-        # Build CFG from source code
-        cfg = builder.build_cfg(request.source_code)
+        # Parse source code to get AST
+        tree = builder.parser.parse(bytes(request.source_code, "utf8"))
+        if not tree:
+            raise HTTPException(status_code=400, detail="Failed to parse source code.")
+
+        # Convert AST to dictionary for JSON serialization
+        ast_dict = asdict(ast_node_to_dict(tree.root_node))
+
+        # Build CFG from AST
+        cfg = builder.build_cfg(tree=tree)
 
         logger.info(
             f"CFG built successfully: function={cfg.function_name}, "
@@ -135,7 +153,7 @@ async def parse_source_code(request: ParseRequest) -> ParseResponse:
         # Convert CFG to JSON-serializable dictionary
         cfg_dict = cfg.to_dict()
 
-        return ParseResponse(success=True, cfg=cfg_dict)
+        return ParseResponse(success=True, cfg=cfg_dict, ast=ast_dict)
 
     except Exception as e:
         logger.error(f"Error parsing source code: {str(e)}")
