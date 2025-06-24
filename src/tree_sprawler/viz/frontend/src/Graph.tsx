@@ -91,9 +91,12 @@ const CYTOSCAPE_STYLE = [
   {
     selector: ':selected',
     style: {
-      'border-width': '3px',
+      'color': '#FF6B35',
+      'background-color': 'rgba(255,235,59,0.1)',
       'border-color': '#FF6B35',
-      'border-style': 'dashed'
+      'border-width': '2px',
+      'border-style': 'solid',
+      'border-radius': '6px',
     }
   }
 ];
