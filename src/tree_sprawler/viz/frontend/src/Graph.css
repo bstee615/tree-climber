@@ -84,3 +84,63 @@
   display: block;
   margin-bottom: 0.5rem;
 }
+
+/* === Cytoscape Node HTML Label Styles === */
+.cy-html-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;;
+  word-break: break-word;
+}
+
+.cy-node-type {
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.cy-source-text {
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+  font-size: 10px;
+}
+
+.cy-tooltip {
+  font-size: 0.9em;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+}
+
+.cy-tooltip-label {
+}
+
+.cy-tooltip-identifiers {
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+}
+
+/* === Tooltip Styles for Defs, Uses, Calls === */
+.cy-tooltip-defs {
+  background: #e6f4ea; /* sage green */
+  color: #234b2c;
+}
+
+.cy-tooltip-uses {
+  background: #fff4e6; /* orange cream */
+  color: #7a4a00;
+}
+
+.cy-tooltip-calls {
+  background: #e6f0fa; /* pastel blue */
+  color: #1a3a5a;
+}
+
+/* Tippy.js tooltip container (optional for spacing) */
+.tippy-box[data-theme~='cy-tooltip'] {
+  padding: 0.5em 0.7em;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  background: #fff;
+}
