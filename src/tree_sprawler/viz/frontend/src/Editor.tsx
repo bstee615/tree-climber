@@ -131,6 +131,11 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
         console.debug("Graph not yet available for selection analysis");
       }
     });
+
+    // Deselect node when editor loses focus
+    editor.onDidBlurEditorWidget(() => {
+      selectGraphNodeById();
+    });
   };
 
   return (
