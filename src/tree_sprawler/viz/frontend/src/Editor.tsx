@@ -1,8 +1,9 @@
 import React from "react";
 import * as monaco from "monaco-editor";
 import Editor from "@monaco-editor/react";
-import { useGraph, selectGraphNodeById } from './GraphContext';
+import { useGraph, selectGraphNodeById, setOnGraphNodeSelectCallback } from './GraphContext';
 import type Graph from "graphology";
+import './highlighted-cfg-node.css'
 
 // Type definitions
 interface Position {
@@ -36,6 +37,27 @@ function positionEquals(start: Position, end: Position) {
   return start.line === end.line && start.column === end.column && start.index === end.index;
 }
 
+/**
+ * Given a node's attributes and the editor instance, return the [startIdx, endIdx] for highlighting.
+ * Returns null if no valid range is found.
+ */
+function getNodeHighlightRange(nodeAttrs: any, editor: any): [number, number] | null {
+  // Try to use metadata if available
+  const meta = nodeAttrs.metadata as any;
+  if (meta && typeof meta.start_index === 'number' && typeof meta.end_index === 'number') {
+    return [meta.start_index, meta.end_index];
+  } else if (nodeAttrs.source_text) {
+    // Fallback: highlight only the first occurrence of source_text in code
+    const codeValue = editor.getValue();
+    const text = nodeAttrs.source_text;
+    const idx = codeValue.indexOf(text);
+    if (idx !== -1) {
+      return [idx, idx + text.length];
+    }
+  }
+  return null;
+}
+
 const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChange: (code: string) => void }) => {
   // State to manage the code in the editor
   const [code, setCode] = React.useState<string>("");
@@ -46,6 +68,26 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
   // Use refs to store current graph state to avoid stale closures
   const graphRef = React.useRef(graphologyGraph);
   const getNodesInRangeRef = React.useRef(getNodesInRange);
+  const editorRef = React.useRef<any>(null);
+  const decorationsCollectionRef = React.useRef<any>(null);
+
+  // Register callback to highlight code when a graph node is selected
+  React.useEffect(() => {
+    setOnGraphNodeSelectCallback((nodeId?: string) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      // Remove previous decorations
+      if (decorationsCollectionRef.current) {
+        decorationsCollectionRef.current.clear();
+      }
+      if (!nodeId) return;
+      const currentGraph = graphRef.current;
+      if (!currentGraph) return;
+      const nodeAttrs = currentGraph.getNodeAttributes(nodeId);
+      const range = getNodeHighlightRange(nodeAttrs, editor);
+      highlightRange(range, editor, decorationsCollectionRef);
+    });
+  }, []);
   
   // Update refs when context values change
   React.useEffect(() => {
@@ -74,6 +116,7 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
 
   const handleEditorMount = (editor: any) => {
     setCode(editor.getValue());
+    editorRef.current = editor;
     // Log cursor position and analyze AST/CFG nodes
     editor.onDidChangeCursorPosition((e: monaco.editor.ICursorPositionChangedEvent) => {
       const pos = getPositionWithIndex(editor, e.position);
@@ -153,6 +196,30 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
 };
 
 export default MonacoEditor;
+
+function highlightRange(range: [number, number] | null, editor: any, decorationsCollectionRef: React.RefObject<any>) {
+  if (range) {
+    const [startIdx, endIdx] = range;
+    const model = editor.getModel();
+    if (model) {
+      const startPos = model.getPositionAt(startIdx);
+      const endPos = model.getPositionAt(endIdx);
+      if (startPos && endPos) {
+        // Only one decoration for the full range
+        const decoration = {
+          range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
+          options: {
+            inlineClassName: 'highlighted-cfg-node',
+            className: 'highlighted-cfg-node',
+            isWholeLine: false,
+            stickiness: monaco.editor.TrackedRangeStickiness.NeverGrowsWhenTypingAtEdges
+          }
+        };
+        decorationsCollectionRef.current = editor.createDecorationsCollection([decoration]);
+      }
+    }
+  }
+}
 
 function getCursorPositionNodes(currentGraph: Graph, pos: Position, editor: any) {
   // Try to match the cursor position to CFG nodes
