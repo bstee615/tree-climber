@@ -176,7 +176,7 @@ const convertCFGToElements = (cfgData: CFGData) => {
           id: `${node.id}-${successorId}`,
           source: node.id.toString(),
           target: successorId.toString(),
-          label: label,
+          label: label.replace('function_call', 'call'),
           edgeType: isFunctionCall ? "FUNCTION_CALL" : null,
         }
       });
