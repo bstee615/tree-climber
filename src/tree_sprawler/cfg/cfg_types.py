@@ -73,6 +73,8 @@ class CFGNode:
             "id": self.id,
             "node_type": self.node_type.name,
             "source_text": self.source_text,
+            "start_index": self.ast_node.start_byte if self.ast_node else None,
+            "end_index": self.ast_node.end_byte if self.ast_node else None,
             "successors": list(self.successors),
             "predecessors": list(self.predecessors),
             "edge_labels": self.edge_labels,

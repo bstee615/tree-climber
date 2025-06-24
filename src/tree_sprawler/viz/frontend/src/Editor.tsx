@@ -53,19 +53,10 @@ function positionEquals(start: Position, end: Position) {
  * Given a node's attributes and the editor instance, return the [startIdx, endIdx] for highlighting.
  * Returns null if no valid range is found.
  */
-function getNodeHighlightRange(nodeAttrs: any, editor: any): [number, number] | null {
+function getNodeHighlightRange(nodeAttrs: any): [number, number] | null {
   // Try to use metadata if available
-  const meta = nodeAttrs.metadata as any;
-  if (meta && typeof meta.start_index === 'number' && typeof meta.end_index === 'number') {
-    return [meta.start_index, meta.end_index];
-  } else if (nodeAttrs.source_text) {
-    // Fallback: highlight only the first occurrence of source_text in code
-    const codeValue = editor.getValue();
-    const text = nodeAttrs.source_text;
-    const idx = codeValue.indexOf(text);
-    if (idx !== -1) {
-      return [idx, idx + text.length];
-    }
+  if (nodeAttrs && typeof nodeAttrs.start_index === 'number' && typeof nodeAttrs.end_index === 'number') {
+    return [nodeAttrs.start_index, nodeAttrs.end_index];
   }
   return null;
 }
@@ -96,7 +87,7 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
       const currentGraph = graphRef.current;
       if (!currentGraph) return;
       const nodeAttrs = currentGraph.getNodeAttributes(nodeId);
-      const range = getNodeHighlightRange(nodeAttrs, editor);
+      const range = getNodeHighlightRange(nodeAttrs);
       highlightRange(range, editor, decorationsCollectionRef);
     });
   }, []);
@@ -138,7 +129,7 @@ const MonacoEditor = ({ language, onTextChange }: { language: string, onTextChan
       // Use the current graph reference to avoid stale closure
       const currentGraph = graphRef.current;
       if (currentGraph && pos) {
-        const matchingNodes: string[] = getCursorPositionNodes(currentGraph, pos, editor);
+        const matchingNodes: string[] = getCursorPositionNodes(currentGraph, pos);
         if (matchingNodes.length > 0) {
           // Select the first matching node in the graph
           selectGraphNodeById(matchingNodes[0]);
@@ -233,24 +224,13 @@ function highlightRange(range: [number, number] | null, editor: any, decorations
   }
 }
 
-function getCursorPositionNodes(currentGraph: Graph, pos: Position, editor: any) {
+function getCursorPositionNodes(currentGraph: Graph, pos: Position) {
   // Try to match the cursor position to CFG nodes
   // This implementation assumes that the CFG node metadata may contain source position info
-  // If not, fallback to a best-effort match using source_text
   const matchingNodes: string[] = [];
   currentGraph.forEachNode((nodeId, attrs) => {
-    // If node metadata has start/end index, use that
-    const meta = attrs.metadata as any;
-    if (meta && typeof meta.start_index === 'number' && typeof meta.end_index === 'number') {
-      if (pos.index >= meta.start_index && pos.index <= meta.end_index) {
-        matchingNodes.push(nodeId);
-      }
-    } else if (attrs.source_text) {
-      // Fallback: try to find the source_text in the editor and see if the cursor is inside it
-      const text = attrs.source_text;
-      const codeValue = editor.getValue();
-      const idx = codeValue.indexOf(text);
-      if (idx !== -1 && pos.index >= idx && pos.index <= idx + text.length) {
+    if (attrs && typeof attrs.start_index === 'number' && typeof attrs.end_index === 'number') {
+      if (pos.index >= attrs.start_index && pos.index <= attrs.end_index) {
         matchingNodes.push(nodeId);
       }
     }
