@@ -233,6 +233,7 @@ const parseCode = async (code: string, language: string): Promise<GraphData> => 
 const Graph = forwardRef<GraphRef>((_props, ref) => {
   const [elements, setElements] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showDefUseEdges, setShowDefUseEdges] = useState<boolean>(true); // Toggle for DFG edges
   const selectedNode = useRef<string | null>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const nodeSelection = useRef<string>('');
@@ -240,10 +241,14 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   // Use the graph context
   const { setGraphData } = useGraph();
 
+  // Store last loaded graphs for toggling DFG edges
+  const lastGraphs = useRef<GraphData | null>(null);
+
   // Update graph with new code
   const updateGraph = async (code: string, language: string = 'c') => {
     if (!code.trim()) {
       setElements([]);
+      lastGraphs.current = null;
       return;
     }
 
@@ -252,21 +257,37 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
       
       // Store the graph data in the context (creates Graphology graph)
       setGraphData(graphs.cfg, language);
+      lastGraphs.current = graphs;
       
       // Create Cytoscape elements for visualization
       const cfgElements = convertCFGToElements(graphs.cfg);
       const dfgElements = convertDFGToElements(graphs.dfg);
-      setElements([...cfgElements, ...dfgElements]);
+      setElements([...cfgElements, ...(showDefUseEdges ? dfgElements : [])]);
       setErrorMessage(null);
       
     } catch (err) {
       if (err instanceof Error) {
         setErrorMessage(err.toString());
         setElements([]);
+        lastGraphs.current = null;
       } else {
         console.error('Unhandled error:', err);
       }
     }
+  };
+
+  // Toggle DFG edges
+  const handleToggleDefUseEdges = () => {
+    setShowDefUseEdges((prev) => {
+      const newValue = !prev;
+      // If we have loaded graphs, update elements accordingly
+      if (lastGraphs.current) {
+        const cfgElements = convertCFGToElements(lastGraphs.current.cfg);
+        const dfgElements = convertDFGToElements(lastGraphs.current.dfg);
+        setElements([...cfgElements, ...(newValue ? dfgElements : [])]);
+      }
+      return newValue;
+    });
   };
 
   // Expose methods to parent via ref
@@ -391,6 +412,9 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
             </button>
             <button onClick={relayoutGraph} style={{ padding: '5px 10px', marginBottom: '10px' }}>
               Relayout
+            </button>
+            <button onClick={handleToggleDefUseEdges} style={{ padding: '5px 10px', marginBottom: '10px' }}>
+              {showDefUseEdges ? 'Hide' : 'Show'} Def-Use Edges
             </button>
           </div>
         </div>
