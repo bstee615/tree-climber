@@ -442,11 +442,11 @@ class JavaCFGVisitor(CFGVisitor):
 
         # Create a synthetic condition checking for next element
         condition_text = f"hasNext({get_source_text(iterable)})"
-        condition_id = self.create_node(NodeType.LOOP_HEADER, node, condition_text)
+        condition_id = self.create_node(NodeType.LOOP_HEADER, iterable, condition_text)
 
         # Create a synthetic node for element assignment
         element_text = f"{get_source_text(variable)} = next()"
-        element_id = self.create_node(NodeType.STATEMENT, node, element_text)
+        element_id = self.create_node(NodeType.STATEMENT, variable, element_text)
 
         # Create exit node
         exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: for-each loop")
