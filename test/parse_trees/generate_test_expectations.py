@@ -9,6 +9,7 @@ and generates the expected DOT graph format.
 import argparse
 from pathlib import Path
 
+import graphviz
 import toml
 
 from tree_sprawler.cfg.builder import CFGBuilder
@@ -75,7 +76,9 @@ def cfg_to_dot(cfg: CFG, graph_name: str = "CFG") -> str:
 
 
 def generate_expectation_for_file(
-    file_path: Path, overwrite: bool = False, dry_run: bool = False
+    file_path: Path,
+    write: bool,
+    show: bool,
 ) -> None:
     """Generate DOT expectation for a single test file."""
     print(f"Processing: {file_path}")
@@ -89,13 +92,6 @@ def generate_expectation_for_file(
 
     if "code" not in data:
         print(f"No 'code' field found in {file_path}")
-        return
-
-    # Check if expects.graph already exists
-    if not overwrite and "expect" in data and "graph" in data["expect"]:
-        print(
-            f"Skipping {file_path} - expect.graph already exists (use --overwrite to replace)"
-        )
         return
 
     # Extract the language from the file path or default to 'c'
@@ -115,9 +111,15 @@ def generate_expectation_for_file(
         # Generate DOT format
         dot_graph = cfg_to_dot(cfg)
 
-        if dry_run:
+        # Show graph if requested
+        if show:
+            print(f"Visualizing graph for {file_path}")
+            show_dot_graph(dot_graph, file_path)
+
+        if not write:
             print(f"Would update {file_path}")
             print(f"Generated DOT graph ({len(cfg.nodes)} nodes):")
+            print("=" * 50)
             print(dot_graph)
             return
 
@@ -143,8 +145,40 @@ def generate_expectation_for_file(
 
     except Exception as e:
         print(f"✗ Error processing {file_path}: {e}")
-        if dry_run:
-            print(f"  Error details: {type(e).__name__}: {e}")
+        print(f"  Error details: {type(e).__name__}: {e}")
+
+
+def show_dot_graph(dot_content: str, toml_file_path: Path) -> None:
+    """Display a DOT graph by rendering to PNG and opening with system viewer."""
+    # Generate PNG filename as sibling to TOML file
+    png_path = toml_file_path.with_suffix(".png")
+
+    try:
+        # Create graphviz object from DOT source
+        graph = graphviz.Source(dot_content)
+
+        # Render to PNG (remove .png from path since render() adds it)
+        graph.render(str(png_path)[:-4], format="png", cleanup=True)
+
+        print(f"✓ Generated graph PNG: {png_path}")
+
+    except Exception as e:
+        print(f"Error showing graph: {e}")
+        _fallback_show_dot(dot_content)
+
+
+def _fallback_show_dot(dot_content: str) -> None:
+    """Fallback function to show DOT content as text when rendering fails."""
+    print("Falling back to showing DOT content as text:")
+    print("=" * 50)
+    print(dot_content)
+    print("=" * 50)
+    print("To visualize this graph, you can:")
+    print("1. Install graphviz: sudo apt install graphviz")
+    print("2. Install Python graphviz: pip install graphviz")
+    print(
+        "3. Copy the DOT content to an online visualizer: https://dreampuf.github.io/GraphvizOnline/"
+    )
 
 
 def main():
@@ -157,14 +191,14 @@ def main():
         help="Test files to process (default: all .test.toml files in test/parse_trees/)",
     )
     parser.add_argument(
-        "--overwrite",
+        "--write",
         action="store_true",
-        help="Overwrite existing expect.graph fields",
+        help="Write to file",
     )
     parser.add_argument(
-        "--dry-run",
+        "--show",
         action="store_true",
-        help="Show what would be generated without writing files",
+        help="Show the graph as a PNG",
     )
     parser.add_argument(
         "--directory",
@@ -175,12 +209,15 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.write:
+        print("Note: --write is not set, no files will be modified.")
+
     if args.files:
         # Process specific files
         for file_path in args.files:
             path = Path(file_path)
             if path.exists() and path.suffix == ".toml":
-                generate_expectation_for_file(path, args.overwrite, args.dry_run)
+                generate_expectation_for_file(path, args.write, args.show)
             else:
                 print(f"File not found or not a .toml file: {file_path}")
     else:
@@ -194,7 +231,7 @@ def main():
         print(f"Found {len(test_files)} test files")
 
         for test_file in test_files:
-            generate_expectation_for_file(test_file, args.overwrite, args.dry_run)
+            generate_expectation_for_file(test_file, args.write)
 
         print(f"\nProcessed {len(test_files)} files")
 
