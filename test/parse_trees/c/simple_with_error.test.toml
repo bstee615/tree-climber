@@ -1,0 +1,21 @@
+code="""\
+int simple() {
+    int x = 1;
+    return x;
+}
+"""
+
+[expect]
+graph="""\
+digraph CFG {
+    node_0 [type="ENTRY", label="simple"]
+    node_1 [type="EXIT", label="simple"]
+    node_2 [type="STATEMENT", label="int x = 1;"]
+    node_3 [type="RETURN", label="return x;"]
+
+    node_0 -> node_2
+    node_2 -> node_3
+    node_3 -> node_1
+    node_2 -> node_1
+}
+"""
