@@ -1,0 +1,41 @@
+code="""\
+int factorial() {
+    int a = 1;
+    for (int i = 0; i < 10; i ++) {
+        for (int j = 0; j < 5; j ++) {
+            a += 1;
+        }
+    }
+    return a;
+}
+"""
+
+[expect]
+graph="""\
+digraph CFG {
+    entry_1 [type="ENTRY", label="factorial", line=1]
+    exit_1 [type="EXIT", label="factorial", line=9]
+    statement_1 [type="STATEMENT", label="int a = 1;", line=2]
+    statement_2 [type="STATEMENT", label="int i = 0;", line=3]
+    loop_header_1 [type="LOOP_HEADER", label="i < 10", line=3]
+    statement_3 [type="STATEMENT", label="i ++", line=3]
+    statement_4 [type="STATEMENT", label="int j = 0;", line=4]
+    loop_header_2 [type="LOOP_HEADER", label="j < 5", line=4]
+    statement_5 [type="STATEMENT", label="j ++", line=4]
+    statement_6 [type="STATEMENT", label="a += 1;", line=5]
+    return_1 [type="RETURN", label="return a;", line=8]
+
+    entry_1 -> statement_1
+    statement_1 -> statement_2
+    statement_2 -> loop_header_1
+    loop_header_1 -> return_1 [label="false"]
+    loop_header_1 -> statement_4 [label="true"]
+    statement_3 -> loop_header_1
+    statement_4 -> loop_header_2
+    loop_header_2 -> statement_6 [label="true"]
+    loop_header_2 -> statement_3 [label="false"]
+    statement_5 -> loop_header_2
+    statement_6 -> statement_5
+    return_1 -> exit_1
+}
+"""
