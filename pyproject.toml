@@ -32,6 +32,9 @@ build-backend = "hatchling.build"
 pythonpath = [
   "src"
 ]
+testpaths = [
+    "test",
+]
 
 [dependency-groups]
 dev = [
