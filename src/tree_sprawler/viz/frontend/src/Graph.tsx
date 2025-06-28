@@ -120,6 +120,9 @@ const CYTOSCAPE_STYLE = [
       'width': 1,
       'line-color': '#FF6B35',
       'target-arrow-color': '#FF6B35',
+      'curve-style': 'unbundled-bezier', // Make DFG edges slightly curved
+      'control-point-distance': 30,      // Slight curve
+      'control-point-weight': 0.5        // Centered
     }
   },
   {
@@ -494,15 +497,26 @@ function loadZoomAndPanInfo(cy: cytoscape.Core) {
   }
 }
 
+// When laying out the graph, only use CFG nodes/edges, then add DFG edges after
 function layoutGraph(cy: cytoscape.Core, callback?: () => void) {
-  const layout = cy.layout({
+  // Get only CFG nodes and edges (exclude DFG edges)
+  const cfgNodes = cy.nodes().filter((n) => !n.isEdge() && n.data('nodeType'));
+  const cfgEdges = cy.edges().filter((e) => e.data('edgeType') !== 'DATA_DEPENDENCY');
+  // Hide DFG edges during layout
+  cy.edges().filter((e) => e.data('edgeType') === 'DATA_DEPENDENCY').style({ display: 'none' });
+
+  // Layout only CFG nodes and edges
+  const layoutElements = cy.collection(cfgNodes).union(cfgEdges);
+  const layout = layoutElements.layout({
     name: 'dagre',
     rankSep: 50,
     nodeSep: 80,
     ranker: 'tight-tree'
-  } as any)
+  } as any);
 
   layout.on('layoutstop', () => {
+    // Show DFG edges after layout
+    cy.edges().filter((e) => e.data('edgeType') === 'DATA_DEPENDENCY').style({ display: 'element' });
     // Load zoom and pan info from localStorage
     loadZoomAndPanInfo(cy);
     if (callback) {
