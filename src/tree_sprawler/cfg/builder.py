@@ -3,7 +3,6 @@ from typing import Optional
 from tree_sitter import Tree
 from tree_sitter_languages import get_parser
 
-from tree_sprawler.cfg.languages.c import CCFGVisitor
 from tree_sprawler.cfg.visitor import CFG, CFGVisitor
 
 
@@ -47,6 +46,8 @@ class CFGBuilder:
         if source_code is not None:
             # Parse the source code
             tree = self.parser.parse(bytes(source_code, "utf8"))
+            if tree is None:
+                raise ValueError("Failed to parse source code.")
             root_node = tree.root_node
         elif tree is not None:
             # Use the provided tree

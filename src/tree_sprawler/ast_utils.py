@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
-from tree_sitter import Node, Tree
+from tree_sitter import Node
 
 
 def get_source_text(node: Node) -> str:
