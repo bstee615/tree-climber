@@ -166,7 +166,6 @@ class JavaCFGVisitor(CFGVisitor):
     def visit_class_declaration(self, node: Node) -> CFGTraversalResult:
         """Visit a class declaration"""
         body = get_required_child_by_field_name(node, "body")
-        print(f"Visiting class declaration: {body.type}")
         return self.visit(body)
 
     def visit_class_body(self, node: Node) -> CFGTraversalResult:
