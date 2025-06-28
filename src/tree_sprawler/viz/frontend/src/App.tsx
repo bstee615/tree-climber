@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Editor from './Editor'
 import Graph from './Graph'
-import LanguageSelector from './LanguageSelector'
+import {LanguageSelector, loadLanguage} from './LanguageSelector'
 import { GraphProvider } from './GraphContext'
 
 // Define the interface for Graph component ref
@@ -10,7 +10,7 @@ interface GraphRef {
 }
 
 function App() {
-  const [language, setLanguage] = useState('c');
+  const [language, setLanguage] = useState(loadLanguage());
   const [isInitialized, setIsInitialized] = useState(false);
   const graphRef = useRef<GraphRef>(null);
 
