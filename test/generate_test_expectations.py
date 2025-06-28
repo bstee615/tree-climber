@@ -16,70 +16,60 @@ from tree_sprawler.cfg.visitor import CFG
 
 
 def cfg_to_dot(cfg: CFG, graph_name: str = "CFG") -> str:
-    """Convert a CFG to DOT format string with semantic node names."""
+    """Convert a CFG to DOT format string with sequential node naming and location info."""
     lines = [f"digraph {graph_name} {{"]
-    
-    # Generate semantic node names and collect by type for uniqueness
+
+    # Generate nodes with sequential naming by type
     node_id_map = {}  # Map CFG node IDs to DOT node names
-    type_counters = {}  # Count nodes by type for unique naming
-    
-    # First pass: assign semantic names
+    type_counters = {}  # Track sequential IDs by node type
+
     for node_id, cfg_node in cfg.nodes.items():
+        # Create sequential node name by type
         node_type = cfg_node.node_type.name.lower()
-        
-        # Count nodes of this type
         if node_type not in type_counters:
             type_counters[node_type] = 0
         type_counters[node_type] += 1
-        
-        # Create semantic name based on content and type
-        if cfg_node.source_text.strip():
-            # Use content-based name for statements
-            content_key = cfg_node.source_text.strip().replace(' ', '_').replace(';', '').replace('(', '').replace(')', '').replace('=', 'eq').replace('<', 'lt').replace('>', 'gt').replace('+', 'plus').replace('*', 'mult')
-            # Remove special characters and limit length
-            content_key = ''.join(c for c in content_key if c.isalnum() or c == '_')[:20]
-            if content_key:
-                dot_node_name = f"{node_type}_{content_key}"
-            else:
-                dot_node_name = f"{node_type}_{type_counters[node_type]}"
-        else:
-            # Use type-based name for entry/exit nodes
-            if type_counters[node_type] == 1:
-                dot_node_name = node_type
-            else:
-                dot_node_name = f"{node_type}_{type_counters[node_type]}"
-        
+
+        dot_node_name = f"{node_type}_{type_counters[node_type]}"
         node_id_map[node_id] = dot_node_name
 
-    # Generate nodes
-    for node_id, cfg_node in cfg.nodes.items():
-        dot_node_name = node_id_map[node_id]
-        
         # Clean up the label text for DOT format
         label = cfg_node.source_text.strip().replace('"', '\\"')
         if not label:
             label = cfg_node.node_type.name.lower()
-        
-        # Add the node definition
-        lines.append(f'    {dot_node_name} [type="{cfg_node.node_type.name}", label="{label}"]')
-    
+
+        # Get location information from AST node
+        line_info = ""
+        if cfg_node.ast_node:
+            start_line = (
+                cfg_node.ast_node.start_point[0] + 1
+            )  # Convert to 1-based line numbers
+            line_info = f", line={start_line}"
+
+        # Add the node definition with location
+        lines.append(
+            f'    {dot_node_name} [type="{cfg_node.node_type.name}", label="{label}"{line_info}]'
+        )
+
     # Add empty line between nodes and edges
     lines.append("")
-    
+
     # Generate edges
     for node_id, cfg_node in cfg.nodes.items():
         from_dot_name = node_id_map[node_id]
-        
+
         for successor_id in cfg_node.successors:
             to_dot_name = node_id_map[successor_id]
-            
+
             # Check if there's an edge label
             edge_label = cfg_node.get_edge_label(successor_id)
             if edge_label:
-                lines.append(f'    {from_dot_name} -> {to_dot_name} [label="{edge_label}"]')
+                lines.append(
+                    f'    {from_dot_name} -> {to_dot_name} [label="{edge_label}"]'
+                )
             else:
-                lines.append(f'    {from_dot_name} -> {to_dot_name}')
-    
+                lines.append(f"    {from_dot_name} -> {to_dot_name}")
+
     lines.append("}")
     return "\n".join(lines)
 

@@ -1,5 +1,6 @@
 # This module runs automated tests from "parse tree specs", snapshots of a source code's parse tree.
 
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -7,7 +8,6 @@ from typing import List, Optional, Tuple
 import pydot
 import pytest
 import toml
-import warnings
 from pydantic import BaseModel, ValidationError
 
 from tree_sprawler.cfg.builder import CFGBuilder
@@ -34,6 +34,7 @@ class DotNode:
     id: str
     node_type: str
     label: str
+    line: Optional[int] = None
 
 
 @dataclass
@@ -93,7 +94,15 @@ def parse_dot_graph(dot_text: str) -> Tuple[List[DotNode], List[DotEdge]]:
         node_type = attrs.get("type", "").strip('"')
         label = attrs.get("label", "").strip('"')
 
-        nodes.append(DotNode(id=node_id, node_type=node_type, label=label))
+        # Extract line number if present
+        line = None
+        if "line" in attrs:
+            try:
+                line = int(attrs.get("line", "").strip('"'))
+            except ValueError:
+                pass
+
+        nodes.append(DotNode(id=node_id, node_type=node_type, label=label, line=line))
 
     # Parse edges
     for edge in graph.get_edges():
@@ -111,7 +120,7 @@ def parse_dot_graph(dot_text: str) -> Tuple[List[DotNode], List[DotEdge]]:
 def assert_graphs_match(cfg: CFG, expected: Expected):
     """Assert that the CFG matches the expected DOT graph structure."""
     errors = []  # Collect all errors before failing
-    
+
     # Parse the expected DOT graph
     expected_nodes, expected_edges = parse_dot_graph(expected.graph)
 
@@ -131,12 +140,16 @@ def assert_graphs_match(cfg: CFG, expected: Expected):
     total_expected = len(expected_nodes)
     total_actual = len(cfg.nodes)
     if total_actual != total_expected:
-        errors.append(f"Node count mismatch. Expected: {total_expected}, Got: {total_actual}")
+        errors.append(
+            f"Node count mismatch. Expected: {total_expected}, Got: {total_actual}"
+        )
 
     for node_type, expected_count in expected_counts.items():
         actual_count = actual_counts.get(node_type, 0)
         if actual_count != expected_count:
-            errors.append(f"{node_type} count mismatch. Expected: {expected_count}, Got: {actual_count}")
+            errors.append(
+                f"{node_type} count mismatch. Expected: {expected_count}, Got: {actual_count}"
+            )
 
     # Compare graph structure - this will add to errors if there are issues
     try:
@@ -146,66 +159,85 @@ def assert_graphs_match(cfg: CFG, expected: Expected):
 
     # Fail with all collected errors
     if errors:
-        error_message = "CFG validation failed:\n" + "\n".join(f"  - {error}" for error in errors)
+        error_message = "CFG validation failed:\n" + "\n".join(
+            f"  - {error}" for error in errors
+        )
         raise AssertionError(error_message)
 
 
 def compare_dot_structure(
     cfg: CFG, expected_nodes: List[DotNode], expected_edges: List[DotEdge]
 ) -> None:
-    """Compare the CFG structure with the expected DOT graph using semantic matching."""
+    """Compare the CFG structure with the expected DOT graph using content and location matching."""
     errors = []  # Collect all errors before failing
-    
-    # Create mapping of expected nodes by type and label for flexible matching
-    expected_by_type_label = {}
-    expected_node_by_id = {}
 
-    for node in expected_nodes:
-        key = f"{node.node_type}:{node.label}"
-        if key not in expected_by_type_label:
-            expected_by_type_label[key] = []
-        expected_by_type_label[key].append(node)
-        expected_node_by_id[node.id] = node
-
-    # Create mapping of actual CFG nodes by semantic key
-    cfg_by_type_label = {}
-    cfg_node_semantic_mapping = {}  # Maps CFG nodes to their semantic identifiers
-
-    for node_id, cfg_node in cfg.nodes.items():
-        key = f"{cfg_node.node_type.name}:{cfg_node.source_text.strip()}"
-        if key not in cfg_by_type_label:
-            cfg_by_type_label[key] = []
-        cfg_by_type_label[key].append((node_id, cfg_node))
-        
-        # Create semantic identifier for this CFG node (matches DOT naming)
-        semantic_id = create_semantic_node_name(cfg_node)
-        cfg_node_semantic_mapping[node_id] = semantic_id
-
-    # Build reverse mapping from expected DOT node names to CFG node IDs
+    # Create mapping from expected nodes to CFG nodes based on content and location
     dot_to_cfg_mapping = {}
-    
-    for expected_key, expected_node_list in expected_by_type_label.items():
-        if expected_key not in cfg_by_type_label:
-            # Try partial matching - just check if the type exists
-            node_type = expected_key.split(":")[0]
-            type_matches = [
-                k for k in cfg_by_type_label.keys() if k.startswith(f"{node_type}:")
-            ]
-            if not type_matches:
-                errors.append(f"Expected node type not found: {expected_key}")
-                continue
-            
-            pytest.warns(UserWarning, match=f"Exact match not found for '{expected_key}', but type '{node_type}' exists")
-        else:
-            # Map expected nodes to CFG nodes based on semantic content
-            cfg_matches = cfg_by_type_label[expected_key]
-            for i, expected_node in enumerate(expected_node_list):
-                if i < len(cfg_matches):
-                    cfg_node_id, cfg_node = cfg_matches[i]
-                    # Map the expected DOT node ID to the actual CFG node ID
-                    dot_to_cfg_mapping[expected_node.id] = cfg_node_id
+    unmatched_expected = []
+    unmatched_cfg = list(cfg.nodes.items())  # List of (node_id, cfg_node) tuples
 
-    # Validate edge structure using semantic matching
+    for expected_node in expected_nodes:
+        best_match = None
+        best_match_id = None
+
+        # Find CFG node that matches this expected node
+        for i, (cfg_node_id, cfg_node) in enumerate(unmatched_cfg):
+            # Check type match
+            if cfg_node.node_type.name != expected_node.node_type:
+                continue
+
+            # Check content match (exact)
+            expected_content = expected_node.label.strip()
+            actual_content = cfg_node.source_text.strip()
+
+            # For entry/exit nodes, content might be empty, so just match by type
+            if expected_node.node_type in ["ENTRY", "EXIT"]:
+                if not expected_content:
+                    expected_content = expected_node.node_type.lower()
+                if not actual_content:
+                    actual_content = cfg_node.node_type.name.lower()
+
+            if expected_content != actual_content:
+                continue
+
+            # Check location match if specified
+            if expected_node.line is not None and cfg_node.ast_node is not None:
+                actual_line = cfg_node.ast_node.start_point[0] + 1  # Convert to 1-based
+                if expected_node.line != actual_line:
+                    continue
+
+            # Found a match
+            best_match = cfg_node
+            best_match_id = cfg_node_id
+            # Remove from unmatched list
+            unmatched_cfg.pop(i)
+            break
+
+        if best_match is not None:
+            dot_to_cfg_mapping[expected_node.id] = best_match_id
+        else:
+            unmatched_expected.append(expected_node)
+
+    # Report unmatched expected nodes
+    if unmatched_expected:
+        for node in unmatched_expected:
+            line_info = f" at line {node.line}" if node.line else ""
+            errors.append(
+                f"Expected node not found: {node.node_type}:'{node.label}'{line_info}"
+            )
+
+    # Report unmatched CFG nodes as warnings
+    if unmatched_cfg:
+        for cfg_node_id, cfg_node in unmatched_cfg:
+            line_info = ""
+            if cfg_node.ast_node:
+                line_info = f" at line {cfg_node.ast_node.start_point[0] + 1}"
+            warnings.warn(
+                f"Unexpected CFG node: {cfg_node.node_type.name}:'{cfg_node.source_text.strip()}'{line_info}",
+                UserWarning,
+            )
+
+    # Validate edge structure using the mapping
     try:
         validate_edge_structure_semantic(cfg, expected_edges, dot_to_cfg_mapping)
     except AssertionError as e:
@@ -213,28 +245,14 @@ def compare_dot_structure(
 
     # Report all collected errors
     if errors:
-        error_message = "Graph structure validation failed:\n" + "\n".join(f"  - {error}" for error in errors)
+        error_message = "Graph structure validation failed:\n" + "\n".join(
+            f"  - {error}" for error in errors
+        )
         raise AssertionError(error_message)
 
-    print(f"Successfully validated graph structure with {len(expected_nodes)} nodes and {len(expected_edges)} edges")
-
-
-def create_semantic_node_name(cfg_node) -> str:
-    """Create a semantic node name matching the DOT generation logic."""
-    node_type = cfg_node.node_type.name.lower()
-    
-    if cfg_node.source_text.strip():
-        # Use content-based name for statements
-        content_key = cfg_node.source_text.strip().replace(' ', '_').replace(';', '').replace('(', '').replace(')', '').replace('=', 'eq').replace('<', 'lt').replace('>', 'gt').replace('+', 'plus').replace('*', 'mult')
-        # Remove special characters and limit length
-        content_key = ''.join(c for c in content_key if c.isalnum() or c == '_')[:20]
-        if content_key:
-            return f"{node_type}_{content_key}"
-        else:
-            return f"{node_type}_1"
-    else:
-        # Use type-based name for entry/exit nodes
-        return node_type
+    print(
+        f"Successfully validated graph structure with {len(expected_nodes)} nodes and {len(expected_edges)} edges"
+    )
 
 
 def validate_edge_structure_semantic(
@@ -242,8 +260,7 @@ def validate_edge_structure_semantic(
 ) -> None:
     """Validate that the CFG edges match the expected DOT edges using semantic matching."""
     errors = []  # Collect all errors before failing
-    warnings_list = []  # Collect warnings
-    
+
     # Create set of actual edges for comparison
     actual_edges = set()
 
@@ -257,18 +274,21 @@ def validate_edge_structure_semantic(
 
     # Check each expected edge
     missing_edges = []
-    unmapped_edges = []
-    
+
     for expected_edge in expected_edges:
         # Map expected node IDs to actual CFG node IDs
         expected_from = dot_to_cfg_mapping.get(expected_edge.from_node)
         expected_to = dot_to_cfg_mapping.get(expected_edge.to_node)
 
         if expected_from is None:
-            unmapped_edges.append(f"Could not map expected from_node '{expected_edge.from_node}' to CFG")
+            warnings.warn(
+                f"Could not map expected from_node '{expected_edge.from_node}' to CFG"
+            )
             continue
         if expected_to is None:
-            unmapped_edges.append(f"Could not map expected to_node '{expected_edge.to_node}' to CFG")
+            warnings.warn(
+                f"Could not map expected to_node '{expected_edge.to_node}' to CFG"
+            )
             continue
 
         # Look for the edge in actual edges
@@ -280,22 +300,14 @@ def validate_edge_structure_semantic(
                 if actual_edge[0] == expected_from and actual_edge[1] == expected_to:
                     edge_found_with_different_label = True
                     if expected_edge.label != actual_edge[2]:
-                        warnings_list.append(
+                        warnings.warn(
                             f"Edge {expected_edge.from_node} -> {expected_edge.to_node} "
                             f"has label '{actual_edge[2]}' but expected '{expected_edge.label}'"
                         )
                     break
-            
+
             if not edge_found_with_different_label:
                 missing_edges.append(expected_edge)
-
-    # Issue warnings for unmapped edges
-    for warning in unmapped_edges:
-        warnings.warn(warning, UserWarning)
-
-    # Issue warnings for label mismatches
-    for warning in warnings_list:
-        warnings.warn(warning, UserWarning)
 
     # Collect missing edge errors
     if missing_edges:
@@ -303,7 +315,7 @@ def validate_edge_structure_semantic(
         for edge in missing_edges:
             edge_str = f"{edge.from_node} -> {edge.to_node}"
             if edge.label:
-                edge_str += f" [label=\"{edge.label}\"]"
+                edge_str += f' [label="{edge.label}"]'
             missing_edge_strs.append(edge_str)
         errors.append(f"Missing expected edges: {', '.join(missing_edge_strs)}")
 
@@ -322,7 +334,6 @@ def validate_edge_structure_semantic(
             unexpected_edges.append(actual_edge)
 
     if unexpected_edges:
-        unexpected_edge_strs = []
         for edge in unexpected_edges:
             # Map back to semantic names for better readability
             from_semantic = None
@@ -332,15 +343,12 @@ def validate_edge_structure_semantic(
                     from_semantic = dot_id
                 if cfg_id == edge[1]:
                     to_semantic = dot_id
-            
+
             if from_semantic and to_semantic:
                 edge_str = f"{from_semantic} -> {to_semantic}"
                 if edge[2]:
                     edge_str += f' [label="{edge[2]}"]'
-                unexpected_edge_strs.append(edge_str)
-
-        if unexpected_edge_strs:
-            warnings.warn(f"Found unexpected edges: {', '.join(unexpected_edge_strs)}", UserWarning)
+                warnings.warn(f"Unexpected edge found: {edge_str}")
 
     # Fail if there were errors
     if errors:
