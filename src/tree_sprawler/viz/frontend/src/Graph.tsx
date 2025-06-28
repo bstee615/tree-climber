@@ -34,6 +34,7 @@ cytoscape.use(cytoscapePopper(tippyFactory));
 
 // API endpoint URL
 const API_BASE_URL = 'http://localhost:8000';
+const DEF_USE_EDGES_KEY = 'tree_sprawler_show_def_use_edges';
 
 interface GraphRef {
   updateGraph: (code: string, language: string) => Promise<void>;
@@ -234,9 +235,14 @@ const parseCode = async (code: string, language: string): Promise<GraphData> => 
 };
 
 const Graph = forwardRef<GraphRef>((_props, ref) => {
+  // Load initial value from localStorage
+  const getInitialShowDefUseEdges = () => {
+    const stored = localStorage.getItem(DEF_USE_EDGES_KEY);
+    return stored === null ? true : stored === 'true';
+  };
   const [elements, setElements] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showDefUseEdges, setShowDefUseEdges] = useState<boolean>(true); // Toggle for DFG edges
+  const [showDefUseEdges, setShowDefUseEdges] = useState<boolean>(getInitialShowDefUseEdges());
   const selectedNode = useRef<string | null>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
   const nodeSelection = useRef<string>('');
@@ -283,6 +289,7 @@ const Graph = forwardRef<GraphRef>((_props, ref) => {
   const handleToggleDefUseEdges = () => {
     setShowDefUseEdges((prev) => {
       const newValue = !prev;
+      localStorage.setItem(DEF_USE_EDGES_KEY, String(newValue));
       // If we have loaded graphs, update elements accordingly
       if (lastGraphs.current) {
         const cfgElements = convertCFGToElements(lastGraphs.current.cfg);
