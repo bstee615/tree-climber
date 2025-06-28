@@ -375,7 +375,7 @@ class JavaCFGVisitor(CFGVisitor):
     def visit_for_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a for loop"""
         # Get components via named fields
-        init = get_child_by_field_name(node, "initializer")  # Changed from 'init'
+        init = get_child_by_field_name(node, "init")  # Changed from 'init'
         condition = get_child_by_field_name(node, "condition")  # This is correct
         update = get_child_by_field_name(node, "update")  # This is correct
         body = get_required_child_by_field_name(node, "body")  # This is correct
