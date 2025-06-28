@@ -1,7 +1,7 @@
-- [ ] 💪 Allow toggling Def use edges
 - [ ] 💪 Need to implement main.py in parity with tree-climber
 - [ ] Java def use, a++ should point to itself
 - [ ] C def use, a++ should point to itself and should point to uses of a
+- [x] 💪 Allow toggling Def use edges
 - [x] Java enhanced for loop, next() and hasNext() point to the same ast node.
   - In general, all CFG nodes should point to a distinct AST node.
 - [x] When editor is blurred, don't deselect if the focus moves to the graph
