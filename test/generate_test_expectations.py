@@ -16,16 +16,44 @@ from tree_sprawler.cfg.visitor import CFG
 
 
 def cfg_to_dot(cfg: CFG, graph_name: str = "CFG") -> str:
-    """Convert a CFG to DOT format string."""
+    """Convert a CFG to DOT format string with semantic node names."""
     lines = [f"digraph {graph_name} {{"]
     
-    # Generate nodes
+    # Generate semantic node names and collect by type for uniqueness
     node_id_map = {}  # Map CFG node IDs to DOT node names
+    type_counters = {}  # Count nodes by type for unique naming
     
+    # First pass: assign semantic names
     for node_id, cfg_node in cfg.nodes.items():
-        # Create a clean DOT node name
-        dot_node_name = f"node_{node_id}"
+        node_type = cfg_node.node_type.name.lower()
+        
+        # Count nodes of this type
+        if node_type not in type_counters:
+            type_counters[node_type] = 0
+        type_counters[node_type] += 1
+        
+        # Create semantic name based on content and type
+        if cfg_node.source_text.strip():
+            # Use content-based name for statements
+            content_key = cfg_node.source_text.strip().replace(' ', '_').replace(';', '').replace('(', '').replace(')', '').replace('=', 'eq').replace('<', 'lt').replace('>', 'gt').replace('+', 'plus').replace('*', 'mult')
+            # Remove special characters and limit length
+            content_key = ''.join(c for c in content_key if c.isalnum() or c == '_')[:20]
+            if content_key:
+                dot_node_name = f"{node_type}_{content_key}"
+            else:
+                dot_node_name = f"{node_type}_{type_counters[node_type]}"
+        else:
+            # Use type-based name for entry/exit nodes
+            if type_counters[node_type] == 1:
+                dot_node_name = node_type
+            else:
+                dot_node_name = f"{node_type}_{type_counters[node_type]}"
+        
         node_id_map[node_id] = dot_node_name
+
+    # Generate nodes
+    for node_id, cfg_node in cfg.nodes.items():
+        dot_node_name = node_id_map[node_id]
         
         # Clean up the label text for DOT format
         label = cfg_node.source_text.strip().replace('"', '\\"')
@@ -56,69 +84,73 @@ def cfg_to_dot(cfg: CFG, graph_name: str = "CFG") -> str:
     return "\n".join(lines)
 
 
-def generate_expectation_for_file(file_path: Path, overwrite: bool = False, dry_run: bool = False) -> None:
+def generate_expectation_for_file(
+    file_path: Path, overwrite: bool = False, dry_run: bool = False
+) -> None:
     """Generate DOT expectation for a single test file."""
     print(f"Processing: {file_path}")
-    
+
     # Read the existing TOML file
     try:
         data = toml.load(file_path)
     except Exception as e:
         print(f"Error reading {file_path}: {e}")
         return
-    
+
     if "code" not in data:
         print(f"No 'code' field found in {file_path}")
         return
-    
+
     # Check if expects.graph already exists
     if not overwrite and "expect" in data and "graph" in data["expect"]:
-        print(f"Skipping {file_path} - expect.graph already exists (use --overwrite to replace)")
+        print(
+            f"Skipping {file_path} - expect.graph already exists (use --overwrite to replace)"
+        )
         return
-    
+
     # Extract the language from the file path or default to 'c'
     language = "c"  # Default for now, can be enhanced to detect from path
-    
+
     try:
         # Build CFG from the code
         builder = CFGBuilder(language)
         builder.setup_parser()
-        
+
         if builder.parser is None:
             raise RuntimeError(f"Failed to setup parser for language: {language}")
-        
+
         tree = builder.parser.parse(bytes(data["code"], "utf8"))
         cfg = builder.build_cfg(tree=tree)
-        
+
         # Generate DOT format
         dot_graph = cfg_to_dot(cfg)
-        
+
         if dry_run:
             print(f"Would update {file_path}")
             print(f"Generated DOT graph ({len(cfg.nodes)} nodes):")
             print(dot_graph)
             return
-        
+
         # Update the data structure
         if "expect" not in data:
             data["expect"] = {}
-        
+
         data["expect"]["graph"] = dot_graph
-        
+
         # Write back to file with better formatting
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             # Write code first
             f.write(f'code="""\\\n{data["code"]}"""\n\n')
-            
+
             # Write expect section
-            f.write('[expect]\n')
+            f.write("[expect]\n")
             f.write(f'graph="""\\\n{data["expect"]["graph"]}\n"""\n')
-        
+
         print(f"✓ Generated expectation for {file_path}")
         print(f"  Nodes: {len(cfg.nodes)}")
         print(f"  Entry nodes: {len(cfg.entry_node_ids)}")
         print(f"  Exit nodes: {len(cfg.exit_node_ids)}")
-        
+
     except Exception as e:
         print(f"✗ Error processing {file_path}: {e}")
         if dry_run:
@@ -132,27 +164,27 @@ def main():
     parser.add_argument(
         "files",
         nargs="*",
-        help="Test files to process (default: all .test.toml files in test/parse_trees/)"
+        help="Test files to process (default: all .test.toml files in test/parse_trees/)",
     )
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="Overwrite existing expect.graph fields"
+        help="Overwrite existing expect.graph fields",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be generated without writing files"
+        help="Show what would be generated without writing files",
     )
     parser.add_argument(
         "--directory",
         type=Path,
         default=Path(__file__).parent / "parse_trees",
-        help="Directory to search for test files (default: test/parse_trees/)"
+        help="Directory to search for test files (default: test/parse_trees/)",
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.files:
         # Process specific files
         for file_path in args.files:
@@ -164,16 +196,16 @@ def main():
     else:
         # Process all .test.toml files in the directory
         test_files = list(args.directory.rglob("*.test.toml"))
-        
+
         if not test_files:
             print(f"No .test.toml files found in {args.directory}")
             return
-        
+
         print(f"Found {len(test_files)} test files")
-        
+
         for test_file in test_files:
             generate_expectation_for_file(test_file, args.overwrite, args.dry_run)
-        
+
         print(f"\nProcessed {len(test_files)} files")
 
 
