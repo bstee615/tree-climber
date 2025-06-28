@@ -22,6 +22,10 @@ After any change, the AI_Agent must ensure that all relevant documentation is up
   - Backend: `${workspaceDir}$ uv add <package>`
   - Frontend: `${workspaceDir}/src/tree_sprawler/viz/frontend$ bun add <package>`
 
+# Interaction
+
+- Always clean up linter and type issues after editing code.
+
 # Fundamental Principles
 
 1. **External Package Research and Documentation**: For any proposed tasks that involve external packages, to avoid hallucinations, use the web to research the documentation first to ensure it's 100% clear how to use the API of the package. Then for each package, a document should be created `<task id>-<package>-guide.md` that contains a fresh cache of the information needed to use the API. It should be date-stamped and link to the original docs provided. E.g., if pg-boss is a library to add as part of task 2-1 then a file `tasks/2-1-pg-boss-guide.md` should be created. This documents foundational assumptions about how to use the package, with example snippets, in the language being used in the project.
