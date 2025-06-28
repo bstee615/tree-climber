@@ -1,10 +1,13 @@
-- [ ] When editor is blurred, don't deselect if the focus moves to the graph
+- [ ] 💪 Allow toggling Def use edges
+- [ ] 💪 Need to implement main.py in parity with tree-climber
+- [ ] Java def use, a++ should point to itself
+- [ ] C def use, a++ should point to itself and should point to uses of a
+- [x] Java enhanced for loop, next() and hasNext() point to the same ast node.
+  - In general, all CFG nodes should point to a distinct AST node.
+- [x] When editor is blurred, don't deselect if the focus moves to the graph
+  - Too complex -- when the user clicks the graph in a blank area, do we deselect? Left as is.
 - [x] Remove python from GUI
 - [x] Save language in local storage
-- [ ] Allow toggling Def use edges
 - [x] Switch case labels in GUI are "case" instead of the value
-- [ ] Need to implement main.py in parity with tree-climber
-- [ ] Java enhanced for loop, next() and hasNext() point to the same ast node.
-  - In general, all CFG nodes should point to a distinct AST node.
 - [x] break in do/while in java test program goes to the next statement but should go out of the loop
   - Fix: Incorrect name for initializer -- should be "init"

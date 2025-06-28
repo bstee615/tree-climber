@@ -101,6 +101,7 @@ class JavaCFGVisitor(CFGVisitor):
                 # Skip identifiers in various contexts where they're not "uses"
                 if node.parent:
                     if node.parent.type in [
+                        "method_declaration",  # Function defs
                         "method_invocation",  # Function calls
                         "field_access",  # Method names in calls
                         "variable_declarator",  # Variable declarations
@@ -108,6 +109,10 @@ class JavaCFGVisitor(CFGVisitor):
                         "class_declaration",  # Class names
                     ]:
                         return None
+                    if node.parent.type == "update_expression":
+                        # Check if this is the target (left side) of the update
+                        if node == node.parent.children[0]:
+                            return get_source_text(node)
                     if node.parent.type == "assignment_expression":
                         # Check if this is the target (left side) of the assignment
                         if node == node.parent.children[0]:
@@ -115,6 +120,12 @@ class JavaCFGVisitor(CFGVisitor):
                                 # Compound assignment, treat as use
                                 return get_source_text(node)
                             return None  # Simple assignment target, not a use
+                print("Default use:", node.type, get_source_text(node))
+                print(
+                    "Default use parent:",
+                    node.parent.type,
+                    get_source_text(node.parent),
+                )
                 return get_source_text(node)
             return None
 
