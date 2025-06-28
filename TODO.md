@@ -1,7 +1,8 @@
 - [ ] When editor is blurred, don't deselect if the focus moves to the graph
-- [ ] Remove python from GUI
+- [x] Remove python from GUI
+- [x] Save language in local storage
 - [ ] Allow toggling Def use edges
-- [ ] Switch case labels in GUI are "case" instead of the value
+- [x] Switch case labels in GUI are "case" instead of the value
 - [ ] Need to implement main.py in parity with tree-climber
 - [ ] Java enhanced for loop, next() and hasNext() point to the same ast node.
   - In general, all CFG nodes should point to a distinct AST node.
