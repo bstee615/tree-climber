@@ -231,7 +231,7 @@ def main():
         print(f"Found {len(test_files)} test files")
 
         for test_file in test_files:
-            generate_expectation_for_file(test_file, args.write)
+            generate_expectation_for_file(test_file, args.write, args.show)
 
         print(f"\nProcessed {len(test_files)} files")
 
