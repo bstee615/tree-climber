@@ -563,7 +563,7 @@ class JavaCFGVisitor(CFGVisitor):
             expression = next(
                 child
                 for child in first_label.children
-                if not child.type.endswith("_comment")
+                if not child.type.endswith("_comment") and child.type != "case"
             )
             value_text = get_source_text(expression)
             case_id = self.create_node(
