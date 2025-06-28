@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface LanguageSelectorProps {
   language: string;
   onLanguageChange: (language: string) => void;
@@ -6,10 +8,24 @@ interface LanguageSelectorProps {
 const SUPPORTED_LANGUAGES = [
   { value: 'c', label: 'C' },
   { value: 'java', label: 'Java' },
-  { value: 'python', label: 'Python' }
 ] as const;
 
-function LanguageSelector({ language, onLanguageChange }: LanguageSelectorProps) {
+export function loadLanguage(): string {
+  // Load the selected language from localStorage or default to 'c'
+  let language = localStorage.getItem('tree_sprawler_selected_language');
+  if (!language) {
+    language = 'c'; // Default to 'c' if no language is set
+  }
+  localStorage.setItem('tree_sprawler_selected_language', language);
+  return language;
+}
+
+export function LanguageSelector({ language, onLanguageChange }: LanguageSelectorProps) {
+  // Save selected language to localStorage whenever it changes
+  React.useEffect(() => {
+    localStorage.setItem('tree_sprawler_selected_language', language);
+  }, [language]);
+
   return (
     <div className="app-container">
       <label htmlFor="language-select">Select Language:</label>
@@ -27,5 +43,3 @@ function LanguageSelector({ language, onLanguageChange }: LanguageSelectorProps)
     </div>
   );
 }
-
-export default LanguageSelector;
