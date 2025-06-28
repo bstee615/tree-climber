@@ -12,24 +12,24 @@ int factorial() {
 [expect]
 graph="""\
 digraph CFG {
-    entry_factorial [type="ENTRY", label="factorial"]
-    exit_factorial [type="EXIT", label="factorial"]
-    statement_int_a_eq_1 [type="STATEMENT", label="int a = 1;"]
-    statement_int_b_eq_10 [type="STATEMENT", label="int b = 10;"]
-    statement_int_i_eq_2 [type="STATEMENT", label="int i = 2;"]
-    loop_header_i_lteq_b [type="LOOP_HEADER", label="i <= b"]
-    statement_i_plusplus [type="STATEMENT", label="i ++"]
-    statement_a_multeq_i [type="STATEMENT", label="a *= i;"]
-    return_return_a [type="RETURN", label="return a;"]
+    entry_1 [type="ENTRY", label="factorial", line=1]
+    exit_1 [type="EXIT", label="factorial", line=8]
+    statement_1 [type="STATEMENT", label="int a = 1;", line=2]
+    statement_2 [type="STATEMENT", label="int b = 10;", line=3]
+    statement_3 [type="STATEMENT", label="int i = 2;", line=4]
+    loop_header_1 [type="LOOP_HEADER", label="i <= b", line=4]
+    statement_4 [type="STATEMENT", label="i ++", line=4]
+    statement_5 [type="STATEMENT", label="a *= i;", line=5]
+    return_1 [type="RETURN", label="return a;", line=7]
 
-    entry_factorial -> statement_int_a_eq_1
-    statement_int_a_eq_1 -> statement_int_b_eq_10
-    statement_int_b_eq_10 -> statement_int_i_eq_2
-    statement_int_i_eq_2 -> loop_header_i_lteq_b
-    loop_header_i_lteq_b -> statement_a_multeq_i [label="true"]
-    loop_header_i_lteq_b -> return_return_a [label="false"]
-    statement_i_plusplus -> loop_header_i_lteq_b
-    statement_a_multeq_i -> statement_i_plusplus
-    return_return_a -> exit_factorial
+    entry_1 -> statement_1
+    statement_1 -> statement_2
+    statement_2 -> statement_3
+    statement_3 -> loop_header_1
+    loop_header_1 -> statement_5 [label="true"]
+    loop_header_1 -> return_1 [label="false"]
+    statement_4 -> loop_header_1
+    statement_5 -> statement_4
+    return_1 -> exit_1
 }
 """
