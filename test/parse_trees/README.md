@@ -6,22 +6,22 @@ This utility generates DOT format expectations for Control Flow Graph (CFG) test
 
 ### Generate expectations for all test files:
 ```bash
-python test/generate_test_expectations.py
+python test/parse_trees/generate_test_expectations.py
 ```
 
 ### Generate expectations for specific files:
 ```bash
-python test/generate_test_expectations.py test/parse_trees/c/basic.test.toml
+python test/parse_trees/generate_test_expectations.py test/parse_trees/c/basic.test.toml
 ```
 
 ### Overwrite existing expectations:
 ```bash
-python test/generate_test_expectations.py --overwrite
+python test/parse_trees/generate_test_expectations.py --overwrite
 ```
 
 ### Process files in a specific directory:
 ```bash
-python test/generate_test_expectations.py --directory path/to/test/files
+python test/parse_trees/generate_test_expectations.py --directory path/to/test/files
 ```
 
 ## File Format
