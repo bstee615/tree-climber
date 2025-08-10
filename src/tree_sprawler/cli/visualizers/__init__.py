@@ -1,1 +1,2 @@
-from .bi_graph import BiGraphVisualizer
+from .bigraph import BiGraphVisualizer
+from .subtree import SubtreeVisualizer

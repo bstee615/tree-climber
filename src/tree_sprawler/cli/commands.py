@@ -21,7 +21,9 @@ from tree_sprawler.dataflow.analyses.reaching_definitions import (
 from tree_sprawler.dataflow.solver import RoundRobinSolver
 
 from .options import AnalysisOptions
-from .visualizers import BiGraphVisualizer
+from .visualizers import BiGraphVisualizer, SubtreeVisualizer
+
+SUPPORTED_LAYOUTS = {"bigraph": BiGraphVisualizer, "subtree": SubtreeVisualizer}
 
 
 class AnalysisTimer:
@@ -77,6 +79,8 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
     # Perform dataflow analysis if needed for DUC
     dataflow_result = None
     if options.draw_duc or options.draw_cpg:
+        if cfg is None:
+            raise ValueError("CFG is required for dataflow analysis")
         with AnalysisTimer("Dataflow analysis", options.timing, options.verbose):
             dataflow_result = _analyze_dataflow(cfg)
 
@@ -86,7 +90,8 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
         if dataflow_result is None:
             raise ValueError("Dataflow result is required for CPG visualization")
         with AnalysisTimer("CPG visualization", options.timing, options.verbose):
-            BiGraphVisualizer(
+            # visualizer_cls = BiGraphVisualizer
+            SUPPORTED_LAYOUTS[options.layout](
                 filename, options, ast_root, cfg, dataflow_result
             ).visualize()
 

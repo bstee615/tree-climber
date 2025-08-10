@@ -11,6 +11,7 @@ class AnalysisOptions:
     draw_duc: bool
     draw_cpg: bool
     language: str
+    layout: str
     output_dir: Path
     save: bool
     show: bool
