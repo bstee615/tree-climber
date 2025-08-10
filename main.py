@@ -53,9 +53,9 @@ def main(
         bool,
         typer.Option("--draw-cfg", help="Visualize Control Flow Graph"),
     ] = False,
-    draw_duc: Annotated[
+    draw_dfg: Annotated[
         bool,
-        typer.Option("--draw-duc", help="Visualize Def-Use Chains"),
+        typer.Option("--draw-dfg", help="Visualize Def-Use Chains"),
     ] = False,
     draw_cpg: Annotated[
         bool,
@@ -79,10 +79,6 @@ def main(
             help="Output directory for saved files (default: same as input file)",
         ),
     ] = None,
-    save: Annotated[
-        bool,
-        typer.Option("--save", "-s", help="Save visualizations to files"),
-    ] = False,
     show: Annotated[
         bool,
         typer.Option("--show", help="Display visualizations interactively"),
@@ -102,33 +98,42 @@ def main(
         typer.Option("--timing", help="Show timing information for each analysis step"),
     ] = False,
     layout: Annotated[
-        Optional[str],
+        str,
         typer.Option(
             "--layout",
             "-L",
             help=f"Layout style for visualizations ({', '.join(SUPPORTED_LAYOUTS)}).",
         ),
-    ] = "bigraph",
+    ] = "subtree",
 ):
     """
     Analyze source code and generate program analysis visualizations.
 
     Examples:
 
-        # Visualize CFG interactively
-        tree-sprawler example.c --draw-cfg
+    # AST:\n
+    uv run -m main test/example.c --draw-ast
 
-        # Generate all visualizations and save to files
-        tree-sprawler example.c --draw-ast --draw-cfg --draw-duc --draw-cpg --save
+    # CFG:\n
+    uv run -m main test/example.c --draw-cfg
 
-        # Analyze Java code with custom output directory
-        tree-sprawler Example.java --draw-cfg --language java --output ./output --save
+    # CFG + DFG view (CFG nodes + dashed DFG edges):\n
+    uv run -m main test/example.c --draw-cfg --draw-dfg
 
-        # Generate SVG files with dot layout
-        tree-sprawler example.c --draw-cfg --format svg --layout dot --save
+    # DFG-only view:\n
+    uv run -m main test/example.c --draw-dfg
+
+    # Combined views with overlays, subtree layout (default):\n
+    uv run -m main test/example.c --draw-cpg
+
+    # Combined views with overlays, bigraph layout:\n
+    uv run -m main test/example.c --draw-cpg -L bigraph
+
+    # Specify language and output directory explicitly:\n
+    uv run -m main test/example.java --language java --draw-ast --draw-cfg --draw-dfg --draw-cpg --output ./out
     """
     # Validate inputs
-    if not any([draw_ast, draw_cfg, draw_duc, draw_cpg]):
+    if not any([draw_ast, draw_cfg, draw_dfg, draw_cpg]):
         typer.echo(
             "Error: At least one visualization option must be specified "
             "(--draw-ast, --draw-cfg, --draw-duc, or --draw-cpg)",
@@ -140,7 +145,7 @@ def main(
         typer.echo("Error: --quiet and --verbose cannot be used together", err=True)
         raise typer.Exit(1)
 
-    if layout and layout not in SUPPORTED_LAYOUTS:
+    if layout not in SUPPORTED_LAYOUTS:
         typer.echo(
             f"Error: Unsupported layout '{layout}'. "
             f"Supported layouts: {', '.join(SUPPORTED_LAYOUTS)}",
@@ -175,7 +180,7 @@ def main(
     options = AnalysisOptions(
         draw_ast=draw_ast,
         draw_cfg=draw_cfg,
-        draw_duc=draw_duc,
+        draw_dfg=draw_dfg,
         draw_cpg=draw_cpg,
         language=language,
         layout=layout,

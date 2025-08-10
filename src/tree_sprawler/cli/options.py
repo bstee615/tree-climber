@@ -8,7 +8,7 @@ class AnalysisOptions:
 
     draw_ast: bool
     draw_cfg: bool
-    draw_duc: bool
+    draw_dfg: bool
     draw_cpg: bool
     language: str
     layout: str

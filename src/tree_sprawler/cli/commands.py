@@ -21,7 +21,13 @@ from tree_sprawler.dataflow.analyses.reaching_definitions import (
 from tree_sprawler.dataflow.solver import RoundRobinSolver
 
 from .options import AnalysisOptions
-from .visualizers import BiGraphVisualizer, SubtreeVisualizer
+from .visualizers import (
+    ASTVisualizer,
+    BiGraphVisualizer,
+    CFGVisualizer,
+    DFGVisualizer,
+    SubtreeVisualizer,
+)
 
 SUPPORTED_LAYOUTS = {"bigraph": BiGraphVisualizer, "subtree": SubtreeVisualizer}
 
@@ -72,28 +78,31 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
 
     # Build CFG if needed
     cfg = None
-    if options.draw_cfg or options.draw_duc or options.draw_cpg:
+    if options.draw_cfg or options.draw_dfg or options.draw_cpg:
         with AnalysisTimer("CFG construction", options.timing, options.verbose):
             cfg = _build_cfg(ast_root, options.language)
 
     # Perform dataflow analysis if needed for DUC
-    dataflow_result = None
-    if options.draw_duc or options.draw_cpg:
+    def_use_result = None
+    if options.draw_dfg or options.draw_cpg:
         if cfg is None:
             raise ValueError("CFG is required for dataflow analysis")
         with AnalysisTimer("Dataflow analysis", options.timing, options.verbose):
-            dataflow_result = _analyze_dataflow(cfg)
+            def_use_result = _analyze_dataflow(cfg)
 
+    visualizer_options = (filename, options, ast_root, cfg, def_use_result)
+    if options.draw_ast:
+        with AnalysisTimer("AST visualization", options.timing, options.verbose):
+            ASTVisualizer(*visualizer_options).visualize()
+    if options.draw_cfg:
+        with AnalysisTimer("CFG visualization", options.timing, options.verbose):
+            CFGVisualizer(*visualizer_options).visualize()
+    if options.draw_dfg:
+        with AnalysisTimer("DFG visualization", options.timing, options.verbose):
+            DFGVisualizer(*visualizer_options).visualize()
     if options.draw_cpg:
-        if cfg is None:
-            raise ValueError("CFG is required for CPG visualization")
-        if dataflow_result is None:
-            raise ValueError("Dataflow result is required for CPG visualization")
         with AnalysisTimer("CPG visualization", options.timing, options.verbose):
-            # visualizer_cls = BiGraphVisualizer
-            SUPPORTED_LAYOUTS[options.layout](
-                filename, options, ast_root, cfg, dataflow_result
-            ).visualize()
+            SUPPORTED_LAYOUTS[options.layout](*visualizer_options).visualize()
 
     if not options.quiet:
         typer.echo("✨ Analysis complete!")

@@ -27,6 +27,7 @@ DUC_EDGE_COLOR: str = "red"
 AST_OVERLAY_NODE_COLOR: str = "#E6E6E6"  # light gray fill for AST nodes
 AST_OVERLAY_BORDER_COLOR: str = "#B0B0B0"  # border color for AST nodes
 AST_OVERLAY_EDGE_COLOR: str = "#404040"  # dotted connector edges
+AST_OVERLAY_LINKING_EDGE_COLOR: str = "blue"
 AST_OVERLAY_FONT_SIZE: int = 8  # small font to reduce clutter
 AST_OVERLAY_MAX_CHILDREN: int = 3  # limit how many child nodes we show per CFG node
 AST_OVERLAY_SHOW_ONLY_NAMED: bool = True  # only show named AST children
