@@ -70,9 +70,11 @@ class JavaCFGVisitor(CFGVisitor):
         """Extract variable definitions under an AST node."""
 
         def process_definition(node: Node) -> Optional[str]:
-            if node.type == "identifier" and node.parent.type in [
-                "enhanced_for_statement"
-            ]:
+            if (
+                node.type == "identifier"
+                and node.parent
+                and node.parent.type in ["enhanced_for_statement"]
+            ):
                 return get_source_text(node)
             if node.type == "variable_declarator":
                 # Look for identifier in declarator
