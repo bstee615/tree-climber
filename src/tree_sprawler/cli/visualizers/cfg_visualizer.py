@@ -52,4 +52,7 @@ class CFGVisualizer(BaseVisualizer):
                 dfg_label = ", ".join(sorted(names))
                 add_dfg_edge(G_cfg, src, dst, dfg_label)
         G_cfg.draw(str(self.output_path("cfg")), prog="dot")
-        print(f"Saved CFG/DFG visualization: {self.output_path('cfg')}")
+        name = "CFG"
+        if options.draw_dfg:
+            name += "/DFG"
+        print(f"Saved {name} visualization: {self.output_path('cfg')}")
