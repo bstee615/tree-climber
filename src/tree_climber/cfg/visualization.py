@@ -1,0 +1,86 @@
+import graphviz
+
+from tree_climber.cfg.cfg_types import CFGNode, NodeType
+from tree_climber.cfg.visitor import CFG
+
+
+def make_node_style(node: CFGNode) -> tuple[str, str]:
+    """Determine the style and color of the node based on its type"""
+    shape = "ellipse"
+    color = "lightblue"
+
+    if node.node_type == NodeType.ENTRY:
+        shape = "box"
+        color = "lightgreen"
+    elif node.node_type == NodeType.EXIT:
+        shape = "box"
+        color = "lightcoral"
+    elif node.node_type == NodeType.CONDITION:
+        shape = "diamond"
+        color = "peachpuff"
+    elif node.node_type == NodeType.LOOP_HEADER:
+        shape = "diamond"
+        color = "lightcyan"
+    elif node.node_type == NodeType.SWITCH_HEAD:
+        shape = "diamond"
+        color = "lightpink"
+    elif node.node_type == NodeType.CASE:
+        shape = "box"
+        color = "lightsalmon"
+    elif node.node_type == NodeType.DEFAULT:
+        shape = "box"
+        color = "orange"
+    elif node.node_type == NodeType.LABEL:
+        shape = "box"
+        color = "lavender"
+    elif node.node_type == NodeType.GOTO:
+        shape = "box"
+        color = "violet"
+
+    return shape, color
+
+
+def make_node_label(node: CFGNode) -> str:
+    return (
+        f"{node.id}: {node.source_text[:50]}"
+        + (
+            "\nfunction calls: " + ", ".join(node.metadata.function_calls)
+            if node.metadata.function_calls
+            else ""
+        )
+        + (
+            "\ndefines: " + ", ".join(node.metadata.variable_definitions)
+            if node.metadata.variable_definitions
+            else ""
+        )
+        + (
+            "\nuses: " + ", ".join(node.metadata.variable_uses)
+            if node.metadata.variable_uses
+            else ""
+        )
+    )
+
+
+def visualize_cfg(cfg: CFG, output_file: str = "cfg"):
+    """Generate a visual representation of the CFG using Graphviz"""
+    dot = graphviz.Digraph(comment=f"CFG for {cfg.function_name}")
+    dot.attr(rankdir="TB")
+
+    # Add nodes
+    for node_id, node in cfg.nodes.items():
+        shape, color = make_node_style(node)
+        label = make_node_label(node)
+        dot.node(str(node_id), label, shape=shape, style="filled", fillcolor=color)
+
+    # Add edges with labels
+    for node_id, node in cfg.nodes.items():
+        for successor_id in node.successors:
+            # Check if there's a label for this edge
+            edge_label = node.get_edge_label(successor_id)
+            if edge_label:
+                dot.edge(str(node_id), str(successor_id), label=edge_label)
+            else:
+                dot.edge(str(node_id), str(successor_id))
+
+    dot.render(output_file, format="png", cleanup=True)
+    return f"{output_file}.png"

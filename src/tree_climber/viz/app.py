@@ -1,0 +1,190 @@
+"""FastAPI server for parsing source code and returning Control Flow Graphs in JSON format.
+
+This server provides endpoints to parse source code from various programming languages
+and return their Control Flow Graph (CFG) representation in JSON format.
+"""
+
+import logging
+import os
+from dataclasses import asdict
+from enum import Enum
+from typing import Any, Dict, Optional
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+
+from tree_climber.ast_utils import ast_node_to_dict
+from tree_climber.cfg.builder import CFGBuilder
+from tree_climber.dataflow.analyses.def_use import DefUseSolver
+from tree_climber.dataflow.analyses.reaching_definitions import (
+    ReachingDefinitionsProblem,
+)
+from tree_climber.dataflow.solver import RoundRobinSolver
+
+# Constants for supported languages
+SUPPORTED_LANGUAGES = ["c", "java"]
+DEFAULT_LANGUAGE = "c"
+
+# CORS configuration
+CORS_ORIGINS = [
+    "http://localhost:3000",  # React default dev server
+    "http://localhost:5173",  # Vite default dev server
+    "http://localhost:5174",  # Vite fallback port
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+]
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+__version__ = "0.0.0"
+app = FastAPI(
+    title="Tree Climber CFG API",
+    description="Parse source code and return Control Flow Graphs in JSON format",
+    version=__version__,
+)
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
+
+class SupportedLanguage(str, Enum):
+    """Enumeration of supported programming languages"""
+
+    C = "c"
+    JAVA = "java"
+
+
+class ParseRequest(BaseModel):
+    """Request model for parsing source code"""
+
+    source_code: str = Field(..., description="The source code to parse")
+    language: SupportedLanguage = Field(
+        default=SupportedLanguage.C,
+        description="The programming language of the source code",
+    )
+
+
+class ParseResponse(BaseModel):
+    """Response model for parsed CFG and AST"""
+
+    success: bool = Field(description="Whether the parsing was successful")
+    cfg: Optional[Dict[str, Any]] = Field(
+        default=None, description="The Control Flow Graph in JSON format"
+    )
+    ast: Optional[Dict[str, Any]] = Field(
+        default=None, description="The Abstract Syntax Tree in JSON format"
+    )
+    dfg: Optional[Dict[str, Any]] = Field(
+        default=None, description="The Data Flow Graph in JSON format"
+    )
+    # Error message if parsing failed
+    error: Optional[str] = Field(
+        default=None, description="Error message if parsing failed"
+    )
+
+
+@app.get("/")
+async def root():
+    """Root endpoint providing API information"""
+    return {
+        "message": "Tree Climber CFG API",
+        "version": __version__,
+        "supported_languages": SUPPORTED_LANGUAGES,
+        "endpoints": {
+            "/parse": "POST - Parse source code and return CFG and AST in JSON format",
+            "/health": "GET - Health check endpoint",
+        },
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+
+@app.post("/parse", response_model=ParseResponse)
+async def parse_source_code(request: ParseRequest) -> ParseResponse:
+    """Parse source code and return a CFG and AST in JSON format.
+
+    Args:
+        request: ParseRequest containing source code and language
+
+    Returns:
+        ParseResponse containing the CFG and AST in JSON format or error message
+    """
+    try:
+        logger.info(
+            f"Parsing {len(request.source_code)} bytes of {request.language} code"
+        )
+
+        # Validate language support
+        if request.language not in SUPPORTED_LANGUAGES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Unsupported language: {request.language}. "
+                f"Supported languages: {SUPPORTED_LANGUAGES}",
+            )
+
+        # Create and setup CFG builder
+        builder = CFGBuilder(request.language.value)
+        builder.setup_parser()
+        if not builder.parser:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Parser for {request.language} not set up correctly.",
+            )
+
+        # Parse source code to get AST
+        tree = builder.parser.parse(bytes(request.source_code, "utf8"))
+        if not tree:
+            raise HTTPException(status_code=400, detail="Failed to parse source code.")
+
+        # Convert AST to dictionary for JSON serialization
+        ast_dict = asdict(ast_node_to_dict(tree.root_node))
+
+        # Build CFG from AST
+        cfg = builder.build_cfg(tree=tree)
+
+        logger.info(
+            f"CFG built successfully: function={cfg.function_name}, "
+            f"nodes={len(cfg.nodes)}"
+        )
+
+        # Analyze reaching definitions
+        problem = ReachingDefinitionsProblem()
+
+        solver = RoundRobinSolver()
+        result = solver.solve(cfg, problem)
+
+        # Analyze def-use chains
+        def_use_analyzer = DefUseSolver()
+        def_use_result = def_use_analyzer.solve(cfg, result)
+
+        # Convert CFG to JSON-serializable dictionary
+        cfg_dict = cfg.to_dict()
+
+        return ParseResponse(
+            success=True, cfg=cfg_dict, ast=ast_dict, dfg=def_use_result.to_dict()
+        )
+
+    except Exception as e:
+        logger.error(f"Error parsing source code: {str(e)}")
+        return ParseResponse(success=False, error=str(e))
+
+
+if os.environ.get("ENABLE_DEBUGPY", "0") == "1":
+    import debugpy
+
+    debugpy.listen(("0.0.0.0", 5678))
+    logger.info("debugpy listening on 5678")

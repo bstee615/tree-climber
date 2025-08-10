@@ -12,8 +12,8 @@ from pathlib import Path
 import graphviz
 import toml
 
-from tree_sprawler.cfg.builder import CFGBuilder
-from tree_sprawler.cfg.visitor import CFG
+from tree_climber.cfg.builder import CFGBuilder
+from tree_climber.cfg.visitor import CFG
 
 
 def cfg_to_dot(cfg: CFG, graph_name: str = "CFG") -> str:

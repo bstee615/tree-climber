@@ -1,6 +1,6 @@
-# Extending Tree Sprawler to Support New Languages
+# Extending Tree Climber to Support New Languages
 
-This guide provides step-by-step instructions for adding support for a new programming language to Tree Sprawler. The process involves creating language-specific configuration files, implementing AST node handling, and setting up test files.
+This guide provides step-by-step instructions for adding support for a new programming language to Tree Climber. The process involves creating language-specific configuration files, implementing AST node handling, and setting up test files.
 
 ## Prerequisites
 
@@ -25,12 +25,12 @@ This guide provides step-by-step instructions for adding support for a new progr
 
 ### 2. Create Language Configuration Module
 
-1. Create a new Python module at `src/tree_sprawler/cfg/languages/<language>.py`
+1. Create a new Python module at `src/tree_climber/cfg/languages/<language>.py`
 2. Implement the following components:
 
 ```python
-from tree_sprawler.cfg.cfg_types import Block, Edge, EdgeType
-from tree_sprawler.cfg.visitor import CFGVisitor
+from tree_climber.cfg.cfg_types import Block, Edge, EdgeType
+from tree_climber.cfg.visitor import CFGVisitor
 
 class LanguageVisitor(CFGVisitor):
     """Visitor class for building CFG from language-specific AST nodes."""
@@ -99,7 +99,7 @@ source_node.edge_labels[target_node.id] = "true"  # For conditional branches
 
 ### 3. Set Up Test Files
 
-1. Create a test file at `src/tree_sprawler/cfg/test_<language>.py`
+1. Create a test file at `src/tree_climber/cfg/test_<language>.py`
 2. Create sample code files in `test/test.<language_extension>`
 3. Implement test cases modeling after `test_c.py` and `test_java.py`
 
@@ -136,8 +136,8 @@ source_node.edge_labels[target_node.id] = "true"  # For conditional branches
 ## Resources
 
 1. Refer to existing implementations:
-   - `src/tree_sprawler/cfg/languages/java.py`
-   - `src/tree_sprawler/cfg/languages/c.py`
+   - `src/tree_climber/cfg/languages/java.py`
+   - `src/tree_climber/cfg/languages/c.py`
 2. Tree-sitter documentation for your language
 3. Language specification for control flow semantics
 

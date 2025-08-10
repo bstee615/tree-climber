@@ -1,5 +1,5 @@
 [project]
-name = "tree-sprawler"
+name = "tree-climber"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tree-sprawler = "tree_sprawler:main"
+tree-climber = "tree_climber.cli.__main__:main"
 
 [build-system]
 requires = ["hatchling"]
