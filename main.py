@@ -9,7 +9,6 @@ and Code Property Graphs (CPG).
 Feature parity with tree-climber: https://github.com/bstee615/tree-climber
 """
 
-import sys
 from pathlib import Path
 from typing import Optional
 
@@ -185,7 +184,6 @@ def main(
         language=language,
         layout=layout,
         output_dir=output_dir,
-        save=save,
         show=show,
         verbose=verbose,
         quiet=quiet,

@@ -13,7 +13,6 @@ class AnalysisOptions:
     language: str
     layout: str
     output_dir: Path
-    save: bool
     show: bool
     verbose: bool
     quiet: bool
