@@ -1,7 +1,31 @@
 from dataclasses import dataclass
 from typing import Callable, List, Optional
 
-from tree_sitter import Node
+from tree_sitter import Node, Tree
+from tree_sitter_languages import get_parser
+
+
+def parse_source_to_ast(source_code: str, language: str) -> Tree:
+    """Parse source code and return the AST tree.
+
+    Args:
+        source_code: The source code to parse
+        language: The programming language (e.g., 'c', 'java')
+
+    Returns:
+        Tree: The parsed AST tree
+
+    Raises:
+        ValueError: If the language is not supported or parsing fails
+    """
+    try:
+        parser = get_parser(language)
+        tree = parser.parse(bytes(source_code, "utf8"))
+        if not tree:
+            raise ValueError(f"Failed to parse {language} source code")
+        return tree
+    except Exception as e:
+        raise ValueError(f"Error parsing {language} source code: {e}")
 
 
 def get_source_text(node: Node) -> str:
