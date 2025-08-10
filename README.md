@@ -2,13 +2,11 @@
 
 Tree Climber is a comprehensive static analysis framework for generating Control Flow Graphs (CFGs) and performing dataflow analysis on source code. It supports multiple programming languages through Tree-sitter parsers and provides both programmatic APIs and interactive web visualization.
 
-## Features
+## Goals
 
-- **Control Flow Graph Generation**: Build CFGs from source code for C and Java
-- **Dataflow Analysis**: Perform def-use chain analysis and reaching definitions
-- **Web Visualization**: Interactive CFG visualization with React frontend
-- **FastAPI Backend**: RESTful API for CFG generation and analysis
-- **Extensible Architecture**: Visitor pattern design for easy language extension
+- Clean architecture and thorough test coverage.
+- Semi- (and eventually fully-)automated analyses written by coding agents.
+- Interactive, detailed, high-quality visualizations for educational and exploration purposes.
 
 ## Supported Languages
 
@@ -78,7 +76,7 @@ If installed as a command, replace `uv run -m tree_climber.cli` with `tree-climb
 
 ### Web Application
 
-The project includes a webapp for visualizing and interacting with CFG/DFGs.
+The project includes a webapp for visualizing and interacting with CFG/DFGs, inspired by https://godbolt.org.
 
 <img width="1849" height="811" alt="image" src="https://github.com/user-attachments/assets/2cde36a0-94e3-49f0-980c-7331784c06c7" />
 
