@@ -68,10 +68,6 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
     if not options.quiet:
         typer.echo(f"Analyzing: {filename}")
 
-    # Ensure output directory exists
-    if options.save:
-        options.output_dir.mkdir(parents=True, exist_ok=True)
-
     # Parse source code to AST
     with AnalysisTimer("AST parsing", options.timing, options.verbose):
         ast_root = _parse_source_file(filename, options.language)
