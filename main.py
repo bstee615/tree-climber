@@ -129,7 +129,7 @@ def main(
     uv run -m main test/example.c --draw-cpg -L bigraph
 
     # Specify language and output directory explicitly:\n
-    uv run -m main test/example.java --language java --draw-ast --draw-cfg --draw-dfg --draw-cpg --output ./out
+    uv run -m main test/test.java --language java --draw-ast --draw-cfg --draw-dfg --draw-cpg --output ./out
     """
     # Validate inputs
     if not any([draw_ast, draw_cfg, draw_dfg, draw_cpg]):
