@@ -76,20 +76,11 @@ Run the CLI against a file or directory. Use the flags below to pick which graph
 Try `uv run -m tree_climber.cli --help` to see examples and help.
 If installed as a command, replace `uv run -m tree_climber.cli` with `tree-climber`.
 
-### Command Line Testing
-
-Run CFG generation tests:
-```bash
-# Test C language CFG generation
-uv run src/tree_climber/cfg/test_c.py
-
-# Test Java language CFG generation  
-uv run src/tree_climber/cfg/test_java.py
-```
-
 ### Web Application
 
-The project includes a full-stack web application with FastAPI backend and React frontend.
+<img width="1849" height="811" alt="image" src="https://github.com/user-attachments/assets/2cde36a0-94e3-49f0-980c-7331784c06c7" />
+
+The project includes a webapp for visualizing and interacting with CFG/DFGs.
 
 #### Start the Backend Server
 
