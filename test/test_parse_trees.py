@@ -10,8 +10,8 @@ import pytest
 import toml
 from pydantic import BaseModel, ValidationError
 
-from tree_sprawler.cfg.builder import CFGBuilder
-from tree_sprawler.cfg.visitor import CFG
+from tree_climber.cfg.builder import CFGBuilder
+from tree_climber.cfg.visitor import CFG
 
 C_TEST_DIR = Path(__file__).parent / "parse_trees" / "c"
 C_TESTS = list(C_TEST_DIR.rglob("*.toml"))

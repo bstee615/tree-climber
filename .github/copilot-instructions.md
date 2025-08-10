@@ -20,7 +20,7 @@ After any change, the AI_Agent must ensure that all relevant documentation is up
 - Servers run in a background task with hot reload.
 - Installing deps:
   - Backend: `${workspaceDir}$ uv add <package>`
-  - Frontend: `${workspaceDir}/src/tree_sprawler/viz/frontend$ bun add <package>`
+  - Frontend: `${workspaceDir}/src/tree_climber/viz/frontend$ bun add <package>`
 
 # Interaction
 

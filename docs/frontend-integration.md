@@ -311,7 +311,7 @@ test('code change updates graph visualization', async () => {
 
 ### Running the Frontend
 ```bash
-cd src/tree_sprawler/viz/frontend
+cd src/tree_climber/viz/frontend
 npm run dev
 # or
 bun dev

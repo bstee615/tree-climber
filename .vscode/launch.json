@@ -8,14 +8,14 @@
             "name": "CFG parser (choose language)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tree_sprawler/cfg/test_${input:cfgLang}.py",
+            "program": "${workspaceFolder}/src/tree_climber/cfg/test_${input:cfgLang}.py",
             "console": "integratedTerminal"
         },
         {
             "name": "Dataflow parser",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/src/tree_sprawler/dataflow/main.py",
+            "program": "${workspaceFolder}/src/tree_climber/dataflow/main.py",
             "console": "integratedTerminal"
         },
         {
@@ -36,7 +36,7 @@
             "presentation": {
                 "reveal": "always"
             },
-            "webRoot": "${workspaceFolder}/src/tree_sprawler/viz/frontend/src"
+            "webRoot": "${workspaceFolder}/src/tree_climber/viz/frontend/src"
         },
         {
             "name": "Attach to Backend",
@@ -53,7 +53,7 @@
             "type": "msedge",
             "request": "launch",
             "url": "http://localhost:5173/",
-            "webRoot": "${workspaceFolder}/src/tree_sprawler/viz/frontend/src"
+            "webRoot": "${workspaceFolder}/src/tree_climber/viz/frontend/src"
         }
     ],
     "inputs": [
