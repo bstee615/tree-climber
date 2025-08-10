@@ -68,6 +68,12 @@ sudo apt install -y graphviz graphviz-dev
 
 ## Usage
 
+### CLI
+
+Run the CLI against a file or directory. Use the flags below to pick which graphs to generate and how to render them.
+Try `uv run main.py --help` to see examples and help.
+If installed as a command, replace `uv run -m main` with `tree-sprawler`.
+
 ### Command Line Testing
 
 Run CFG generation tests:

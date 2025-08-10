@@ -1,7 +1,7 @@
 import abc
 from collections import defaultdict
 from pathlib import Path
-from typing import Literal, Set, Tuple
+from typing import Literal, Optional, Set, Tuple
 
 from tree_sitter import Tree
 
@@ -61,14 +61,17 @@ def get_node_display(node: CFGNode) -> Tuple[str, str]:
     return (REGULAR_NODE_COLOR, "ellipse")
 
 
+DefUseEdges = dict[Tuple[int, int], Set[str]]
+
+
 class BaseVisualizer(abc.ABC):
     def __init__(
         self,
         filename: Path,
         options: AnalysisOptions,
-        ast_root: Tree,
-        cfg: CFG,
-        def_use: DefUseResult,
+        ast_root: Optional[Tree],
+        cfg: Optional[CFG],
+        def_use: Optional[DefUseResult],
     ):
         self.filename = filename
         self.options = options
@@ -77,8 +80,10 @@ class BaseVisualizer(abc.ABC):
         self.def_use = def_use
 
     @property
-    def duc_edges(self) -> dict[Tuple[int, int], Set[str]]:
+    def duc_edges(self) -> Optional[DefUseEdges]:
         duc_edges = defaultdict(set)
+        if self.def_use is None:
+            return None
         for name, chains in self.def_use.chains.items():
             for chain in chains:
                 for use in chain.uses:
