@@ -1,0 +1,77 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CFG parser (choose language)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/tree_climber/cfg/test_${input:cfgLang}.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Dataflow parser",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/tree_climber/dataflow/main.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Run Server and Frontend",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173/",
+            "preLaunchTask": "Run Server and Frontend",
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
+            "name": "Run Server and Frontend (Browser Only)",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:5173/",
+            "presentation": {
+                "reveal": "always"
+            },
+            "webRoot": "${workspaceFolder}/src/tree_climber/viz/frontend/src"
+        },
+        {
+            "name": "Attach to Backend",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "justMyCode": true
+        },
+        {
+            "name": "Attach to Frontend",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:5173/",
+            "webRoot": "${workspaceFolder}/src/tree_climber/viz/frontend/src"
+        }
+    ],
+    "inputs": [
+        {
+            "id": "cfgLang",
+            "type": "pickString",
+            "description": "Choose CFG language",
+            "options": ["c", "java"],
+            "default": "c"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Attach Both Backend and Frontend",
+            "configurations": [
+                "Attach to Backend",
+                "Attach to Frontend"
+            ]
+        }
+    ]
+}

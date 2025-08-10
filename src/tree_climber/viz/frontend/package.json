@@ -1,0 +1,40 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@types/cytoscape-dagre": "^2.3.3",
+    "@types/react-cytoscapejs": "^1.2.5",
+    "cytoscape": "^3.32.0",
+    "cytoscape-dagre": "^2.5.0",
+    "cytoscape-node-html-label": "^1.2.2",
+    "cytoscape-popper": "^4.0.1",
+    "graphology": "^0.26.0",
+    "graphology-types": "^0.24.8",
+    "react": "^19.1.0",
+    "react-cytoscapejs": "^2.0.0",
+    "react-dom": "^19.1.0",
+    "tippy.js": "^6.3.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react-swc": "^3.9.0",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.30.1",
+    "vite": "^6.3.5"
+  }
+}

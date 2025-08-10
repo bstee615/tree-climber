@@ -1,25 +1,47 @@
+[project]
+name = "tree-climber"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "bstee615", email = "benjaminjsteenhoek@gmail.com" }
+]
+requires-python = ">=3.12.4,<3.13"
+dependencies = [
+    "debugpy>=1.8.14",
+    "fastapi>=0.104.0",
+    "graphviz>=0.20.3",
+    "matplotlib>=3.10.3",
+    "networkx>=3.5",
+    "pydantic>=2.11.7",
+    "pydot>=4.0.1",
+    "pygraphviz>=1.14",
+    "pytest>=8.4.0",
+    "streamlit>=1.46.0",
+    "streamlit-agraph>=0.0.45",
+    "tree-sitter<0.21.0",
+    "tree-sitter-languages>=1.10.2",
+    "typer>=0.16.0",
+    "uvicorn>=0.24.0",
+]
+
+[project.scripts]
+tree-climber = "tree_climber.cli.__main__:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[project]
-name = "tree-climber"
-version = "0.0.1"
-authors = [
-  { name="Benjamin Steenhoek", email="benjaminjsteenhoek@gmail.com" },
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
 ]
-description = "Program analysis tools built on tree-sitter."
-readme = "readme.md"
-license = { file="LICENSE" }
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
+testpaths = [
+    "test",
 ]
-keywords = [ "program-analysis", "tree-sitter", "cfg", "dfg", "pdg", "cpg" ]
-dependencies = [ "matplotlib", "tree-sitter", "networkx", "GitPython", "pygraphviz" ]
 
-[project.urls]
-"Homepage" = "https://github.com/bstee615/tree-climber"
-"Bug Tracker" = "https://github.com/bstee615/tree-climber/issues"
+[dependency-groups]
+dev = [
+    "pyright>=1.1.402",
+    "ruff>=0.12.1",
+]

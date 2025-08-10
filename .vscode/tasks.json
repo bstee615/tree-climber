@@ -1,0 +1,34 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run FastAPI Server",
+			"type": "shell",
+			"command": "ENABLE_DEBUGPY=1 uv run -m uvicorn tree_climber.viz.app:app --reload --host 0.0.0.0 --port 8000",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+		},
+		{
+			"label": "Run Frontend",
+			"type": "shell",
+			"command": "cd src/tree_climber/viz/frontend && bun dev",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Server and Frontend",
+			"dependsOn": ["Run FastAPI Server", "Run Frontend"],
+			"dependsOrder": "parallel",
+			"group": "build"
+		}
+	],
+	"default": "Run Server and Frontend",
+	"auto": [
+		{
+			"task": "Run Server and Frontend",
+			"type": "process",
+			"event": "onFolderOpen"
+		}
+	]
+}

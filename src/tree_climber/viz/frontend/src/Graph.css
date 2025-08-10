@@ -1,0 +1,144 @@
+/* Graph component styles */
+
+/* Main container for the graph component */
+.graph-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Header section with title and controls */
+.graph-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
+}
+
+.graph-header h2 {
+  margin: 0;
+}
+
+/* Node selection controls */
+.node-selection-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.selected-node-display {
+  margin-bottom: 0.5rem;
+}
+
+.node-selection-input {
+  margin-bottom: 0.5rem;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.control-button {
+  padding: 5px 10px;
+  margin-bottom: 10px;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.control-button:hover {
+  background-color: #005a9e;
+}
+
+.control-button:active {
+  background-color: #004080;
+}
+
+.cytoscape-container {
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+/* Error message styling */
+.error-message {
+  color: #d32f2f;
+  background-color: #ffebee;
+  border: 1px solid #f8bbd9;
+  border-radius: 4px;
+  padding: 1rem;
+  margin: 1rem 0;
+  font-family: monospace;
+}
+
+.error-message strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* === Cytoscape Node HTML Label Styles === */
+.cy-html-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;;
+  word-break: break-word;
+}
+
+.cy-node-type {
+  font-family: inherit;
+  font-size: 10px;
+}
+
+.cy-source-text {
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+  font-size: 10px;
+}
+
+.cy-tooltip {
+  font-size: 0.9em;
+  padding: 0.2em 0.5em;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  max-width: 400px;
+  margin-bottom: 4px;
+}
+
+.cy-tooltip-identifiers {
+  font-family: 'Fira Mono', 'Consolas', 'Menlo', 'Monaco', monospace;
+}
+
+/* === Tooltip Styles for Defs, Uses, Calls === */
+.cy-tooltip-defs {
+  background: #e6f4ea; /* sage green */
+  color: #234b2c;
+}
+
+.cy-tooltip-uses {
+  background: #fff4e6; /* orange cream */
+  color: #7a4a00;
+}
+
+.cy-tooltip-calls {
+  background: #e6f0fa; /* pastel blue */
+  color: #1a3a5a;
+}
+
+/* Tippy.js tooltip container (optional for spacing) */
+.tippy-box[data-theme~='cy-tooltip'] {
+  padding: 0.5em 0.7em;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  background: #fff;
+}

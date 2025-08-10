@@ -1,14 +1,9 @@
 {
-    "python.formatting.provider": "black",
-    "editor.formatOnSave": false,
-    "editor.formatOnPaste": false,
-    "markdown.extension.toc.orderedList": true,
-    "markdown.extension.toc.omittedFromToc": {
-        "README.md": [
-            "# tree-climber",
-            "# Try it out",
-            "# Table of contents",
-            "# Stress test (Jun 16 2022, outdated)"
-        ]
+    "[python]": {
+        "editor.codeActionsOnSave": {
+            // https://github.com/astral-sh/ruff-vscode/issues/363#issuecomment-2958936767
+            "source.organizeImports.ruff": "explicit"
+        },
+        "editor.formatOnSave": true
     }
 }
