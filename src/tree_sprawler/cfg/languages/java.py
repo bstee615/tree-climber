@@ -120,12 +120,6 @@ class JavaCFGVisitor(CFGVisitor):
                                 # Compound assignment, treat as use
                                 return get_source_text(node)
                             return None  # Simple assignment target, not a use
-                print("Default use:", node.type, get_source_text(node))
-                print(
-                    "Default use parent:",
-                    node.parent.type,
-                    get_source_text(node.parent),
-                )
                 return get_source_text(node)
             return None
 
