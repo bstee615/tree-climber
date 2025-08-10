@@ -16,7 +16,11 @@ from typing import Optional
 import typer
 from typing_extensions import Annotated
 
-from src.tree_sprawler.cli.commands import AnalysisOptions, analyze_source_code
+from src.tree_sprawler.cli.commands import (
+    SUPPORTED_LAYOUTS,
+    AnalysisOptions,
+    analyze_source_code,
+)
 from src.tree_sprawler.cli.visualizers.constants import (
     DEFAULT_LANGUAGE,
     SUPPORTED_LANGUAGES,
@@ -97,6 +101,14 @@ def main(
         bool,
         typer.Option("--timing", help="Show timing information for each analysis step"),
     ] = False,
+    layout: Annotated[
+        Optional[str],
+        typer.Option(
+            "--layout",
+            "-L",
+            help=f"Layout style for visualizations ({', '.join(SUPPORTED_LAYOUTS)}).",
+        ),
+    ] = "bigraph",
 ):
     """
     Analyze source code and generate program analysis visualizations.
@@ -126,6 +138,14 @@ def main(
 
     if quiet and verbose:
         typer.echo("Error: --quiet and --verbose cannot be used together", err=True)
+        raise typer.Exit(1)
+
+    if layout and layout not in SUPPORTED_LAYOUTS:
+        typer.echo(
+            f"Error: Unsupported layout '{layout}'. "
+            f"Supported layouts: {', '.join(SUPPORTED_LAYOUTS)}",
+            err=True,
+        )
         raise typer.Exit(1)
 
     if language and language not in SUPPORTED_LANGUAGES:
@@ -158,6 +178,7 @@ def main(
         draw_duc=draw_duc,
         draw_cpg=draw_cpg,
         language=language,
+        layout=layout,
         output_dir=output_dir,
         save=save,
         show=show,
