@@ -55,10 +55,15 @@ cd tree-sprawler
 uv sync
 ```
 
-3. Install frontend dependencies:
+3. (For web frontend) Install frontend dependencies:
 ```bash
 cd src/tree_sprawler/viz/frontend
 bun install
+```
+
+4. (For CLI) Install CLI dependencies:
+```bash
+sudo apt install -y graphviz graphviz-dev
 ```
 
 ## Usage

@@ -9,7 +9,7 @@ if __name__ == "__main__":
     test_file = os.path.join(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))),
         "test",
-        "test.c",
+        "example.c",
     )
     print(f"Reading file: {test_file}")
     with open(test_file, "r") as f:
