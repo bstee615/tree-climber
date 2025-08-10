@@ -17,13 +17,9 @@ import typer
 from typing_extensions import Annotated
 
 from src.tree_sprawler.cli.commands import AnalysisOptions, analyze_source_code
-from src.tree_sprawler.cli.constants import (
+from src.tree_sprawler.cli.visualizers.constants import (
     DEFAULT_LANGUAGE,
-    DEFAULT_LAYOUT,
-    DEFAULT_OUTPUT_FORMAT,
     SUPPORTED_LANGUAGES,
-    LayoutAlgorithm,
-    OutputFormat,
 )
 
 # Create the main Typer app
@@ -70,21 +66,6 @@ def main(
             help=f"Programming language ({', '.join(SUPPORTED_LANGUAGES)}). Auto-detected if not specified.",
         ),
     ] = None,
-    output_format: Annotated[
-        OutputFormat,
-        typer.Option(
-            "--format",
-            "-f",
-            help="Output format for visualizations",
-        ),
-    ] = DEFAULT_OUTPUT_FORMAT,
-    layout: Annotated[
-        LayoutAlgorithm,
-        typer.Option(
-            "--layout",
-            help="Graph layout algorithm for visualizations",
-        ),
-    ] = DEFAULT_LAYOUT,
     # Output options
     output_dir: Annotated[
         Optional[Path],
@@ -177,8 +158,6 @@ def main(
         draw_duc=draw_duc,
         draw_cpg=draw_cpg,
         language=language,
-        output_format=output_format,
-        layout=layout,
         output_dir=output_dir,
         save=save,
         show=show,

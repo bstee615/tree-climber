@@ -6,22 +6,22 @@ visualizations of AST, CFG, DUC, and CPG.
 """
 
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 import typer
+from tree_sitter import Tree
 
-from tree_sprawler.ast_utils import ast_node_to_dict, parse_source_to_ast
+from tree_sprawler.ast_utils import parse_source_to_ast
 from tree_sprawler.cfg.builder import CFGBuilder
-from tree_sprawler.dataflow.analyses.def_use import DefUseSolver
+from tree_sprawler.cfg.visitor import CFG
+from tree_sprawler.dataflow.analyses.def_use import DefUseResult, DefUseSolver
 from tree_sprawler.dataflow.analyses.reaching_definitions import (
     ReachingDefinitionsProblem,
 )
 from tree_sprawler.dataflow.solver import RoundRobinSolver
 
 from .options import AnalysisOptions
-from .visualizers import visualize_cpg
+from .visualizers import BiGraphVisualizer
 
 
 class AnalysisTimer:
@@ -80,31 +80,21 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
         with AnalysisTimer("Dataflow analysis", options.timing, options.verbose):
             dataflow_result = _analyze_dataflow(cfg)
 
-    # Generate visualizations
-    base_filename = filename.stem if filename.is_file() else filename.name
-
-    # if options.draw_ast:
-    #     with AnalysisTimer("AST visualization", options.timing, options.verbose):
-    #         _visualize_ast(ast_root, base_filename, options)
-
-    # if options.draw_cfg:
-    #     with AnalysisTimer("CFG visualization", options.timing, options.verbose):
-    #         _visualize_cfg(cfg, base_filename, options)
-
-    # if options.draw_duc:
-    #     with AnalysisTimer("DUC visualization", options.timing, options.verbose):
-    #         _visualize_duc(cfg, dataflow_result, base_filename, options)
-
     if options.draw_cpg:
+        if cfg is None:
+            raise ValueError("CFG is required for CPG visualization")
+        if dataflow_result is None:
+            raise ValueError("Dataflow result is required for CPG visualization")
         with AnalysisTimer("CPG visualization", options.timing, options.verbose):
-            visualize_cpg(filename, options)
-            # _visualize_cpg(ast_root, cfg, dataflow_result, base_filename, options)
+            BiGraphVisualizer(
+                filename, options, ast_root, cfg, dataflow_result
+            ).visualize()
 
     if not options.quiet:
         typer.echo("✨ Analysis complete!")
 
 
-def _parse_source_file(filename: Path, language: str):
+def _parse_source_file(filename: Path, language: str) -> Tree:
     """Parse source code file to AST."""
     if not filename.is_file():
         raise ValueError(f"Not a file: {filename}")
@@ -113,91 +103,16 @@ def _parse_source_file(filename: Path, language: str):
     return parse_source_to_ast(source_code, language)
 
 
-def _build_cfg(ast_root, language: str):
+def _build_cfg(ast_root: Tree, language: str) -> CFG:
     """Build Control Flow Graph from AST."""
     builder = CFGBuilder(language)
     builder.setup_parser()
     return builder.build_cfg(tree=ast_root)
 
 
-def _analyze_dataflow(cfg):
+def _analyze_dataflow(cfg: CFG) -> DefUseResult:
     """Perform reaching definitions dataflow analysis."""
     problem = ReachingDefinitionsProblem()
-    solver = RoundRobinSolver()
-    return solver.solve(cfg, problem)
-
-
-def _visualize_ast(ast_root, base_filename: str, options: AnalysisOptions):
-    """Generate AST visualization."""
-    visualizer = ASTVisualizer(options.layout, options.output_format)
-
-    if options.show:
-        visualizer.show(ast_root, title=f"AST: {base_filename}")
-
-    if options.save:
-        output_path = (
-            options.output_dir / f"{base_filename}_ast.{options.output_format.value}"
-        )
-        visualizer.save(ast_root, output_path, title=f"AST: {base_filename}")
-        if not options.quiet:
-            typer.echo(f"Saved AST visualization: {output_path}")
-
-
-def _visualize_cfg(cfg, base_filename: str, options: AnalysisOptions):
-    """Generate CFG visualization."""
-    visualizer = CFGVisualizer(options.layout, options.output_format)
-
-    if options.show:
-        visualizer.show(cfg, title=f"CFG: {base_filename}")
-
-    if options.save:
-        output_path = (
-            options.output_dir / f"{base_filename}_cfg.{options.output_format.value}"
-        )
-        visualizer.save(cfg, output_path, title=f"CFG: {base_filename}")
-        if not options.quiet:
-            typer.echo(f"Saved CFG visualization: {output_path}")
-
-
-def _visualize_duc(cfg, dataflow_result, base_filename: str, options: AnalysisOptions):
-    """Generate DUC visualization."""
-    # Compute def-use chains
-    duc_solver = DefUseSolver()
-    duc_result = duc_solver.solve(cfg, dataflow_result)
-
-    visualizer = DUCVisualizer(options.layout, options.output_format)
-
-    if options.show:
-        visualizer.show(cfg, duc_result, title=f"DUC: {base_filename}")
-
-    if options.save:
-        output_path = (
-            options.output_dir / f"{base_filename}_duc.{options.output_format.value}"
-        )
-        visualizer.save(cfg, duc_result, output_path, title=f"DUC: {base_filename}")
-        if not options.quiet:
-            typer.echo(f"Saved DUC visualization: {output_path}")
-
-
-def _visualize_cpg(
-    ast_root, cfg, dataflow_result, base_filename: str, options: AnalysisOptions
-):
-    """Generate CPG visualization."""
-    # Compute def-use chains
-    duc_solver = DefUseSolver()
-    duc_result = duc_solver.solve(cfg, dataflow_result)
-
-    visualizer = CPGVisualizer(options.layout, options.output_format)
-
-    if options.show:
-        visualizer.show(ast_root, cfg, duc_result, title=f"CPG: {base_filename}")
-
-    if options.save:
-        output_path = (
-            options.output_dir / f"{base_filename}_cpg.{options.output_format.value}"
-        )
-        visualizer.save(
-            ast_root, cfg, duc_result, output_path, title=f"CPG: {base_filename}"
-        )
-        if not options.quiet:
-            typer.echo(f"Saved CPG visualization: {output_path}")
+    dataflow_solver = RoundRobinSolver()
+    def_use_solver = DefUseSolver()
+    return def_use_solver.solve(cfg, dataflow_solver.solve(cfg, problem))
