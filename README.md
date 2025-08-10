@@ -78,9 +78,9 @@ If installed as a command, replace `uv run -m tree_climber.cli` with `tree-climb
 
 ### Web Application
 
-<img width="1849" height="811" alt="image" src="https://github.com/user-attachments/assets/2cde36a0-94e3-49f0-980c-7331784c06c7" />
-
 The project includes a webapp for visualizing and interacting with CFG/DFGs.
+
+<img width="1849" height="811" alt="image" src="https://github.com/user-attachments/assets/2cde36a0-94e3-49f0-980c-7331784c06c7" />
 
 #### Start the Backend Server
 
