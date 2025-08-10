@@ -12,40 +12,10 @@ SUPPORTED_LANGUAGES: List[str] = ["c", "java"]
 DEFAULT_LANGUAGE: str = "c"
 
 
-# Output formats
-class OutputFormat(str, Enum):
-    """Supported output formats for visualizations."""
-
-    PNG = "png"
-    SVG = "svg"
-    PDF = "pdf"
-    JSON = "json"
-    DOT = "dot"
-
-
-SUPPORTED_OUTPUT_FORMATS: List[str] = [format.value for format in OutputFormat]
-DEFAULT_OUTPUT_FORMAT: OutputFormat = OutputFormat.PNG
-
-
-# Graph layout algorithms
-class LayoutAlgorithm(str, Enum):
-    """Supported graph layout algorithms."""
-
-    DOT = "dot"  # Hierarchical layout (default)
-    NEATO = "neato"  # Spring model layout
-    FDP = "fdp"  # Force-directed layout
-    SFDP = "sfdp"  # Scalable force-directed layout
-    CIRCO = "circo"  # Circular layout
-    TWOPI = "twopi"  # Radial layout
-
-
-LAYOUT_ALGORITHMS: List[str] = [algo.value for algo in LayoutAlgorithm]
-DEFAULT_LAYOUT: LayoutAlgorithm = LayoutAlgorithm.DOT
-
 # Visualization constants
 DEFAULT_FIGURE_SIZE: tuple[int, int] = (12, 8)
 DEFAULT_DPI: int = 300
-MAX_LABEL_LENGTH: int = 30
+MAX_LABEL_LENGTH: int = 50
 TRUNCATION_SUFFIX: str = "..."
 
 # Color schemes for different graph types
@@ -60,7 +30,7 @@ AST_OVERLAY_EDGE_COLOR: str = "#404040"  # dotted connector edges
 AST_OVERLAY_FONT_SIZE: int = 8  # small font to reduce clutter
 AST_OVERLAY_MAX_CHILDREN: int = 3  # limit how many child nodes we show per CFG node
 AST_OVERLAY_SHOW_ONLY_NAMED: bool = True  # only show named AST children
-AST_OVERLAY_LABEL_MAX: int = 24  # shorter labels for AST overlay
+AST_OVERLAY_LABEL_MAX: int = MAX_LABEL_LENGTH  # shorter labels for AST overlay
 
 # Node colors
 ENTRY_NODE_COLOR: str = "#90EE90"  # Light green
@@ -80,6 +50,9 @@ BREAK_EDGE_LABEL: str = "break"
 CONTINUE_EDGE_LABEL: str = "continue"
 GOTO_EDGE_LABEL: str = "goto"
 RETURN_EDGE_LABEL: str = "return"
+
+# Graphviz constants
+SHAPE_MAP = {"s": "box", "o": "ellipse", "D": "diamond"}
 
 # File extensions mapping
 LANGUAGE_EXTENSIONS: dict[str, List[str]] = {

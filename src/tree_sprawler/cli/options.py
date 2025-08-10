@@ -1,11 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from .constants import (
-    LayoutAlgorithm,
-    OutputFormat,
-)
-
 
 @dataclass
 class AnalysisOptions:
@@ -16,8 +11,6 @@ class AnalysisOptions:
     draw_duc: bool
     draw_cpg: bool
     language: str
-    output_format: OutputFormat
-    layout: LayoutAlgorithm
     output_dir: Path
     save: bool
     show: bool
