@@ -7,6 +7,7 @@ Parsing Bugs
 - [ ] Java def use, a++ should point to itself
 - [ ] C def use, a++ should point to itself and should point to uses of a
 - [ ] Function calls should have an edge from exit going back to the call
+- [ ] Function parameters should alias def uses
 
 UI Bugs
 - [ ] Code editor, when typing, the highlight doesn't update so points to the wrong tokens
