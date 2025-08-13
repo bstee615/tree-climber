@@ -2,19 +2,35 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "uv sync",
+			"type": "shell",
+			"command": "uv sync",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
+			"label": "bun install",
+			"type": "shell",
+			"command": "source ~/.nvm/nvm.sh && nvm use node && cd src/tree_climber/viz/frontend && bun install",
+			"group": "build",
+			"problemMatcher": []
+		},
+		{
 			"label": "Run FastAPI Server",
 			"type": "shell",
 			"command": "ENABLE_DEBUGPY=1 uv run -m uvicorn tree_climber.viz.app:app --reload --host 0.0.0.0 --port 8000",
 			"group": "build",
 			"isBackground": true,
 			"problemMatcher": [],
+			"dependsOn": ["uv sync"]
 		},
 		{
 			"label": "Run Frontend",
 			"type": "shell",
-			"command": "cd src/tree_climber/viz/frontend && bun dev",
+			"command": "source ~/.nvm/nvm.sh && nvm use node && cd src/tree_climber/viz/frontend && bun dev",
 			"isBackground": true,
-			"problemMatcher": []
+			"problemMatcher": [],
+			"dependsOn": ["bun install"]
 		},
 		{
 			"label": "Run Server and Frontend",
