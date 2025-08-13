@@ -1,6 +1,17 @@
+For release 0.1.0
+- [ ] Comprehensive tests and example programs for C and Java
+- [ ] Full list of language features that are supported and not supported (limitations)
+- [ ] CLI parity with 0.0.0
+
+Parsing Bugs
 - [ ] Java def use, a++ should point to itself
 - [ ] C def use, a++ should point to itself and should point to uses of a
 - [ ] Function calls should have an edge from exit going back to the call
+
+UI Bugs
+- [ ] Code editor, when typing, the highlight doesn't update so points to the wrong tokens
+
+Old
 - [x] 💪 Need to implement main.py in parity with tree-climber
 - [x] 💪 Allow toggling Def use edges
 - [x] Java enhanced for loop, next() and hasNext() point to the same ast node.
