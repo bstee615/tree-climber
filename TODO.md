@@ -1,6 +1,5 @@
 For release 0.1.0
 - [ ] Comprehensive tests and example programs for C and Java
-- [ ] Full list of language features that are supported and not supported (limitations)
 - [ ] CLI parity with 0.0.0
 
 Parsing Bugs
