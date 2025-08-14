@@ -131,6 +131,8 @@ The FastAPI backend provides the following endpoints:
 
 Currently, only basic program constructs are supported. I am working to make the parsing more robust and complete.
 
+See the full list of features handled and planned in the [Limitations section of this doc](./docs/extending-languages.md).
+
 ## Development
 
 ### Adding New Languages

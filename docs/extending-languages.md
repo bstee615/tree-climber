@@ -159,3 +159,102 @@ source_node.edge_labels[target_node.id] = "true"  # For conditional branches
    - AttributeError: Usually means incorrect field name
    - KeyError: Missing node field
    - TypeError: Wrong node type handling
+
+## Current Implementation Limitations
+
+This section documents known limitations in existing language implementations that could be addressed when extending support.
+
+### C Language Implementation Limitations (`c.py`)
+
+**Missing Statement Types:**
+- `attributed_statement` - Statements with attributes/annotations 
+- `seh_leave_statement` - Structured Exception Handling (Windows-specific)
+- `seh_try_statement` - SEH try blocks (Windows-specific)
+
+**Missing Expression Handling:**
+- Complex pointer dereferencing patterns
+- Struct/union field access beyond basic cases
+- Function pointers and their invocations
+- Variadic function calls (`...` parameters)
+
+**Missing Advanced Control Flow:**
+- Computed `goto` statements (GCC extension)
+- Nested function definitions (GCC extension)
+- Statement expressions (GCC extension)
+
+**Variable Analysis Gaps:**
+- Array subscript handling in def/use analysis
+- Field member access (struct.field) in variable tracking
+- Pointer arithmetic effects on variable state
+
+### Java Language Implementation Limitations (`java.py`)
+
+**Missing Statement Types:**
+- `assert_statement` - Java assertions
+- `synchronized_statement` - Synchronized blocks 
+- `yield_statement` - Switch expression yield
+- Exception handling
+   - `throw_statement` - Exception throwing
+   - `try_statement` - Try-catch-finally blocks
+   - `try_with_resources_statement` - Try-with-resources
+
+**Missing Advanced Switch Constructs:**
+- `switch_rule` - Modern switch expression rules (Java 14+)
+- Pattern matching in switch statements
+- `guard` expressions in switch cases
+
+**Missing Lambda/Functional Constructs:**
+- `lambda_expression` body analysis beyond basic cases
+- Method references (`::` operator)
+- Stream operations and functional interfaces
+
+**Missing Exception Handling:**
+- `catch_clause` processing
+- `finally_clause` processing
+- Exception propagation through CFG
+- `throws` clause analysis
+
+**Missing Modern Java Features:**
+- Record pattern matching
+- Template expressions (preview feature)
+- Module system statements (`exports`, `requires`, etc.)
+
+**Expression Analysis Gaps:**
+- Generic type instantiation effects
+- Method chaining in fluent interfaces
+- Anonymous class instantiation
+- Array initializer expressions
+
+### General Architecture Limitations
+
+**AST Node Coverage:**
+- Both implementations handle only a subset of available grammar nodes
+- Missing visitor methods for many node types means they're treated as generic statements
+
+**Control Flow Edge Cases:**
+- Fall-through behavior in switch statements not fully modeled
+- Exception control flow paths missing
+- Resource management (try-with-resources) lifecycle not tracked
+
+**Variable Analysis Depth:**
+- Limited handling of complex expressions in def/use analysis  
+- No support for aliasing through pointers/references
+- Missing analysis of field modifications vs local variables
+
+**Language Feature Support:**
+- Modern language features (Java 17+, C23) not covered
+- Compiler-specific extensions (GCC, MSVC) not handled
+- Platform-specific constructs missing
+
+### Recommendations for New Language Implementations
+
+When implementing support for new languages, consider addressing these common gaps:
+
+1. **Exception Handling**: Plan for exception control flow from the start
+2. **Modern Language Features**: Include support for recent language additions
+3. **Complex Expressions**: Handle nested and chained expressions properly
+4. **Variable Analysis**: Implement comprehensive def/use tracking
+5. **Platform Extensions**: Consider compiler-specific or platform-specific features
+6. **Resource Management**: Model resource lifecycle (RAII, try-with-resources, etc.)
+
+This analysis reveals that while both implementations cover core imperative control flow constructs well (if/while/for/switch), they lack support for many advanced language features available in their respective grammars.
