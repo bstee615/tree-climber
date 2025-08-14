@@ -1,6 +1,7 @@
 For release 0.1.0
 - [ ] Comprehensive tests and example programs for C and Java
 - [ ] CLI parity with 0.0.0
+- [x] Full list of language features that are supported and not supported (limitations)
 
 Parsing Bugs
 - [ ] Java def use, a++ should point to itself
@@ -11,7 +12,12 @@ Parsing Bugs
 UI Bugs
 - [ ] Code editor, when typing, the highlight doesn't update so points to the wrong tokens
 
-Old
+Old list
+- [ ] Add class/file nodes.
+- [ ] Handle forward declarations of function calls.
+- [ ] Raise warnings throughout the code and handle gracefully where nodes are missing.
+- [ ] Avoid hardcoded constants in language specific code, preferring predicates, such as "comment" vs. "line_comment/block_comment" -> is_comment.
+- [ ] Detect potentially undefined variables
 - [x] 💪 Need to implement main.py in parity with tree-climber
 - [x] 💪 Allow toggling Def use edges
 - [x] Java enhanced for loop, next() and hasNext() point to the same ast node.
