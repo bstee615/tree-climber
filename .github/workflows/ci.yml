@@ -27,6 +27,7 @@ jobs:
     
     - name: Install dependencies
       run: |
+        apt install -y graphviz graphviz-dev
         uv sync --dev
     
     - name: Run ruff format check
@@ -61,6 +62,7 @@ jobs:
     
     - name: Install dependencies
       run: |
+        apt install -y graphviz graphviz-dev
         uv sync --dev
     
     - name: Run pytest
