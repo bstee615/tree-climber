@@ -5,7 +5,7 @@ This module provides end-to-end validation of CFG generation for C language
 constructs, including individual constructs, nested combinations, and edge cases.
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Tuple
 
 import pytest
 
@@ -1307,6 +1307,160 @@ class TestVariableAnalysis:
 
         # Should include function calls
         assert len(all_calls) > 0, "Should track function calls"
+
+    def test_function_call_edges(self, helper):
+        """Test that function calls create proper call and return edges."""
+        code = """
+        void helper() {
+            int y = 10;
+        }
+        
+        int main() {
+            int x = 5;
+            helper();
+            x = x + 1;
+            return x;
+        }
+        """
+        cfg = helper.build_cfg_from_code(code)
+
+        # Find function nodes
+        helper_entry = None
+        helper_exit = None
+        call_node = None
+        continuation_node = None
+
+        for node in cfg.nodes.values():
+            if node.node_type == NodeType.ENTRY and "helper" in node.source_text:
+                helper_entry = node
+            elif node.node_type == NodeType.EXIT and "helper" in node.source_text:
+                helper_exit = node
+            elif "helper()" in node.source_text:
+                call_node = node
+            elif "x = x + 1" in node.source_text:
+                continuation_node = node
+
+        # Verify nodes were found
+        assert helper_entry is not None, "Should find helper entry node"
+        assert helper_exit is not None, "Should find helper exit node"
+        assert call_node is not None, "Should find function call node"
+        assert continuation_node is not None, "Should find continuation node"
+
+        # Verify call edge: call_node -> helper_entry
+        assert helper_entry.id in call_node.successors, (
+            "Call node should have edge to function entry"
+        )
+
+        # Verify return edge: helper_exit -> call_node
+        assert call_node.id in helper_exit.successors, (
+            "Function exit should have edge back to call node"
+        )
+
+        # Verify continuation edge: call_node -> continuation_node
+        assert continuation_node.id in call_node.successors, (
+            "Call node should have edge to continuation"
+        )
+
+        # Verify edge labels
+        call_edge_label = call_node.get_edge_label(helper_entry.id)
+        return_edge_label = helper_exit.get_edge_label(call_node.id)
+
+        assert call_edge_label == "function_call", (
+            f"Call edge should be labeled 'function_call', got {call_edge_label}"
+        )
+        assert return_edge_label == "function_return", (
+            f"Return edge should be labeled 'function_return', got {return_edge_label}"
+        )
+
+    def test_multiple_function_calls(self, helper):
+        """Test multiple function calls in sequence."""
+        code = """
+        void func1() {
+            int a = 1;
+        }
+        
+        void func2() {
+            int b = 2;
+        }
+        
+        int main() {
+            func1();
+            func2();
+            return 0;
+        }
+        """
+        cfg = helper.build_cfg_from_code(code)
+
+        # Find call nodes
+        func1_call = None
+        func2_call = None
+
+        for node in cfg.nodes.values():
+            if "func1()" in node.source_text:
+                func1_call = node
+            elif "func2()" in node.source_text:
+                func2_call = node
+
+        assert func1_call is not None, "Should find func1 call"
+        assert func2_call is not None, "Should find func2 call"
+
+        # Verify calls are connected in sequence
+        assert func2_call.id in func1_call.successors, (
+            "First call should connect to second call"
+        )
+
+        # Verify each call has proper call and return edges
+        func1_call_edges = [
+            label
+            for label in func1_call.edge_labels.values()
+            if label == "function_call"
+        ]
+        func2_call_edges = [
+            label
+            for label in func2_call.edge_labels.values()
+            if label == "function_call"
+        ]
+
+        assert len(func1_call_edges) > 0, "func1 call should have function_call edge"
+        assert len(func2_call_edges) > 0, "func2 call should have function_call edge"
+
+    def test_nested_function_calls(self, helper):
+        """Test function calls within other functions."""
+        code = """
+        int leaf() {
+            return 1;
+        }
+        
+        int intermediate() {
+            return leaf() + 1;
+        }
+        
+        int main() {
+            int result = intermediate();
+            return result;
+        }
+        """
+        cfg = helper.build_cfg_from_code(code)
+
+        # Count function call edges
+        call_edge_count = 0
+        return_edge_count = 0
+
+        for node in cfg.nodes.values():
+            for successor_id in node.successors:
+                edge_label = node.get_edge_label(successor_id)
+                if edge_label == "function_call":
+                    call_edge_count += 1
+                elif edge_label == "function_return":
+                    return_edge_count += 1
+
+        # Should have call edges for intermediate() and leaf() calls
+        assert call_edge_count >= 2, (
+            f"Should have at least 2 function call edges, got {call_edge_count}"
+        )
+        assert return_edge_count >= 2, (
+            f"Should have at least 2 function return edges, got {return_edge_count}"
+        )
 
 
 if __name__ == "__main__":

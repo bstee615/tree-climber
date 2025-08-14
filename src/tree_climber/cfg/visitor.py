@@ -31,6 +31,9 @@ class ControlFlowContext:
         self.function_definitions: Dict[
             int, str
         ] = {}  # Map of entry node IDs to function names
+        self.function_call_exits: List[
+            tuple[int, int]
+        ] = []  # List of (function_exit_id, call_return_point_id) pairs
 
     def push_loop_context(self, break_target: int, continue_target: int):
         """Push a new loop context"""
@@ -116,6 +119,12 @@ class ControlFlowContext:
             print(
                 f"Warning: Function definition for {function_name} already exists with ID {node_id}"
             )
+
+    def register_function_call_return(
+        self, function_exit_id: int, call_return_point_id: int
+    ):
+        """Register a return edge from function exit to call return point"""
+        self.function_call_exits.append((function_exit_id, call_return_point_id))
 
 
 class CFG:
@@ -205,6 +214,14 @@ class CFGVisitor(abc.ABC):
                 ) in self.context.function_definitions.items():
                     if definition_name in function_calls:
                         call_edges.append((node_id, definition_id))
+                        # Register return edge: when this function exits, return to this call node
+                        # Find the exit node for this function definition
+                        for exit_id in self.cfg.exit_node_ids:
+                            exit_node = self.cfg.nodes.get(exit_id)
+                            if exit_node and exit_node.source_text == definition_name:
+                                self.context.register_function_call_return(
+                                    exit_id, node_id
+                                )
                         break
             node.metadata = CFGNodeMetadata(
                 function_calls=function_calls,
@@ -231,8 +248,24 @@ class CFGVisitor(abc.ABC):
         Post-process the CFG to apply transformations after the initial construction.
         Currently implements:
         - Passthrough for ENTRY and EXIT nodes (connecting predecessors directly to successors)
+        - Function call return edges
         """
+        self._add_function_call_return_edges()
         self._passthrough_entry_exit_nodes()
+
+    def _add_function_call_return_edges(self):
+        """Add return edges from function exits to call sites"""
+        for (
+            function_exit_id,
+            call_return_point_id,
+        ) in self.context.function_call_exits:
+            if (
+                function_exit_id in self.cfg.nodes
+                and call_return_point_id in self.cfg.nodes
+            ):
+                self.cfg.add_edge(
+                    function_exit_id, call_return_point_id, label="function_return"
+                )
 
     def _passthrough_entry_exit_nodes(self):
         """
