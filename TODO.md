@@ -1,7 +1,7 @@
 For release 0.1.0
-- [/] Comprehensive tests and example programs for C and Java
-  - [x] C
-  - [ ] Java
+- [x] Comprehensive tests and example programs for C and Java
+  - [x] C (37/37 tests passed - 100% success)
+  - [x] Java (29/29 tests passed - 100% success)
 - [x] CLI parity with 0.0.0
 - [x] Full list of language features that are supported and not supported (limitations)
 
@@ -10,6 +10,28 @@ Parsing Bugs
 - [ ] C def use, a++ should point to itself and should point to uses of a
 - [ ] Function calls should have an edge from exit going back to the call
 - [ ] Function parameters should alias def uses
+
+Java CFG Enhancement Opportunities (Low Priority)
+- [ ] Method call chain decomposition: Separate chained method calls into individual CFG nodes for better granularity
+  - Current: `obj.method1().method2()` creates single STATEMENT node
+  - Enhancement: Create separate METHOD_CALL nodes for each call in chain
+  - Benefits: More granular CFG representation, better dataflow analysis
+- [ ] Lambda expression CFG contexts: Create separate CFG contexts for lambda body statements
+  - Current: Lambda bodies processed within containing method CFG
+  - Enhancement: Generate isolated CFG contexts for lambda expressions
+  - Benefits: Better representation of functional programming constructs
+- [ ] Modern Java switch expression support: Full support for Java 14+ switch expressions with yield
+  - Current: Switch expressions create minimal CFG nodes
+  - Enhancement: Complete switch expression parsing with yield statements and multiple case values
+  - Benefits: Complete Java 14+ language feature support
+- [ ] Exception handling flow completeness: More explicit exception flow paths between try/catch/finally blocks
+  - Current: Exception handling creates correct but dense statement structure
+  - Enhancement: Clearer exception flow representation and propagation paths
+  - Benefits: Better analysis of exception control flow patterns
+- [ ] Method call context enhancement: Complete TODO at line 63 in java.py for full method call qualification
+  - Current: Returns only method name (identifiers[-1])
+  - Enhancement: Capture full context (obj.method vs Class.staticMethod)
+  - Benefits: Better distinction between instance and static method calls
 
 UI Bugs
 - [ ] Code editor, when typing, the highlight doesn't update so points to the wrong tokens
