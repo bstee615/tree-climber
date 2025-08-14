@@ -44,7 +44,7 @@ Located in: `src/tree_climber/cfg/test_c_cfg_comprehensive.py`
 - `build_cfg_from_code(c_code)` - Parse and build CFG from source
 
 #### 2. Test Data Organization
-Located in: `test/c_cfg_samples/`
+Located in: `test/c_cfg/`
 
 **Sample Files:**
 - `basic_constructs.c` - Individual construct examples
@@ -447,7 +447,7 @@ for param in parameter_list.children:
 ### Test Specification Errors Fixed
 
 #### ❌ **Test Fix #1: Duplicate Node Type Declarations**
-**Files:** `test/c_cfg_samples/test_c_cfg.py:228-234`  
+**Files:** `test/c_cfg/test_c_cfg.py:228-234`  
 **Issue:** `test_if_only` declared `NodeType.STATEMENT: 1` twice in expected types  
 **Fix:** Combined into single `NodeType.STATEMENT: 2` declaration
 
