@@ -21,7 +21,7 @@ class ControlFlowContext:
         self.break_targets: List[int] = []  # Stack of break targets
         self.continue_targets: List[int] = []  # Stack of continue targets
         self.current_nodes: List[int] = []  # Current active nodes
-        self.switch_head: Optional[int] = None  # Current switch statement head
+        self.switch_heads: List[int] = []  # Stack of switch statement heads
         self.labels: Dict[str, int] = {}  # Map of label names to node IDs
         self.forward_goto_refs: Dict[
             str, List[int]
@@ -47,13 +47,14 @@ class ControlFlowContext:
     def push_switch_context(self, break_target: int, switch_head: int):
         """Push a new switch context"""
         self.break_targets.append(break_target)
-        self.switch_head = switch_head
+        self.switch_heads.append(switch_head)
 
     def pop_switch_context(self):
         """Pop the current switch context"""
         if self.break_targets:
             self.break_targets.pop()
-        self.switch_head = None
+        if self.switch_heads:
+            self.switch_heads.pop()
 
     def push_entry(self, node_id: int):
         """Set the entry node"""
@@ -83,7 +84,7 @@ class ControlFlowContext:
 
     def get_switch_head(self) -> Optional[int]:
         """Get the current switch head"""
-        return self.switch_head
+        return self.switch_heads[-1] if self.switch_heads else None
 
     def add_label(self, label: str, node_id: int):
         """Register a label with its node ID"""
