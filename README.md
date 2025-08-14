@@ -70,9 +70,36 @@ sudo apt install -y graphviz graphviz-dev
 
 ### CLI
 
-Run the CLI against a file or directory. Use the flags below to pick which graphs to generate and how to render them.
-Try `uv run -m tree_climber.cli --help` to see examples and help.
-If installed as a command, replace `uv run -m tree_climber.cli` with `tree-climber`.
+CLI is available as a command, `tree-climber`. Run the CLI against a file or directory. Use the flags below to pick which graphs to generate and how to render them.
+
+Example:
+
+```bash
+tree-climber test/example.c --draw_cfg --draw_cpg
+```
+
+Example CFG | Example CPG (Code Property Graph, including AST + CFG + DFG edges)
+-- | --
+![Example CFG](./test/example.c_cfg.png) | ![Example CPG](./test/example.c_cpg.png)
+
+An alternative view of the CPG is available which draws the AST and CFG separately, with edges connecting CFG <-> AST nodes. Use the option `-L bigraph`.
+
+Example bigraph CPG
+--
+![Example bigraph CPG](./test/example.c_cpg_bigraph.png)
+
+Try `tree-climber --help` to see all options.
+
+### Command Line Testing
+
+Run CFG generation tests:
+```bash
+# Test C language CFG generation
+uv run src/tree_climber/cfg/test_c.py
+
+# Test Java language CFG generation  
+uv run src/tree_climber/cfg/test_java.py
+```
 
 ### Web Application
 
