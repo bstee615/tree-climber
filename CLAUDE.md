@@ -48,8 +48,12 @@ This document contains important rules and guidelines for working on this codeba
 - **Document plans**: Before starting to edit code, document your plan with the date in the `docs/plans` folder. After completing, document your results at the end of the same file with an executive summary
 - **Edit over create**: ALWAYS prefer editing an existing file to creating a new one
 - **Read before edit**: Use Read tool at least once before editing any file
+- **Purpose**: Maintains codebase integrity and intentionality
+
+### Code Edits
 - **Test significant changes**: For significant code changes, use comprehensive test validation
-- **Purpose**: Maintains codebase integrity and prevents breaking changes
+- **Maintain formatting**: Run `ruff format` to format code that you edit
+- **Purpose**: Maintains code style and prevents breaking changes
 
 ### Task Management
 - **Use TodoWrite frequently**: Use TodoWrite tool frequently to track tasks and give user visibility into progress
