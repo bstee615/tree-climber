@@ -91,17 +91,6 @@ Example bigraph CPG
 
 Try `tree-climber --help` to see all options.
 
-### Command Line Testing
-
-Run CFG generation tests:
-```bash
-# Test C language CFG generation
-uv run src/tree_climber/cfg/test_c.py
-
-# Test Java language CFG generation  
-uv run src/tree_climber/cfg/test_java.py
-```
-
 ### Web Application
 
 The project includes a webapp for visualizing and interacting with CFG/DFGs, inspired by https://godbolt.org.
