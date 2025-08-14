@@ -48,8 +48,10 @@ git clone https://github.com/bstee615/tree-climber
 cd tree-climber
 ```
 
-2. Install Python dependencies:
+2. Install dependencies:
 ```bash
+# Install dependencies on Ubuntu
+sudo apt install -y graphviz graphviz-dev
 uv sync
 ```
 
@@ -63,7 +65,6 @@ bun install
 ```bash
 source .venv/bin/activate
 uv pip install -e .
-sudo apt install -y graphviz graphviz-dev
 ```
 
 ## Usage
