@@ -47,19 +47,23 @@ def typer_main(
     # Analysis options
     draw_ast: Annotated[
         bool,
-        typer.Option("--draw-ast", help="Visualize Abstract Syntax Tree"),
+        typer.Option("--draw_ast", help="Visualize Abstract Syntax Tree"),
     ] = False,
     draw_cfg: Annotated[
         bool,
-        typer.Option("--draw-cfg", help="Visualize Control Flow Graph"),
+        typer.Option("--draw_cfg", help="Visualize Control Flow Graph"),
     ] = False,
     draw_dfg: Annotated[
         bool,
-        typer.Option("--draw-dfg", help="Visualize Def-Use Chains"),
+        typer.Option("--draw_dfg", help="Visualize Data Flow Graph/Def-Use Chains"),
+    ] = False,
+    draw_duc: Annotated[
+        bool,
+        typer.Option("--draw_duc", help="Visualize Def-Use Chains (alias for --draw_dfg)"),
     ] = False,
     draw_cpg: Annotated[
         bool,
-        typer.Option("--draw-cpg", help="Visualize Code Property Graph (AST+CFG+DFG)"),
+        typer.Option("--draw_cpg", help="Visualize Code Property Graph (AST+CFG+DFG)"),
     ] = False,
     # Language and format options
     language: Annotated[
@@ -120,8 +124,9 @@ def typer_main(
     # CFG + DFG view (CFG nodes + dashed DFG edges):\n
     tree-climber test/example.c --draw-cfg --draw-dfg
 
-    # DFG-only view:\n
-    tree-climber test/example.c --draw-dfg
+    # DFG-only view (Def-Use Chains):\n
+    tree-climber test/example.c --draw-dfg\n
+    tree-climber test/example.c --draw-duc  # alias for --draw-dfg
 
     # Combined views with overlays, subtree layout (default):\n
     tree-climber test/example.c --draw-cpg
@@ -132,11 +137,14 @@ def typer_main(
     # Specify language and output directory explicitly:\n
     tree-climber test/test.java --language java --draw-ast --draw-cfg --draw-dfg --draw-cpg --output ./out
     """
+    # Handle draw_duc as alias for draw_dfg
+    draw_dfg = draw_dfg or draw_duc
+
     # Validate inputs
     if not any([draw_ast, draw_cfg, draw_dfg, draw_cpg]):
         typer.echo(
             "Error: At least one visualization option must be specified "
-            "(--draw-ast, --draw-cfg, --draw-dfg, or --draw-cpg)",
+            "(--draw-ast, --draw-cfg, --draw-dfg/--draw-duc, or --draw-cpg)",
             err=True,
         )
         raise typer.Exit(1)
