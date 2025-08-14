@@ -1,5 +1,7 @@
 For release 0.1.0
-- [ ] Comprehensive tests and example programs for C and Java
+- [/] Comprehensive tests and example programs for C and Java
+  - [x] C
+  - [ ] Java
 - [x] CLI parity with 0.0.0
 - [x] Full list of language features that are supported and not supported (limitations)
 
