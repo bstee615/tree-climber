@@ -134,6 +134,7 @@ class CCFGVisitor(CFGVisitor):
     def visit_comment(self, node: Node) -> None:
         """Skip comment nodes entirely"""
         # Return None to indicate that this node should be ignored
+        # node parameter required by visitor interface but not used
         return None
 
     def visit_expression_statement(self, node: Node) -> CFGTraversalResult:
@@ -182,14 +183,25 @@ class CCFGVisitor(CFGVisitor):
         for param in parameter_list.children:
             match param.type:
                 case "parameter_declaration":
-                    parameter_identifier = get_required_child_by_field_name(
-                        param, "declarator", "identifier"
-                    )
-                    parameters.append(get_source_text(parameter_identifier))
+                    # Get the declarator within the parameter
+                    declarator_child = get_child_by_field_name(param, "declarator")
+                    if declarator_child:
+                        # For simple identifiers
+                        if declarator_child.type == "identifier":
+                            param_name = get_source_text(declarator_child)
+                            parameters.append(param_name)
+                        # For pointer declarators
+                        elif declarator_child.type == "pointer_declarator":
+                            # Find the identifier within the pointer declarator
+                            for grandchild in declarator_child.children:
+                                if grandchild.type == "identifier":
+                                    param_name = get_source_text(grandchild)
+                                    parameters.append(param_name)
+                                    break
                 case _:
-                    # TODO: Raise warning
-                    parameters.append(get_source_text(param))
-            break
+                    # Skip punctuation and other non-parameter elements
+                    if param.is_named and not param.type == "comment":
+                        parameters.append(get_source_text(param))
 
         # Find closing brace in body for exit node location
         for child in body_node.children:
