@@ -59,7 +59,9 @@ def typer_main(
     ] = False,
     draw_duc: Annotated[
         bool,
-        typer.Option("--draw_duc", help="Visualize Def-Use Chains (alias for --draw_dfg)"),
+        typer.Option(
+            "--draw_duc", help="Visualize Def-Use Chains (alias for --draw_dfg)"
+        ),
     ] = False,
     draw_cpg: Annotated[
         bool,
