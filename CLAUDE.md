@@ -52,7 +52,7 @@ This document contains important rules and guidelines for working on this codeba
 
 ### Code Edits
 - **Test significant changes**: For significant code changes, use comprehensive test validation
-- **Maintain formatting**: ALWAYS run `ruff format` to format code that you edit
+- **Maintain formatting**: ALWAYS run `ruff format` after wrapping up tasks.
 - **Purpose**: Maintains code style and prevents breaking changes
 
 ### Task Management
