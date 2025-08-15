@@ -21,7 +21,14 @@ from tree_climber.cli.commands import (
     AnalysisOptions,
     analyze_source_code,
 )
-from tree_climber.cli.source import CodeSource, FileSource, ClipboardSource
+from tree_climber.cli.source import (
+    ClipboardSource,
+    CodeSource,
+    FileSource,
+    StdinSource,
+    is_stdin_available,
+    read_stdin,
+)
 from tree_climber.cli.visualizers.constants import SUPPORTED_LANGUAGES
 
 # Create the main Typer app
@@ -37,7 +44,7 @@ def typer_main(
     filename: Annotated[
         Optional[Path],
         typer.Argument(
-            help="Source code file or directory to analyze (optional if --clipboard is used)",
+            help="Source code file or directory to analyze, 'clipboard' to read from clipboard, or pipe via stdin",
         ),
     ] = None,
     # Analysis options
@@ -107,11 +114,6 @@ def typer_main(
             help=f"Layout style for visualizations ({', '.join(SUPPORTED_LAYOUTS)}).",
         ),
     ] = "subtree",
-    # Input source options
-    clipboard: Annotated[
-        bool,
-        typer.Option("--clipboard", "-c", help="Read source code from clipboard instead of file"),
-    ] = False,
 ):
     """
     Analyze source code and generate program analysis visualizations.
@@ -141,19 +143,47 @@ def typer_main(
     tree-climber test/test.java --language java --draw-ast --draw-cfg --draw-dfg --draw-cpg --output ./out
 
     # Read code from clipboard (language must be specified):\n
-    tree-climber --clipboard --language java --draw-ast
-    tree-climber -c -l c --draw-cfg --draw-dfg
+    tree-climber clipboard --language java --draw-ast
+    tree-climber clipboard -l c --draw-cfg --draw-dfg
+
+    # Read code from stdin pipe (language must be specified):\n
+    echo 'int main() { return 0; }' | tree-climber - --language c --draw-ast
+    cat mycode.java | tree-climber - -l java --draw-cfg
     """
     # Handle draw_duc as alias for draw_dfg
     draw_dfg = draw_dfg or draw_duc
 
-    # Validate input source
-    if clipboard and filename:
-        typer.echo("Error: Cannot specify both --clipboard and filename", err=True)
+    # Check for special filenames and stdin input
+    stdin_available = is_stdin_available()
+    clipboard_requested = filename and str(filename) == "clipboard"
+    stdin_requested = filename and str(filename) == "-"
+
+    # Validate input source - exactly one valid input method
+    if stdin_requested:
+        if not stdin_available:
+            typer.echo(
+                "Error: Filename '-' specified but no stdin input detected", err=True
+            )
+            raise typer.Exit(1)
+        if Path("-").exists():
+            typer.echo(
+                "Error: 'stdin' signifies stdin input but a file named 'stdin' exists",
+                err=True,
+            )
+            raise typer.Exit(1)
+
+    if clipboard_requested and Path("clipboard").exists():
+        typer.echo(
+            "Error: 'clipboard' signifies clipboard input but a file named 'clipboard' exists",
+            err=True,
+        )
         raise typer.Exit(1)
-    
-    if not clipboard and not filename:
-        typer.echo("Error: Must specify either filename or --clipboard", err=True)
+
+    if not filename and not stdin_available:
+        typer.echo(
+            "Error: Must specify filename, 'clipboard' for clipboard input, '-' for stdin, or pipe input via stdin",
+            err=True,
+        )
         raise typer.Exit(1)
 
     # Validate inputs
@@ -185,10 +215,11 @@ def typer_main(
         )
         raise typer.Exit(1)
 
-    # Create code source
+    # Create code source based on input type
     code_source: CodeSource
-    if clipboard:
-        from tree_climber.cli.clipboard import get_clipboard_content, ClipboardError
+    if clipboard_requested:
+        from tree_climber.cli.clipboard import ClipboardError, get_clipboard_content
+
         try:
             source_code = get_clipboard_content()
             if not source_code.strip():
@@ -198,18 +229,35 @@ def typer_main(
         except ClipboardError as e:
             typer.echo(f"Error: {e}", err=True)
             raise typer.Exit(1)
-        
+
         # For clipboard input, we need to detect language or require it
         if not language:
             typer.echo(
-                "Error: Language must be specified when using --clipboard "
+                "Error: Language must be specified when using 'clipboard' "
                 "(cannot auto-detect from clipboard content)",
                 err=True,
             )
             raise typer.Exit(1)
+    elif stdin_requested or (not filename and stdin_available):
+        source_code = read_stdin()
+        if not source_code.strip():
+            typer.echo("Error: Stdin is empty", err=True)
+            raise typer.Exit(1)
+        code_source = StdinSource(source_code)
+
+        # For stdin input, we need to detect language or require it
+        if not language:
+            typer.echo(
+                "Error: Language must be specified when using stdin "
+                "(cannot auto-detect from piped content)",
+                err=True,
+            )
+            raise typer.Exit(1)
     else:
+        # At this point, filename is guaranteed to be not None by validation logic
+        assert filename is not None
         code_source = FileSource(filename)
-        
+
         # Auto-detect language if not specified for file input
         if not language:
             language = code_source.get_language_hint()
@@ -252,8 +300,6 @@ def typer_main(
         else:
             typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
-
-
 
 
 @app.command()

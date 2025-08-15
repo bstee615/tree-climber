@@ -1,7 +1,8 @@
 """
-Code source abstraction for handling input from files or clipboard.
+Code source abstraction for handling input from files, clipboard, or stdin.
 """
 
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
@@ -96,3 +97,40 @@ class ClipboardSource(CodeSource):
     def get_output_dir(self) -> Path:
         """Return current working directory for clipboard sources."""
         return Path.cwd()
+
+
+class StdinSource(CodeSource):
+    """Code source from standard input (pipe)."""
+
+    def __init__(self, content: str):
+        self.content = content
+
+    def get_content(self) -> str:
+        """Return the stdin content."""
+        return self.content
+
+    def get_display_name(self) -> str:
+        """Return a description for stdin source."""
+        return "stdin"
+
+    def get_output_name(self) -> str:
+        """Return a generic name for stdin output."""
+        return "stdin_code"
+
+    def get_language_hint(self) -> Optional[str]:
+        """Cannot detect language from stdin content."""
+        return None
+
+    def get_output_dir(self) -> Path:
+        """Return current working directory for stdin sources."""
+        return Path.cwd()
+
+
+def is_stdin_available() -> bool:
+    """Check if stdin has data available (is being piped to)."""
+    return not sys.stdin.isatty()
+
+
+def read_stdin() -> str:
+    """Read all content from stdin."""
+    return sys.stdin.read()
