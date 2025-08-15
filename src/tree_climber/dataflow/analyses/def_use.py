@@ -109,13 +109,20 @@ class UseDefSolver:
             
         # Find the function entry node that defines this parameter
         parameter_def_node = None
+        parameter_def_node_id = None
         for node_id, node in cfg.nodes.items():
             if (node.node_type.name == "ENTRY" and 
                 variable_name in node.metadata.variable_definitions):
                 parameter_def_node = node
+                parameter_def_node_id = node_id
                 break
         
         if not parameter_def_node:
+            return alias_definitions
+        
+        # Check if the parameter has been redefined between the function entry and this use
+        if self._parameter_redefined_before_use(cfg, parameter_def_node_id, use_node_id, variable_name):
+            # Parameter was redefined, so the original alias is killed
             return alias_definitions
             
         # Find call sites that call this function
@@ -141,6 +148,53 @@ class UseDefSolver:
                             alias_definitions.append(pred_node_id)
         
         return alias_definitions
+    
+    def _parameter_redefined_before_use(self, cfg: CFG, param_def_node_id: int, use_node_id: int, variable_name: str) -> bool:
+        """Check if a parameter is redefined between its initial definition and a use."""
+        # Check if there's a path from the parameter definition to the use that
+        # goes through a redefinition of the same variable
+        
+        # Get all nodes that define this variable (excluding the parameter entry node)
+        redefinition_nodes = []
+        for node_id, node in cfg.nodes.items():
+            if (node_id != param_def_node_id and 
+                variable_name in node.metadata.variable_definitions):
+                redefinition_nodes.append(node_id)
+        
+        if not redefinition_nodes:
+            return False  # No redefinitions found
+            
+        # Check if there's a path from parameter definition to use that goes through a redefinition
+        return self._path_goes_through_redefinition(cfg, param_def_node_id, use_node_id, redefinition_nodes)
+    
+    def _path_goes_through_redefinition(self, cfg: CFG, start_node_id: int, target_node_id: int, redefinition_nodes: List[int]) -> bool:
+        """Check if any path from start to target goes through a redefinition."""
+        if start_node_id == target_node_id:
+            return False  # Direct path, no redefinition
+            
+        visited = set()
+        stack = [(start_node_id, False)]  # (node_id, has_seen_redefinition)
+        
+        while stack:
+            current, seen_redef = stack.pop()
+            if current == target_node_id:
+                return seen_redef  # Return whether we've seen a redefinition on this path
+            if current in visited:
+                continue
+            visited.add(current)
+            
+            current_node = cfg.nodes.get(current)
+            if current_node:
+                # Check if this node is a redefinition (but not the start node)
+                new_seen_redef = seen_redef or (current != start_node_id and current in redefinition_nodes)
+                    
+                # Add successors to explore
+                for succ_id in current_node.successors:
+                    if succ_id not in visited:
+                        stack.append((succ_id, new_seen_redef))
+        
+        return False  # No path found
+    
     
     def _reaches_call_site(self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str) -> bool:
         """Check if a definition reaches a call site without being killed."""
@@ -250,13 +304,20 @@ class DefUseSolver:
             
         # Find the function entry node that defines this parameter
         parameter_def_node = None
+        parameter_def_node_id = None
         for node_id, node in cfg.nodes.items():
             if (node.node_type.name == "ENTRY" and 
                 variable_name in node.metadata.variable_definitions):
                 parameter_def_node = node
+                parameter_def_node_id = node_id
                 break
         
         if not parameter_def_node:
+            return alias_definitions
+        
+        # Check if the parameter has been redefined between the function entry and this use
+        if self._parameter_redefined_before_use(cfg, parameter_def_node_id, use_node_id, variable_name):
+            # Parameter was redefined, so the original alias is killed
             return alias_definitions
             
         # Find call sites that call this function
@@ -282,6 +343,53 @@ class DefUseSolver:
                             alias_definitions.append(pred_node_id)
         
         return alias_definitions
+    
+    def _parameter_redefined_before_use(self, cfg: CFG, param_def_node_id: int, use_node_id: int, variable_name: str) -> bool:
+        """Check if a parameter is redefined between its initial definition and a use."""
+        # Check if there's a path from the parameter definition to the use that
+        # goes through a redefinition of the same variable
+        
+        # Get all nodes that define this variable (excluding the parameter entry node)
+        redefinition_nodes = []
+        for node_id, node in cfg.nodes.items():
+            if (node_id != param_def_node_id and 
+                variable_name in node.metadata.variable_definitions):
+                redefinition_nodes.append(node_id)
+        
+        if not redefinition_nodes:
+            return False  # No redefinitions found
+            
+        # Check if there's a path from parameter definition to use that goes through a redefinition
+        return self._path_goes_through_redefinition(cfg, param_def_node_id, use_node_id, redefinition_nodes)
+    
+    def _path_goes_through_redefinition(self, cfg: CFG, start_node_id: int, target_node_id: int, redefinition_nodes: List[int]) -> bool:
+        """Check if any path from start to target goes through a redefinition."""
+        if start_node_id == target_node_id:
+            return False  # Direct path, no redefinition
+            
+        visited = set()
+        stack = [(start_node_id, False)]  # (node_id, has_seen_redefinition)
+        
+        while stack:
+            current, seen_redef = stack.pop()
+            if current == target_node_id:
+                return seen_redef  # Return whether we've seen a redefinition on this path
+            if current in visited:
+                continue
+            visited.add(current)
+            
+            current_node = cfg.nodes.get(current)
+            if current_node:
+                # Check if this node is a redefinition (but not the start node)
+                new_seen_redef = seen_redef or (current != start_node_id and current in redefinition_nodes)
+                    
+                # Add successors to explore
+                for succ_id in current_node.successors:
+                    if succ_id not in visited:
+                        stack.append((succ_id, new_seen_redef))
+        
+        return False  # No path found
+    
     
     def _reaches_call_site(self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str) -> bool:
         """Check if a definition reaches a call site without being killed."""
