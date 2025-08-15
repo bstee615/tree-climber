@@ -206,6 +206,11 @@ class DefUseSolver:
                     and fact.variable_name == variable_name
                 ]
                 
+                # Check if this node also defines the same variable (self-reference case)
+                if variable_name in node.metadata.variable_definitions:
+                    # This is a self-referencing operation like a++ or a += 1
+                    definitions.append(node_id)
+                
                 # Also check for inter-procedural parameter aliases
                 alias_definitions = self._find_parameter_aliases(cfg, node_id, variable_name)
                 definitions.extend(alias_definitions)

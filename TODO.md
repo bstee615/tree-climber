@@ -8,8 +8,8 @@ For release 0.1.0
 Parsing Bugs
 - [x] Both languages CFG, Function calls should have an edge from exit going back to the call
 - [x] Both languages DFG, Function parameters should alias def uses
-- [ ] Java def use, a++ should point to itself
-- [ ] C def use, a++ should point to itself and should point to uses of a
+- [x] Java def use, a++ should point to itself
+- [x] C def use, a++ should point to itself and should point to uses of a
 
 Java CFG Enhancement Opportunities (Low Priority)
 - [ ] Method call chain decomposition: Separate chained method calls into individual CFG nodes for better granularity

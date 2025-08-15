@@ -462,6 +462,203 @@ class TestInterproceduralAnalysis:
                                     "Parameter 'x' should alias through the call chain")
 
 
+class TestIncrementOperators:
+    """Test increment and decrement operator def-use behavior."""
+
+    @pytest.fixture(params=["c", "java"])
+    def helper(self, request):
+        return DFGTestHelper(request.param)
+
+    def test_postfix_increment_self_reference(self, helper):
+        """Test that a++ should point to itself in def-use chains."""
+        if helper.language == "c":
+            code = """
+            int main() {
+                int a = 5;
+                a++;
+                return a;
+            }
+            """
+        else:  # java
+            code = """
+            public class Test {
+                public static int main() {
+                    int a = 5;
+                    a++;
+                    return a;
+                }
+            }
+            """
+        
+        cfg, def_use_result, use_def_result = helper.build_dfg_from_code(code)
+        
+        # Debug the current chains
+        helper.debug_dfg_chains(cfg, def_use_result, use_def_result, "Postfix increment test")
+        
+        # a++ should create a def-use chain where the increment definition points to itself
+        a_chains = def_use_result.chains.get("a", [])
+        assert len(a_chains) >= 1, f"Expected at least 1 def-use chain for a, got {len(a_chains)}"
+        
+        # Look for the increment chain that should point to itself
+        increment_chain = None
+        for chain in a_chains:
+            def_node = cfg.nodes.get(chain.definition)
+            def_text = def_node.source_text.strip() if def_node else ""
+            if "++" in def_text:
+                increment_chain = chain
+                break
+        
+        assert increment_chain is not None, "Should find def-use chain for a++ increment"
+        
+        # The increment should point to its own use (self-reference)
+        # For C: a++ should point to itself AND to uses of a
+        # For Java: a++ should point to itself
+        increment_def_id = increment_chain.definition
+        assert increment_def_id in increment_chain.uses, "a++ should have a self-reference (definition should be in its own uses)"
+
+    def test_prefix_increment_self_reference(self, helper):
+        """Test that ++a should point to itself in def-use chains."""
+        if helper.language == "c":
+            code = """
+            int main() {
+                int a = 5;
+                ++a;
+                return a;
+            }
+            """
+        else:  # java
+            code = """
+            public class Test {
+                public static int main() {
+                    int a = 5;
+                    ++a;
+                    return a;
+                }
+            }
+            """
+        
+        cfg, def_use_result, use_def_result = helper.build_dfg_from_code(code)
+        
+        # Debug the current chains
+        helper.debug_dfg_chains(cfg, def_use_result, use_def_result, "Prefix increment test")
+        
+        # ++a should create a def-use chain where the increment definition points to itself
+        a_chains = def_use_result.chains.get("a", [])
+        assert len(a_chains) >= 1, f"Expected at least 1 def-use chain for a, got {len(a_chains)}"
+        
+        # Look for the increment chain
+        increment_chain = None
+        for chain in a_chains:
+            def_node = cfg.nodes.get(chain.definition)
+            def_text = def_node.source_text.strip() if def_node else ""
+            if "++" in def_text:
+                increment_chain = chain
+                break
+        
+        assert increment_chain is not None, "Should find def-use chain for ++a increment"
+        
+        # The increment should point to its own use (self-reference)
+        increment_def_id = increment_chain.definition
+        assert increment_def_id in increment_chain.uses, "++a should have a self-reference"
+
+    def test_increment_in_expression(self, helper):
+        """Test increment operators within expressions."""
+        if helper.language == "c":
+            code = """
+            int main() {
+                int a = 5;
+                int b = a++ + 1;
+                return b;
+            }
+            """
+        else:  # java
+            code = """
+            public class Test {
+                public static int main() {
+                    int a = 5;
+                    int b = a++ + 1;
+                    return b;
+                }
+            }
+            """
+        
+        cfg, def_use_result, use_def_result = helper.build_dfg_from_code(code)
+        
+        # Debug the current chains
+        helper.debug_dfg_chains(cfg, def_use_result, use_def_result, "Increment in expression test")
+        
+        # Find the node that contains the increment (should define and use 'a')
+        increment_node = None
+        for node_id, node in cfg.nodes.items():
+            if ("++" in node.source_text and 
+                "a" in node.metadata.variable_definitions and 
+                "a" in node.metadata.variable_uses):
+                increment_node = node_id
+                break
+        
+        assert increment_node is not None, "Should find node with increment operation"
+        
+        # Find the def-use chain for 'a' from the increment node
+        a_chains = def_use_result.chains.get("a", [])
+        increment_chain = None
+        for chain in a_chains:
+            if chain.definition == increment_node:
+                increment_chain = chain
+                break
+        
+        assert increment_chain is not None, "Should find def-use chain for increment"
+        assert increment_node in increment_chain.uses, "a++ should have self-reference even in expressions"
+
+    def test_multiple_increments(self, helper):
+        """Test multiple increment operations on the same variable."""
+        if helper.language == "c":
+            code = """
+            int main() {
+                int a = 5;
+                a++;
+                ++a;
+                a--;
+                return a;
+            }
+            """
+        else:  # java
+            code = """
+            public class Test {
+                public static int main() {
+                    int a = 5;
+                    a++;
+                    ++a;
+                    a--;
+                    return a;
+                }
+            }
+            """
+        
+        cfg, def_use_result, use_def_result = helper.build_dfg_from_code(code)
+        
+        # Debug the current chains
+        helper.debug_dfg_chains(cfg, def_use_result, use_def_result, "Multiple increments test")
+        
+        # Should have multiple def-use chains for a
+        a_chains = def_use_result.chains.get("a", [])
+        assert len(a_chains) >= 3, f"Expected at least 3 def-use chains for a (initial + increments), got {len(a_chains)}"
+        
+        # Each increment/decrement should have self-reference
+        increment_chains = []
+        for chain in a_chains:
+            def_node = cfg.nodes.get(chain.definition)
+            def_text = def_node.source_text.strip() if def_node else ""
+            if "++" in def_text or "--" in def_text:
+                increment_chains.append(chain)
+        
+        assert len(increment_chains) >= 3, f"Expected at least 3 increment/decrement chains, got {len(increment_chains)}"
+        
+        # Each increment chain should have self-reference
+        for chain in increment_chains:
+            increment_def_id = chain.definition
+            assert increment_def_id in chain.uses, f"Increment/decrement at node {increment_def_id} should have self-reference"
+
+
 class TestComplexDataflow:
     """Test complex dataflow scenarios."""
 
@@ -550,6 +747,64 @@ class TestComplexDataflow:
         # Original parameter should alias to argument
         helper.assert_parameter_alias(def_use_result, "p", "x = 5", "p = p + 10", 
                                     "Original parameter should alias to argument")
+    
+    def test_parameter_redefinition_kills_alias(self, helper):
+        """Test that parameter redefinition should kill the original alias."""
+        if helper.language == "c":
+            code = """
+            void helper(int a) {
+                a = 10;
+                int b = a + 1;
+            }
+            
+            int main() {
+                int x = 5;
+                helper(x);
+                return 0;
+            }
+            """
+        else:  # java
+            code = """
+            public class Test {
+                public static void helper(int a) {
+                    a = 10;
+                    int b = a + 1;
+                }
+                
+                public static void main(String[] args) {
+                    int x = 5;
+                    helper(x);
+                }
+            }
+            """
+        
+        cfg, def_use_result, use_def_result = helper.build_dfg_from_code(code)
+        
+        # Debug the current chains
+        helper.debug_dfg_chains(cfg, def_use_result, use_def_result, "Parameter redefinition test")
+        
+        # Find the use of 'a' in "int b = a + 1"
+        a_use_chains = use_def_result.chains.get("a", [])
+        b_assignment_chain = None
+        for chain in a_use_chains:
+            use_node = cfg.nodes.get(chain.use)
+            if use_node and "b = a + 1" in use_node.source_text:
+                b_assignment_chain = chain
+                break
+        
+        assert b_assignment_chain is not None, "Should find use-def chain for 'a' in 'b = a + 1'"
+        
+        # The use of 'a' in "int b = a + 1" should ONLY reach the definition "a = 10"
+        # It should NOT reach the original argument definition "x = 5"
+        reaching_defs = []
+        for def_id in b_assignment_chain.definitions:
+            def_node = cfg.nodes.get(def_id)
+            if def_node:
+                reaching_defs.append(def_node.source_text.strip())
+        
+        # Should only have "a = 10" as reaching definition, not "x = 5"
+        assert any("a = 10" in def_text for def_text in reaching_defs), "Should have 'a = 10' as reaching definition"
+        assert not any("x = 5" in def_text for def_text in reaching_defs), f"Should NOT have 'x = 5' as reaching definition. Found: {reaching_defs}"
 
 
 if __name__ == "__main__":

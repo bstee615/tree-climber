@@ -79,6 +79,11 @@ class CCFGVisitor(CFGVisitor):
                 for child in node.children:
                     if child.type == "identifier":
                         return child.text.decode()
+            elif node.type == "update_expression":
+                # Handle increment/decrement operators like a++, ++a, a--, --a
+                for child in node.children:
+                    if child.type == "identifier":
+                        return child.text.decode()
             return None
 
         return dfs(ast_node, process_definition)
@@ -106,6 +111,9 @@ class CCFGVisitor(CFGVisitor):
                         else:
                             # Otherwise, it's an assignment target, not a use
                             return None
+                    if node.parent.type == "update_expression":
+                        # Increment/decrement operations are both uses and definitions
+                        return node.text.decode()
                 return node.text.decode()
             return None
 
