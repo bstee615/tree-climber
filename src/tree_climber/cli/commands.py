@@ -21,6 +21,7 @@ from tree_climber.dataflow.analyses.reaching_definitions import (
 from tree_climber.dataflow.solver import RoundRobinSolver
 
 from .options import AnalysisOptions
+from .source import CodeSource
 from .visualizers import (
     ASTVisualizer,
     BiGraphVisualizer,
@@ -57,20 +58,20 @@ class AnalysisTimer:
             typer.echo(f"✓ {self.operation_name} completed")
 
 
-def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
+def analyze_source_code(source: CodeSource, options: AnalysisOptions) -> None:
     """
     Analyze source code and generate requested visualizations.
 
     Args:
-        filename: Path to source file or directory to analyze
+        source: Code source (file or clipboard)
         options: Configuration options for the analysis
     """
     if not options.quiet:
-        typer.echo(f"Analyzing: {filename}")
+        typer.echo(f"Analyzing: {source.get_display_name()}")
 
     # Parse source code to AST
     with AnalysisTimer("AST parsing", options.timing, options.verbose):
-        ast_root = _parse_source_file(filename, options.language)
+        ast_root = _parse_source_string(source.get_content(), options.language)
 
     # Build CFG if needed
     cfg = None
@@ -86,7 +87,7 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
         with AnalysisTimer("Dataflow analysis", options.timing, options.verbose):
             def_use_result = _analyze_dataflow(cfg)
 
-    visualizer_options = (filename, options, ast_root, cfg, def_use_result)
+    visualizer_options = (source, options, ast_root, cfg, def_use_result)
     if options.draw_ast:
         with AnalysisTimer("AST visualization", options.timing, options.verbose):
             ASTVisualizer(*visualizer_options).visualize()
@@ -104,12 +105,8 @@ def analyze_source_code(filename: Path, options: AnalysisOptions) -> None:
         typer.echo("✨ Analysis complete!")
 
 
-def _parse_source_file(filename: Path, language: str) -> Tree:
-    """Parse source code file to AST."""
-    if not filename.is_file():
-        raise ValueError(f"Not a file: {filename}")
-
-    source_code = filename.read_text(encoding="utf-8")
+def _parse_source_string(source_code: str, language: str) -> Tree:
+    """Parse source code string to AST."""
     return parse_source_to_ast(source_code, language)
 
 

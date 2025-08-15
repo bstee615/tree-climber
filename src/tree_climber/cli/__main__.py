@@ -21,10 +21,8 @@ from tree_climber.cli.commands import (
     AnalysisOptions,
     analyze_source_code,
 )
-from tree_climber.cli.visualizers.constants import (
-    DEFAULT_LANGUAGE,
-    SUPPORTED_LANGUAGES,
-)
+from tree_climber.cli.source import CodeSource, FileSource, ClipboardSource
+from tree_climber.cli.visualizers.constants import SUPPORTED_LANGUAGES
 
 # Create the main Typer app
 app = typer.Typer(
@@ -37,13 +35,11 @@ app = typer.Typer(
 
 def typer_main(
     filename: Annotated[
-        Path,
+        Optional[Path],
         typer.Argument(
-            help="Source code file or directory to analyze",
-            exists=True,
-            readable=True,
+            help="Source code file or directory to analyze (optional if --clipboard is used)",
         ),
-    ],
+    ] = None,
     # Analysis options
     draw_ast: Annotated[
         bool,
@@ -111,6 +107,11 @@ def typer_main(
             help=f"Layout style for visualizations ({', '.join(SUPPORTED_LAYOUTS)}).",
         ),
     ] = "subtree",
+    # Input source options
+    clipboard: Annotated[
+        bool,
+        typer.Option("--clipboard", "-c", help="Read source code from clipboard instead of file"),
+    ] = False,
 ):
     """
     Analyze source code and generate program analysis visualizations.
@@ -138,9 +139,22 @@ def typer_main(
 
     # Specify language and output directory explicitly:\n
     tree-climber test/test.java --language java --draw-ast --draw-cfg --draw-dfg --draw-cpg --output ./out
+
+    # Read code from clipboard (language must be specified):\n
+    tree-climber --clipboard --language java --draw-ast
+    tree-climber -c -l c --draw-cfg --draw-dfg
     """
     # Handle draw_duc as alias for draw_dfg
     draw_dfg = draw_dfg or draw_duc
+
+    # Validate input source
+    if clipboard and filename:
+        typer.echo("Error: Cannot specify both --clipboard and filename", err=True)
+        raise typer.Exit(1)
+    
+    if not clipboard and not filename:
+        typer.echo("Error: Must specify either filename or --clipboard", err=True)
+        raise typer.Exit(1)
 
     # Validate inputs
     if not any([draw_ast, draw_cfg, draw_dfg, draw_cpg]):
@@ -171,20 +185,45 @@ def typer_main(
         )
         raise typer.Exit(1)
 
-    # Auto-detect language if not specified
-    if not language:
-        language = _detect_language(filename)
+    # Create code source
+    code_source: CodeSource
+    if clipboard:
+        from tree_climber.cli.clipboard import get_clipboard_content, ClipboardError
+        try:
+            source_code = get_clipboard_content()
+            if not source_code.strip():
+                typer.echo("Error: Clipboard is empty", err=True)
+                raise typer.Exit(1)
+            code_source = ClipboardSource(source_code)
+        except ClipboardError as e:
+            typer.echo(f"Error: {e}", err=True)
+            raise typer.Exit(1)
+        
+        # For clipboard input, we need to detect language or require it
         if not language:
             typer.echo(
-                f"Error: Could not auto-detect language for '{filename}'. "
-                f"Please specify with --language option.",
+                "Error: Language must be specified when using --clipboard "
+                "(cannot auto-detect from clipboard content)",
                 err=True,
             )
             raise typer.Exit(1)
+    else:
+        code_source = FileSource(filename)
+        
+        # Auto-detect language if not specified for file input
+        if not language:
+            language = code_source.get_language_hint()
+            if not language:
+                typer.echo(
+                    f"Error: Could not auto-detect language for '{filename}'. "
+                    f"Please specify with --language option.",
+                    err=True,
+                )
+                raise typer.Exit(1)
 
     # Set up output directory
     if output_dir is None:
-        output_dir = filename.parent if filename.is_file() else filename
+        output_dir = code_source.get_output_dir()
 
     # Create analysis options
     options = AnalysisOptions(
@@ -203,7 +242,7 @@ def typer_main(
 
     # Perform analysis
     try:
-        analyze_source_code(filename, options)
+        analyze_source_code(code_source, options)
     except Exception as e:
         if verbose:
             import traceback
@@ -215,19 +254,6 @@ def typer_main(
         raise typer.Exit(1)
 
 
-def _detect_language(filename: Path) -> Optional[str]:
-    """Auto-detect programming language from file extension."""
-    if filename.is_file():
-        suffix = filename.suffix.lower()
-        extension_map = {
-            ".c": "c",
-            ".h": "c",
-            ".java": "java",
-        }
-        return extension_map.get(suffix)
-
-    # For directories, we'd need to scan files
-    return DEFAULT_LANGUAGE
 
 
 @app.command()

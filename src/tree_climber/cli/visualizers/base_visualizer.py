@@ -8,6 +8,7 @@ from tree_sitter import Tree
 from tree_climber.cfg.cfg_types import CFGNode, NodeType
 from tree_climber.cfg.visitor import CFG
 from tree_climber.cli.options import AnalysisOptions
+from tree_climber.cli.source import CodeSource
 from tree_climber.dataflow.analyses.def_use import DefUseResult
 
 from .constants import (
@@ -67,13 +68,13 @@ DefUseEdges = dict[Tuple[int, int], Set[str]]
 class BaseVisualizer(abc.ABC):
     def __init__(
         self,
-        filename: Path,
+        source: CodeSource,
         options: AnalysisOptions,
         ast_root: Optional[Tree],
         cfg: Optional[CFG],
         def_use: Optional[DefUseResult],
     ):
-        self.filename = filename
+        self.source = source
         self.options = options
         self.ast_root = ast_root
         self.cfg = cfg
@@ -98,7 +99,7 @@ class BaseVisualizer(abc.ABC):
 
     def output_path(self, name: Literal["ast", "cfg", "dfg", "cpg"]) -> Path:
         output_dir = self.output_dir
-        output_ast_path = output_dir / f"{self.filename.name}_{name}.png"
+        output_ast_path = output_dir / f"{self.source.get_output_name()}_{name}.png"
         return output_ast_path
 
     @abc.abstractmethod
