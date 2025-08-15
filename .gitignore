@@ -10,4 +10,7 @@ wheels/
 # Virtual environments
 .venv
 
+# Example images
 *.png
+!test/example.c_cfg*.png
+!test/example.c_cpg*.png
