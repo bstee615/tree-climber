@@ -21,7 +21,7 @@ from tree_climber.dataflow.analyses.reaching_definitions import (
 from tree_climber.dataflow.solver import RoundRobinSolver
 
 from .options import AnalysisOptions
-from .source import CodeSource
+from .source import ClipboardSource, CodeSource
 from .visualizers import (
     ASTVisualizer,
     BiGraphVisualizer,
@@ -67,7 +67,10 @@ def analyze_source_code(source: CodeSource, options: AnalysisOptions) -> None:
         options: Configuration options for the analysis
     """
     if not options.quiet:
-        typer.echo(f"Analyzing: {source.get_display_name()}")
+        if isinstance(source, ClipboardSource):
+            typer.echo("Analyzing text from clipboard")
+        else:
+            typer.echo(f"Analyzing: {source.get_display_name()}")
 
     # Parse source code to AST
     with AnalysisTimer("AST parsing", options.timing, options.verbose):
