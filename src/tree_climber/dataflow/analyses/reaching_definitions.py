@@ -1,7 +1,9 @@
 # Define a simple dataflow problem (e.g., reaching definitions)
-from typing import Iterable, Set
+from typing import Iterable, Set, List, Optional
 
-from tree_climber.cfg.cfg_types import CFGNode
+from tree_sitter import Node
+from tree_climber.cfg.cfg_types import CFGNode, NodeType
+from tree_climber.ast_utils import dfs, get_source_text
 from tree_climber.dataflow.dataflow_types import (
     DataflowFact,
     DataflowInitializer,
@@ -20,6 +22,42 @@ class ReachingDefinition(DataflowFact):
         return (
             f"ReachingDefinition(variable={self.variable_name}, node_id={self.node_id})"
         )
+
+
+class ParameterAlias(DataflowFact):
+    def __init__(self, parameter_name: str, argument_name: str, definition_node_id: int):
+        self.parameter_name = parameter_name
+        self.argument_name = argument_name
+        self.definition_node_id = definition_node_id
+
+    def __repr__(self) -> str:
+        return (
+            f"ParameterAlias(parameter={self.parameter_name}, argument={self.argument_name}, def_node={self.definition_node_id})"
+        )
+
+
+def extract_function_call_arguments(ast_node: Node) -> List[str]:
+    """Extract variable names used as arguments in function calls."""
+    arguments = []
+    
+    def process_call(node: Node) -> Optional[str]:
+        if node.type in ("call_expression", "method_invocation"):
+            # Find argument_list or arguments
+            for child in node.children:
+                if child.type in ("argument_list", "arguments"):
+                    # Extract identifiers from arguments
+                    for arg_child in child.children:
+                        if arg_child.type == "identifier":
+                            arguments.append(get_source_text(arg_child))
+                        elif arg_child.is_named:  # Handle complex expressions
+                            # Look for identifiers within the argument expression
+                            for identifier in dfs(arg_child, lambda n: get_source_text(n) if n.type == "identifier" else None):
+                                if identifier:
+                                    arguments.append(identifier)
+        return None
+    
+    dfs(ast_node, process_call)
+    return arguments
 
 
 class Union(MeetOperation):
@@ -43,9 +81,6 @@ class ReachingDefinitionsGenKill(TransferFunction):
         }
 
         out_facts = (in_facts - kill_facts) | gen_facts
-        # print(
-        #     f"Node {node_id}: DEFS = {defined_variables}, GEN = {gen_facts}, KILL = {kill_facts}, OUT = {out_facts}"
-        # )
         return out_facts
 
 

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from tree_climber.cfg.visitor import CFG
-from tree_climber.dataflow.analyses.reaching_definitions import ReachingDefinition
+from tree_climber.dataflow.analyses.reaching_definitions import ReachingDefinition, ParameterAlias
 from tree_climber.dataflow.dataflow_types import DataflowResult
 
 
@@ -81,6 +81,10 @@ class UseDefSolver:
                     if isinstance(fact, ReachingDefinition)
                     and fact.variable_name == variable_name
                 ]
+                
+                # Also check for inter-procedural parameter aliases
+                alias_definitions = self._find_parameter_aliases(cfg, node_id, variable_name)
+                definitions.extend(alias_definitions)
 
                 # Only create a chain if we haven't already for this use
                 if not any(chain.use == node_id for chain in chains[variable_name]):
@@ -93,6 +97,85 @@ class UseDefSolver:
                     )
 
         return result
+
+    def _find_parameter_aliases(self, cfg: CFG, use_node_id: int, variable_name: str) -> List[int]:
+        """Find argument definitions that alias to this parameter use."""
+        alias_definitions = []
+        
+        # Check if this variable use is for a function parameter
+        use_node = cfg.nodes[use_node_id]
+        if variable_name not in use_node.metadata.variable_uses:
+            return alias_definitions
+            
+        # Find the function entry node that defines this parameter
+        parameter_def_node = None
+        for node_id, node in cfg.nodes.items():
+            if (node.node_type.name == "ENTRY" and 
+                variable_name in node.metadata.variable_definitions):
+                parameter_def_node = node
+                break
+        
+        if not parameter_def_node:
+            return alias_definitions
+            
+        # Find call sites that call this function
+        function_name = parameter_def_node.source_text.strip()
+        for node_id, node in cfg.nodes.items():
+            if (node.metadata.function_calls and 
+                function_name in node.metadata.function_calls and
+                node.ast_node):
+                
+                # Extract arguments from the function call
+                from tree_climber.dataflow.analyses.reaching_definitions import extract_function_call_arguments
+                call_arguments = extract_function_call_arguments(node.ast_node)
+                
+                # Map arguments to parameters
+                param_index = parameter_def_node.metadata.variable_definitions.index(variable_name)
+                if param_index < len(call_arguments):
+                    arg_name = call_arguments[param_index]
+                    
+                    # Find definitions of the argument at the call site
+                    for pred_node_id, pred_node in cfg.nodes.items():
+                        if (arg_name in pred_node.metadata.variable_definitions and
+                            self._reaches_call_site(cfg, pred_node_id, node_id, arg_name)):
+                            alias_definitions.append(pred_node_id)
+        
+        return alias_definitions
+    
+    def _reaches_call_site(self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str) -> bool:
+        """Check if a definition reaches a call site without being killed."""
+        # Simplified reachability check - in a full implementation, 
+        # this would use proper dataflow analysis
+        # For now, we'll do a simple check based on node ordering and CFG structure
+        
+        if def_node_id == call_node_id:
+            return False
+            
+        # Check if there's a path from def_node to call_node
+        visited = set()
+        stack = [def_node_id]
+        
+        while stack:
+            current = stack.pop()
+            if current == call_node_id:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            
+            current_node = cfg.nodes.get(current)
+            if current_node:
+                # Check if this node redefines the variable (kills the definition)
+                if (current != def_node_id and 
+                    variable_name in current_node.metadata.variable_definitions):
+                    continue  # This path is killed
+                    
+                # Add successors to explore
+                for succ_id in current_node.successors:
+                    if succ_id not in visited:
+                        stack.append(succ_id)
+        
+        return False
 
 
 class DefUseSolver:
@@ -122,6 +205,10 @@ class DefUseSolver:
                     if isinstance(fact, ReachingDefinition)
                     and fact.variable_name == variable_name
                 ]
+                
+                # Also check for inter-procedural parameter aliases
+                alias_definitions = self._find_parameter_aliases(cfg, node_id, variable_name)
+                definitions.extend(alias_definitions)
 
                 # Add this use to each definition's list of uses
                 for def_node_id in definitions:
@@ -146,3 +233,79 @@ class DefUseSolver:
             )
 
         return result
+
+    def _find_parameter_aliases(self, cfg: CFG, use_node_id: int, variable_name: str) -> List[int]:
+        """Find argument definitions that alias to this parameter use."""
+        alias_definitions = []
+        
+        # Check if this variable use is for a function parameter
+        use_node = cfg.nodes[use_node_id]
+        if variable_name not in use_node.metadata.variable_uses:
+            return alias_definitions
+            
+        # Find the function entry node that defines this parameter
+        parameter_def_node = None
+        for node_id, node in cfg.nodes.items():
+            if (node.node_type.name == "ENTRY" and 
+                variable_name in node.metadata.variable_definitions):
+                parameter_def_node = node
+                break
+        
+        if not parameter_def_node:
+            return alias_definitions
+            
+        # Find call sites that call this function
+        function_name = parameter_def_node.source_text.strip()
+        for node_id, node in cfg.nodes.items():
+            if (node.metadata.function_calls and 
+                function_name in node.metadata.function_calls and
+                node.ast_node):
+                
+                # Extract arguments from the function call
+                from tree_climber.dataflow.analyses.reaching_definitions import extract_function_call_arguments
+                call_arguments = extract_function_call_arguments(node.ast_node)
+                
+                # Map arguments to parameters
+                param_index = parameter_def_node.metadata.variable_definitions.index(variable_name)
+                if param_index < len(call_arguments):
+                    arg_name = call_arguments[param_index]
+                    
+                    # Find definitions of the argument at the call site
+                    for pred_node_id, pred_node in cfg.nodes.items():
+                        if (arg_name in pred_node.metadata.variable_definitions and
+                            self._reaches_call_site(cfg, pred_node_id, node_id, arg_name)):
+                            alias_definitions.append(pred_node_id)
+        
+        return alias_definitions
+    
+    def _reaches_call_site(self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str) -> bool:
+        """Check if a definition reaches a call site without being killed."""
+        # Simplified reachability check - for now, we'll use a basic heuristic
+        if def_node_id == call_node_id:
+            return False
+            
+        # Check if there's a path from def_node to call_node
+        visited = set()
+        stack = [def_node_id]
+        
+        while stack:
+            current = stack.pop()
+            if current == call_node_id:
+                return True
+            if current in visited:
+                continue
+            visited.add(current)
+            
+            current_node = cfg.nodes.get(current)
+            if current_node:
+                # Check if this node redefines the variable (kills the definition)
+                if (current != def_node_id and 
+                    variable_name in current_node.metadata.variable_definitions):
+                    continue  # This path is killed
+                    
+                # Add successors to explore
+                for succ_id in current_node.successors:
+                    if succ_id not in visited:
+                        stack.append(succ_id)
+        
+        return False
