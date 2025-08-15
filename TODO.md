@@ -6,8 +6,8 @@ For release 0.1.0
 - [x] Full list of language features that are supported and not supported (limitations)
 
 Parsing Bugs
-- [ ] Both languages CFG, Function calls should have an edge from exit going back to the call
-- [ ] Both languages DFG, Function parameters should alias def uses
+- [x] Both languages CFG, Function calls should have an edge from exit going back to the call
+- [x] Both languages DFG, Function parameters should alias def uses
 - [ ] Java def use, a++ should point to itself
 - [ ] C def use, a++ should point to itself and should point to uses of a
 
