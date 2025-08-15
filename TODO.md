@@ -10,6 +10,9 @@ Parsing Bugs
 - [x] Both languages DFG, Function parameters should alias def uses
 - [x] Java def use, a++ should point to itself
 - [x] C def use, a++ should point to itself and should point to uses of a
+- [ ] C and Java def use, in for loops, i++ should have a DFG edge back to i = 0
+- [ ] Java def use, next() should define the list it's operating on in enhanced for loops
+- [ ] C DFG, x += ... should be a use of previous definitions of x
 
 Java CFG Enhancement Opportunities (Low Priority)
 - [ ] Method call chain decomposition: Separate chained method calls into individual CFG nodes for better granularity
