@@ -23,13 +23,14 @@ from .constants import (
 class SubtreeVisualizer(BaseVisualizer):
     @override
     def visualize(self):
-        options = self.options
         cfg = self.cfg
         duc_edges = self.duc_edges
 
         # CPG: CFG with per-node AST subtree clusters and optional DFG overlay
         if cfg is None:
             raise ValueError("CFG required to draw CPG")
+        if duc_edges is None:
+            raise ValueError("DFG required to draw CPG")
         G = pgv.AGraph(strict=False, directed=True)
         G.graph_attr.update(
             ranksep="0.2",
@@ -55,11 +56,7 @@ class SubtreeVisualizer(BaseVisualizer):
                 edge = (node_id, successor_id)
                 label = node.edge_labels.get(successor_id, "")
                 G.add_edge(node_id, successor_id, color="black", label=label)
-                if (
-                    getattr(options, "draw_duc", False)
-                    and duc_edges is not None
-                    and edge in duc_edges
-                ):
+                if edge in duc_edges:
                     dfg_label = ", ".join(sorted(duc_edges[edge]))
                     G.add_edge(
                         node_id,
