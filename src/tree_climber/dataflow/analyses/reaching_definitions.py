@@ -25,21 +25,21 @@ class ReachingDefinition(DataflowFact):
 
 
 class ParameterAlias(DataflowFact):
-    def __init__(self, parameter_name: str, argument_name: str, definition_node_id: int):
+    def __init__(
+        self, parameter_name: str, argument_name: str, definition_node_id: int
+    ):
         self.parameter_name = parameter_name
         self.argument_name = argument_name
         self.definition_node_id = definition_node_id
 
     def __repr__(self) -> str:
-        return (
-            f"ParameterAlias(parameter={self.parameter_name}, argument={self.argument_name}, def_node={self.definition_node_id})"
-        )
+        return f"ParameterAlias(parameter={self.parameter_name}, argument={self.argument_name}, def_node={self.definition_node_id})"
 
 
 def extract_function_call_arguments(ast_node: Node) -> List[str]:
     """Extract variable names used as arguments in function calls."""
     arguments = []
-    
+
     def process_call(node: Node) -> Optional[str]:
         if node.type in ("call_expression", "method_invocation"):
             # Find argument_list or arguments
@@ -51,11 +51,16 @@ def extract_function_call_arguments(ast_node: Node) -> List[str]:
                             arguments.append(get_source_text(arg_child))
                         elif arg_child.is_named:  # Handle complex expressions
                             # Look for identifiers within the argument expression
-                            for identifier in dfs(arg_child, lambda n: get_source_text(n) if n.type == "identifier" else None):
+                            for identifier in dfs(
+                                arg_child,
+                                lambda n: get_source_text(n)
+                                if n.type == "identifier"
+                                else None,
+                            ):
                                 if identifier:
                                     arguments.append(identifier)
         return None
-    
+
     dfs(ast_node, process_call)
     return arguments
 

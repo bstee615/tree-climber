@@ -12,11 +12,11 @@ from test.dfg.test_dfg_comprehensive import DFGTestHelper
 
 class TestDFGStressC:
     """Stress tests using the C stress test program."""
-    
+
     def setup_method(self):
         self.helper = DFGTestHelper("c")
         self.stress_file = os.path.join(os.path.dirname(__file__), "stress_test_c.c")
-    
+
     def test_basic_function_analysis(self):
         """Test DFG analysis on basic functions from stress test."""
         code = """
@@ -32,19 +32,34 @@ class TestDFGStressC:
             return sum;
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Test parameter aliasing
-        self.helper.assert_parameter_alias(def_use_result, "a", "x = 5", "result = a + b",
-                                         "Parameter 'a' should alias to argument 'x'")
-        self.helper.assert_parameter_alias(def_use_result, "b", "y = 3", "result = a + b",
-                                         "Parameter 'b' should alias to argument 'y'")
-        
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "a",
+            "x = 5",
+            "result = a + b",
+            "Parameter 'a' should alias to argument 'x'",
+        )
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "b",
+            "y = 3",
+            "result = a + b",
+            "Parameter 'b' should alias to argument 'y'",
+        )
+
         # Test return value usage
-        self.helper.assert_def_use_chain(def_use_result, "sum", "sum = add(x, y)", "return sum",
-                                        "sum should be defined by function call and used in return")
-    
+        self.helper.assert_def_use_chain(
+            def_use_result,
+            "sum",
+            "sum = add(x, y)",
+            "return sum",
+            "sum should be defined by function call and used in return",
+        )
+
     def test_parameter_modification(self):
         """Test functions that modify their parameters."""
         code = """
@@ -60,17 +75,24 @@ class TestDFGStressC:
             return result;
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Parameter x should have multiple definitions
         x_chains = def_use_result.chains.get("x", [])
-        assert len(x_chains) >= 2, f"Expected at least 2 def-use chains for x, got {len(x_chains)}"
-        
+        assert len(x_chains) >= 2, (
+            f"Expected at least 2 def-use chains for x, got {len(x_chains)}"
+        )
+
         # Original parameter should alias to argument
-        self.helper.assert_parameter_alias(def_use_result, "x", "val = 10", "x = x + 1",
-                                         "Original parameter should alias to argument")
-    
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "x",
+            "val = 10",
+            "x = x + 1",
+            "Original parameter should alias to argument",
+        )
+
     def test_nested_function_calls(self):
         """Test complex nested function call patterns."""
         code = """
@@ -95,18 +117,27 @@ class TestDFGStressC:
             return result;
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Test the aliasing chain through nested calls
-        self.helper.assert_parameter_alias(def_use_result, "val", "input = 5", "increment(val)",
-                                         "Parameter 'val' should alias to 'input'")
-        
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "val",
+            "input = 5",
+            "increment(val)",
+            "Parameter 'val' should alias to 'input'",
+        )
+
         # Test that processed variable connects to function result
-        self.helper.assert_def_use_chain(def_use_result, "processed", "processed = increment(val)", 
-                                        "add(processed, processed)", 
-                                        "processed should be used in nested function call")
-    
+        self.helper.assert_def_use_chain(
+            def_use_result,
+            "processed",
+            "processed = increment(val)",
+            "add(processed, processed)",
+            "processed should be used in nested function call",
+        )
+
     def test_loops_with_function_calls(self):
         """Test dataflow analysis with loops containing function calls."""
         code = """
@@ -122,17 +153,24 @@ class TestDFGStressC:
             return sum;
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # sum should have multiple definitions due to loop
         sum_chains = def_use_result.chains.get("sum", [])
-        assert len(sum_chains) >= 2, f"Expected at least 2 def-use chains for sum, got {len(sum_chains)}"
-        
+        assert len(sum_chains) >= 2, (
+            f"Expected at least 2 def-use chains for sum, got {len(sum_chains)}"
+        )
+
         # Loop variable i should be aliased to parameter x
-        self.helper.assert_parameter_alias(def_use_result, "x", "i = 0", "return x + 1",
-                                         "Loop variable should alias to function parameter")
-    
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "x",
+            "i = 0",
+            "return x + 1",
+            "Loop variable should alias to function parameter",
+        )
+
     def test_complex_control_flow(self):
         """Test DFG with complex control flow including conditionals and loops."""
         code = """
@@ -156,25 +194,34 @@ class TestDFGStressC:
             return result;
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Test parameter aliasing in conditional context
-        self.helper.assert_parameter_alias(def_use_result, "val", "x = 5", "return val * 2",
-                                         "Parameter should alias through conditional call")
-        
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "val",
+            "x = 5",
+            "return val * 2",
+            "Parameter should alias through conditional call",
+        )
+
         # result should have multiple definitions
         result_chains = def_use_result.chains.get("result", [])
-        assert len(result_chains) >= 2, f"Expected multiple def-use chains for result, got {len(result_chains)}"
+        assert len(result_chains) >= 2, (
+            f"Expected multiple def-use chains for result, got {len(result_chains)}"
+        )
 
 
 class TestDFGStressJava:
     """Stress tests using the Java stress test program."""
-    
+
     def setup_method(self):
         self.helper = DFGTestHelper("java")
-        self.stress_file = os.path.join(os.path.dirname(__file__), "stress_test_java.java")
-    
+        self.stress_file = os.path.join(
+            os.path.dirname(__file__), "stress_test_java.java"
+        )
+
     def test_basic_method_analysis(self):
         """Test DFG analysis on basic Java methods."""
         code = """
@@ -191,15 +238,25 @@ class TestDFGStressJava:
             }
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Test parameter aliasing
-        self.helper.assert_parameter_alias(def_use_result, "a", "x = 5", "result = a + b",
-                                         "Parameter 'a' should alias to argument 'x'")
-        self.helper.assert_parameter_alias(def_use_result, "b", "y = 3", "result = a + b",
-                                         "Parameter 'b' should alias to argument 'y'")
-    
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "a",
+            "x = 5",
+            "result = a + b",
+            "Parameter 'a' should alias to argument 'x'",
+        )
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "b",
+            "y = 3",
+            "result = a + b",
+            "Parameter 'b' should alias to argument 'y'",
+        )
+
     def test_enhanced_for_loop(self):
         """Test Java enhanced for loop with method calls."""
         code = """
@@ -217,17 +274,24 @@ class TestDFGStressJava:
             }
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Enhanced for loop should create proper dataflow
         sum_chains = def_use_result.chains.get("sum", [])
-        assert len(sum_chains) >= 1, f"Expected at least 1 def-use chain for sum, got {len(sum_chains)}"
-        
+        assert len(sum_chains) >= 1, (
+            f"Expected at least 1 def-use chain for sum, got {len(sum_chains)}"
+        )
+
         # Parameter x should be aliased to loop variable num
-        self.helper.assert_parameter_alias(def_use_result, "x", "num", "return x + 1",
-                                         "Enhanced for loop variable should alias to parameter")
-    
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "x",
+            "num",
+            "return x + 1",
+            "Enhanced for loop variable should alias to parameter",
+        )
+
     def test_exception_handling(self):
         """Test DFG analysis with try-catch blocks."""
         code = """
@@ -248,17 +312,24 @@ class TestDFGStressJava:
             }
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Parameter should be aliased even in exception context
-        self.helper.assert_parameter_alias(def_use_result, "x", "input = 5", "return x * 2",
-                                         "Parameter should alias in try-catch context")
-        
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "x",
+            "input = 5",
+            "return x * 2",
+            "Parameter should alias in try-catch context",
+        )
+
         # result should have definitions from both try and catch blocks
         result_chains = def_use_result.chains.get("result", [])
-        assert len(result_chains) >= 2, f"Expected multiple def-use chains for result, got {len(result_chains)}"
-    
+        assert len(result_chains) >= 2, (
+            f"Expected multiple def-use chains for result, got {len(result_chains)}"
+        )
+
     def test_switch_with_method_calls(self):
         """Test DFG analysis with switch statements containing method calls."""
         code = """
@@ -288,17 +359,24 @@ class TestDFGStressJava:
             }
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Parameters should be aliased in switch context
-        self.helper.assert_parameter_alias(def_use_result, "x", "value = 2", "return x * 2",
-                                         "Parameter should alias in switch case")
-        
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "x",
+            "value = 2",
+            "return x * 2",
+            "Parameter should alias in switch case",
+        )
+
         # result should have multiple possible definitions
         result_chains = def_use_result.chains.get("result", [])
-        assert len(result_chains) >= 1, f"Expected at least 1 def-use chain for result, got {len(result_chains)}"
-    
+        assert len(result_chains) >= 1, (
+            f"Expected at least 1 def-use chain for result, got {len(result_chains)}"
+        )
+
     def test_recursive_methods(self):
         """Test DFG analysis with recursive method calls."""
         code = """
@@ -316,25 +394,32 @@ class TestDFGStressJava:
             }
         }
         """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Test parameter aliasing in recursive context
-        self.helper.assert_parameter_alias(def_use_result, "n", "input = 5", "n <= 1",
-                                         "Parameter should alias in recursive method")
-        
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "n",
+            "input = 5",
+            "n <= 1",
+            "Parameter should alias in recursive method",
+        )
+
         # n should be used in multiple places within the recursive method
         n_chains = def_use_result.chains.get("n", [])
-        assert len(n_chains) >= 1, f"Expected at least 1 def-use chain for n, got {len(n_chains)}"
+        assert len(n_chains) >= 1, (
+            f"Expected at least 1 def-use chain for n, got {len(n_chains)}"
+        )
 
 
 class TestDFGEdgeCases:
     """Test edge cases and boundary conditions for DFG analysis."""
-    
+
     @pytest.fixture(params=["c", "java"])
     def helper(self, request):
         return DFGTestHelper(request.param)
-    
+
     def test_empty_functions(self, helper):
         """Test DFG analysis with empty functions."""
         if helper.language == "c":
@@ -358,12 +443,14 @@ class TestDFGEdgeCases:
                 }
             }
             """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Should handle empty functions gracefully
-        assert len(def_use_result.chains) >= 0, "Should handle empty functions without error"
-    
+        assert len(def_use_result.chains) >= 0, (
+            "Should handle empty functions without error"
+        )
+
     def test_functions_with_no_parameters(self, helper):
         """Test functions that have no parameters."""
         if helper.language == "c":
@@ -391,13 +478,18 @@ class TestDFGEdgeCases:
                 }
             }
             """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Should track local variables even without parameter aliasing
-        self.helper.assert_def_use_chain(def_use_result, "value", "value = 42", "return value",
-                                        "Local variable should have proper def-use chain")
-    
+        self.helper.assert_def_use_chain(
+            def_use_result,
+            "value",
+            "value = 42",
+            "return value",
+            "Local variable should have proper def-use chain",
+        )
+
     def test_unreachable_code(self, helper):
         """Test DFG analysis with unreachable code."""
         if helper.language == "c":
@@ -426,12 +518,17 @@ class TestDFGEdgeCases:
                 }
             }
             """
-        
+
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
-        
+
         # Should handle unreachable code gracefully
-        self.helper.assert_parameter_alias(def_use_result, "x", "5", "return x * 2",
-                                         "Should handle parameter aliasing even with unreachable code")
+        self.helper.assert_parameter_alias(
+            def_use_result,
+            "x",
+            "5",
+            "return x * 2",
+            "Should handle parameter aliasing even with unreachable code",
+        )
 
 
 if __name__ == "__main__":

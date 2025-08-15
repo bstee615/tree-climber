@@ -3,7 +3,7 @@ DFG (Data Flow Graph) Test Suite
 
 This package contains comprehensive tests for dataflow analysis including:
 - Basic def-use and use-def chain analysis
-- Inter-procedural parameter aliasing  
+- Inter-procedural parameter aliasing
 - Complex control flow scenarios
 - Language-specific stress tests for C and Java
 

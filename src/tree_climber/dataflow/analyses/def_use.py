@@ -2,7 +2,10 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from tree_climber.cfg.visitor import CFG
-from tree_climber.dataflow.analyses.reaching_definitions import ReachingDefinition, ParameterAlias
+from tree_climber.dataflow.analyses.reaching_definitions import (
+    ReachingDefinition,
+    ParameterAlias,
+)
 from tree_climber.dataflow.dataflow_types import DataflowResult
 
 
@@ -81,9 +84,11 @@ class UseDefSolver:
                     if isinstance(fact, ReachingDefinition)
                     and fact.variable_name == variable_name
                 ]
-                
+
                 # Also check for inter-procedural parameter aliases
-                alias_definitions = self._find_parameter_aliases(cfg, node_id, variable_name)
+                alias_definitions = self._find_parameter_aliases(
+                    cfg, node_id, variable_name
+                )
                 definitions.extend(alias_definitions)
 
                 # Only create a chain if we haven't already for this use
@@ -98,117 +103,150 @@ class UseDefSolver:
 
         return result
 
-    def _find_parameter_aliases(self, cfg: CFG, use_node_id: int, variable_name: str) -> List[int]:
+    def _find_parameter_aliases(
+        self, cfg: CFG, use_node_id: int, variable_name: str
+    ) -> List[int]:
         """Find argument definitions that alias to this parameter use."""
         alias_definitions = []
-        
+
         # Check if this variable use is for a function parameter
         use_node = cfg.nodes[use_node_id]
         if variable_name not in use_node.metadata.variable_uses:
             return alias_definitions
-            
+
         # Find the function entry node that defines this parameter
         parameter_def_node = None
         parameter_def_node_id = None
         for node_id, node in cfg.nodes.items():
-            if (node.node_type.name == "ENTRY" and 
-                variable_name in node.metadata.variable_definitions):
+            if (
+                node.node_type.name == "ENTRY"
+                and variable_name in node.metadata.variable_definitions
+            ):
                 parameter_def_node = node
                 parameter_def_node_id = node_id
                 break
-        
+
         if not parameter_def_node:
             return alias_definitions
-        
+
         # Check if the parameter has been redefined between the function entry and this use
-        if self._parameter_redefined_before_use(cfg, parameter_def_node_id, use_node_id, variable_name):
+        if self._parameter_redefined_before_use(
+            cfg, parameter_def_node_id, use_node_id, variable_name
+        ):
             # Parameter was redefined, so the original alias is killed
             return alias_definitions
-            
+
         # Find call sites that call this function
         function_name = parameter_def_node.source_text.strip()
         for node_id, node in cfg.nodes.items():
-            if (node.metadata.function_calls and 
-                function_name in node.metadata.function_calls and
-                node.ast_node):
-                
+            if (
+                node.metadata.function_calls
+                and function_name in node.metadata.function_calls
+                and node.ast_node
+            ):
                 # Extract arguments from the function call
-                from tree_climber.dataflow.analyses.reaching_definitions import extract_function_call_arguments
+                from tree_climber.dataflow.analyses.reaching_definitions import (
+                    extract_function_call_arguments,
+                )
+
                 call_arguments = extract_function_call_arguments(node.ast_node)
-                
+
                 # Map arguments to parameters
-                param_index = parameter_def_node.metadata.variable_definitions.index(variable_name)
+                param_index = parameter_def_node.metadata.variable_definitions.index(
+                    variable_name
+                )
                 if param_index < len(call_arguments):
                     arg_name = call_arguments[param_index]
-                    
+
                     # Find definitions of the argument at the call site
                     for pred_node_id, pred_node in cfg.nodes.items():
-                        if (arg_name in pred_node.metadata.variable_definitions and
-                            self._reaches_call_site(cfg, pred_node_id, node_id, arg_name)):
+                        if (
+                            arg_name in pred_node.metadata.variable_definitions
+                            and self._reaches_call_site(
+                                cfg, pred_node_id, node_id, arg_name
+                            )
+                        ):
                             alias_definitions.append(pred_node_id)
-        
+
         return alias_definitions
-    
-    def _parameter_redefined_before_use(self, cfg: CFG, param_def_node_id: int, use_node_id: int, variable_name: str) -> bool:
+
+    def _parameter_redefined_before_use(
+        self, cfg: CFG, param_def_node_id: int, use_node_id: int, variable_name: str
+    ) -> bool:
         """Check if a parameter is redefined between its initial definition and a use."""
         # Check if there's a path from the parameter definition to the use that
         # goes through a redefinition of the same variable
-        
+
         # Get all nodes that define this variable (excluding the parameter entry node)
         redefinition_nodes = []
         for node_id, node in cfg.nodes.items():
-            if (node_id != param_def_node_id and 
-                variable_name in node.metadata.variable_definitions):
+            if (
+                node_id != param_def_node_id
+                and variable_name in node.metadata.variable_definitions
+            ):
                 redefinition_nodes.append(node_id)
-        
+
         if not redefinition_nodes:
             return False  # No redefinitions found
-            
+
         # Check if there's a path from parameter definition to use that goes through a redefinition
-        return self._path_goes_through_redefinition(cfg, param_def_node_id, use_node_id, redefinition_nodes)
-    
-    def _path_goes_through_redefinition(self, cfg: CFG, start_node_id: int, target_node_id: int, redefinition_nodes: List[int]) -> bool:
+        return self._path_goes_through_redefinition(
+            cfg, param_def_node_id, use_node_id, redefinition_nodes
+        )
+
+    def _path_goes_through_redefinition(
+        self,
+        cfg: CFG,
+        start_node_id: int,
+        target_node_id: int,
+        redefinition_nodes: List[int],
+    ) -> bool:
         """Check if any path from start to target goes through a redefinition."""
         if start_node_id == target_node_id:
             return False  # Direct path, no redefinition
-            
+
         visited = set()
         stack = [(start_node_id, False)]  # (node_id, has_seen_redefinition)
-        
+
         while stack:
             current, seen_redef = stack.pop()
             if current == target_node_id:
-                return seen_redef  # Return whether we've seen a redefinition on this path
+                return (
+                    seen_redef  # Return whether we've seen a redefinition on this path
+                )
             if current in visited:
                 continue
             visited.add(current)
-            
+
             current_node = cfg.nodes.get(current)
             if current_node:
                 # Check if this node is a redefinition (but not the start node)
-                new_seen_redef = seen_redef or (current != start_node_id and current in redefinition_nodes)
-                    
+                new_seen_redef = seen_redef or (
+                    current != start_node_id and current in redefinition_nodes
+                )
+
                 # Add successors to explore
                 for succ_id in current_node.successors:
                     if succ_id not in visited:
                         stack.append((succ_id, new_seen_redef))
-        
+
         return False  # No path found
-    
-    
-    def _reaches_call_site(self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str) -> bool:
+
+    def _reaches_call_site(
+        self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str
+    ) -> bool:
         """Check if a definition reaches a call site without being killed."""
-        # Simplified reachability check - in a full implementation, 
+        # Simplified reachability check - in a full implementation,
         # this would use proper dataflow analysis
         # For now, we'll do a simple check based on node ordering and CFG structure
-        
+
         if def_node_id == call_node_id:
             return False
-            
+
         # Check if there's a path from def_node to call_node
         visited = set()
         stack = [def_node_id]
-        
+
         while stack:
             current = stack.pop()
             if current == call_node_id:
@@ -216,19 +254,21 @@ class UseDefSolver:
             if current in visited:
                 continue
             visited.add(current)
-            
+
             current_node = cfg.nodes.get(current)
             if current_node:
                 # Check if this node redefines the variable (kills the definition)
-                if (current != def_node_id and 
-                    variable_name in current_node.metadata.variable_definitions):
+                if (
+                    current != def_node_id
+                    and variable_name in current_node.metadata.variable_definitions
+                ):
                     continue  # This path is killed
-                    
+
                 # Add successors to explore
                 for succ_id in current_node.successors:
                     if succ_id not in visited:
                         stack.append(succ_id)
-        
+
         return False
 
 
@@ -259,14 +299,16 @@ class DefUseSolver:
                     if isinstance(fact, ReachingDefinition)
                     and fact.variable_name == variable_name
                 ]
-                
+
                 # Check if this node also defines the same variable (self-reference case)
                 if variable_name in node.metadata.variable_definitions:
                     # This is a self-referencing operation like a++ or a += 1
                     definitions.append(node_id)
-                
+
                 # Also check for inter-procedural parameter aliases
-                alias_definitions = self._find_parameter_aliases(cfg, node_id, variable_name)
+                alias_definitions = self._find_parameter_aliases(
+                    cfg, node_id, variable_name
+                )
                 definitions.extend(alias_definitions)
 
                 # Add this use to each definition's list of uses
@@ -293,114 +335,147 @@ class DefUseSolver:
 
         return result
 
-    def _find_parameter_aliases(self, cfg: CFG, use_node_id: int, variable_name: str) -> List[int]:
+    def _find_parameter_aliases(
+        self, cfg: CFG, use_node_id: int, variable_name: str
+    ) -> List[int]:
         """Find argument definitions that alias to this parameter use."""
         alias_definitions = []
-        
+
         # Check if this variable use is for a function parameter
         use_node = cfg.nodes[use_node_id]
         if variable_name not in use_node.metadata.variable_uses:
             return alias_definitions
-            
+
         # Find the function entry node that defines this parameter
         parameter_def_node = None
         parameter_def_node_id = None
         for node_id, node in cfg.nodes.items():
-            if (node.node_type.name == "ENTRY" and 
-                variable_name in node.metadata.variable_definitions):
+            if (
+                node.node_type.name == "ENTRY"
+                and variable_name in node.metadata.variable_definitions
+            ):
                 parameter_def_node = node
                 parameter_def_node_id = node_id
                 break
-        
+
         if not parameter_def_node:
             return alias_definitions
-        
+
         # Check if the parameter has been redefined between the function entry and this use
-        if self._parameter_redefined_before_use(cfg, parameter_def_node_id, use_node_id, variable_name):
+        if self._parameter_redefined_before_use(
+            cfg, parameter_def_node_id, use_node_id, variable_name
+        ):
             # Parameter was redefined, so the original alias is killed
             return alias_definitions
-            
+
         # Find call sites that call this function
         function_name = parameter_def_node.source_text.strip()
         for node_id, node in cfg.nodes.items():
-            if (node.metadata.function_calls and 
-                function_name in node.metadata.function_calls and
-                node.ast_node):
-                
+            if (
+                node.metadata.function_calls
+                and function_name in node.metadata.function_calls
+                and node.ast_node
+            ):
                 # Extract arguments from the function call
-                from tree_climber.dataflow.analyses.reaching_definitions import extract_function_call_arguments
+                from tree_climber.dataflow.analyses.reaching_definitions import (
+                    extract_function_call_arguments,
+                )
+
                 call_arguments = extract_function_call_arguments(node.ast_node)
-                
+
                 # Map arguments to parameters
-                param_index = parameter_def_node.metadata.variable_definitions.index(variable_name)
+                param_index = parameter_def_node.metadata.variable_definitions.index(
+                    variable_name
+                )
                 if param_index < len(call_arguments):
                     arg_name = call_arguments[param_index]
-                    
+
                     # Find definitions of the argument at the call site
                     for pred_node_id, pred_node in cfg.nodes.items():
-                        if (arg_name in pred_node.metadata.variable_definitions and
-                            self._reaches_call_site(cfg, pred_node_id, node_id, arg_name)):
+                        if (
+                            arg_name in pred_node.metadata.variable_definitions
+                            and self._reaches_call_site(
+                                cfg, pred_node_id, node_id, arg_name
+                            )
+                        ):
                             alias_definitions.append(pred_node_id)
-        
+
         return alias_definitions
-    
-    def _parameter_redefined_before_use(self, cfg: CFG, param_def_node_id: int, use_node_id: int, variable_name: str) -> bool:
+
+    def _parameter_redefined_before_use(
+        self, cfg: CFG, param_def_node_id: int, use_node_id: int, variable_name: str
+    ) -> bool:
         """Check if a parameter is redefined between its initial definition and a use."""
         # Check if there's a path from the parameter definition to the use that
         # goes through a redefinition of the same variable
-        
+
         # Get all nodes that define this variable (excluding the parameter entry node)
         redefinition_nodes = []
         for node_id, node in cfg.nodes.items():
-            if (node_id != param_def_node_id and 
-                variable_name in node.metadata.variable_definitions):
+            if (
+                node_id != param_def_node_id
+                and variable_name in node.metadata.variable_definitions
+            ):
                 redefinition_nodes.append(node_id)
-        
+
         if not redefinition_nodes:
             return False  # No redefinitions found
-            
+
         # Check if there's a path from parameter definition to use that goes through a redefinition
-        return self._path_goes_through_redefinition(cfg, param_def_node_id, use_node_id, redefinition_nodes)
-    
-    def _path_goes_through_redefinition(self, cfg: CFG, start_node_id: int, target_node_id: int, redefinition_nodes: List[int]) -> bool:
+        return self._path_goes_through_redefinition(
+            cfg, param_def_node_id, use_node_id, redefinition_nodes
+        )
+
+    def _path_goes_through_redefinition(
+        self,
+        cfg: CFG,
+        start_node_id: int,
+        target_node_id: int,
+        redefinition_nodes: List[int],
+    ) -> bool:
         """Check if any path from start to target goes through a redefinition."""
         if start_node_id == target_node_id:
             return False  # Direct path, no redefinition
-            
+
         visited = set()
         stack = [(start_node_id, False)]  # (node_id, has_seen_redefinition)
-        
+
         while stack:
             current, seen_redef = stack.pop()
             if current == target_node_id:
-                return seen_redef  # Return whether we've seen a redefinition on this path
+                return (
+                    seen_redef  # Return whether we've seen a redefinition on this path
+                )
             if current in visited:
                 continue
             visited.add(current)
-            
+
             current_node = cfg.nodes.get(current)
             if current_node:
                 # Check if this node is a redefinition (but not the start node)
-                new_seen_redef = seen_redef or (current != start_node_id and current in redefinition_nodes)
-                    
+                new_seen_redef = seen_redef or (
+                    current != start_node_id and current in redefinition_nodes
+                )
+
                 # Add successors to explore
                 for succ_id in current_node.successors:
                     if succ_id not in visited:
                         stack.append((succ_id, new_seen_redef))
-        
+
         return False  # No path found
-    
-    
-    def _reaches_call_site(self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str) -> bool:
+
+    def _reaches_call_site(
+        self, cfg: CFG, def_node_id: int, call_node_id: int, variable_name: str
+    ) -> bool:
         """Check if a definition reaches a call site without being killed."""
         # Simplified reachability check - for now, we'll use a basic heuristic
         if def_node_id == call_node_id:
             return False
-            
+
         # Check if there's a path from def_node to call_node
         visited = set()
         stack = [def_node_id]
-        
+
         while stack:
             current = stack.pop()
             if current == call_node_id:
@@ -408,17 +483,19 @@ class DefUseSolver:
             if current in visited:
                 continue
             visited.add(current)
-            
+
             current_node = cfg.nodes.get(current)
             if current_node:
                 # Check if this node redefines the variable (kills the definition)
-                if (current != def_node_id and 
-                    variable_name in current_node.metadata.variable_definitions):
+                if (
+                    current != def_node_id
+                    and variable_name in current_node.metadata.variable_definitions
+                ):
                     continue  # This path is killed
-                    
+
                 # Add successors to explore
                 for succ_id in current_node.successors:
                     if succ_id not in visited:
                         stack.append(succ_id)
-        
+
         return False
