@@ -55,7 +55,7 @@ class FileSource(CodeSource):
 
     def get_output_name(self) -> str:
         """Return the file stem for output naming."""
-        return self.file_path.stem
+        return self.file_path.name
 
     def get_language_hint(self) -> Optional[str]:
         """Auto-detect language from file extension."""
