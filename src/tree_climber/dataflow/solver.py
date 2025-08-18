@@ -19,6 +19,7 @@ class RoundRobinSolver:
         # Iterate until convergence
         changed = True
         while changed:
+            changed = False  # Reset changed for the next iteration
             for node_id, node in cfg.nodes.items():
                 old_out_facts = copy.deepcopy(out_facts[node_id])
                 in_facts[node_id] = problem.meet(
@@ -27,6 +28,5 @@ class RoundRobinSolver:
                 out_facts[node_id] = problem.transfer(node, in_facts[node_id])
                 if out_facts[node_id] != old_out_facts:
                     changed = True
-            changed = False  # Reset changed for the next iteration
 
         return DataflowResult(in_facts=in_facts, out_facts=out_facts)
