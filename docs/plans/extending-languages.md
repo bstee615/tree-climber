@@ -164,6 +164,10 @@ source_node.edge_labels[target_node.id] = "true"  # For conditional branches
 
 This section documents known limitations in existing language implementations that could be addressed when extending support.
 
+### Cross-Language
+- Statements are represented by individual CFG nodes, but should be broken up into independent assignments for more granular analysis.
+- Interprocedural aliasing is not supported.
+
 ### C Language Implementation Limitations (`c.py`)
 
 **Missing Statement Types:**

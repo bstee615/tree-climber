@@ -8,7 +8,6 @@
 
 ### Parsing Bugs
 - [ ] Java def use, next() should define the list it's operating on and hasNext(numbers) should _not_ define numbers, in enhanced for loops
-- [ ] Both languages DFG, Function parameters should alias def uses. https://chatgpt.com/s/t_68a29b591f6081919fa38217eeaa7646
 - [x] Both languages CFG, Function calls should have an edge from exit going back to the call
 - [x] Java def use, a++ should point to itself
 - [x] C def use, a++ should point to itself and should point to uses of a
@@ -20,6 +19,7 @@
 
 ## vNext
 - [ ] Break up (desugar) CFG edges which contain multiple assignments or function calls. https://chatgpt.com/s/t_68a29bf367dc8191aa630931256a6c71
+- [ ] Both languages DFG, Function parameters should alias def uses. https://chatgpt.com/s/t_68a29b591f6081919fa38217eeaa7646
 
 ## Laundry List
 ### Java CFG Enhancement Opportunities (Low Priority)
