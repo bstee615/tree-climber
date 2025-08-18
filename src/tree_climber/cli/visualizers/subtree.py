@@ -50,22 +50,23 @@ class SubtreeVisualizer(BaseVisualizer):
             color, shape = get_node_display(node)
             G.add_node(node_id, label=label, shape=shape, fillcolor=color)
 
-        # Add CFG edges and optional DFG overlay
+        # Add CFG edges
         for node_id, node in cfg.nodes.items():
             for successor_id in node.successors:
-                edge = (node_id, successor_id)
                 label = node.edge_labels.get(successor_id, "")
                 G.add_edge(node_id, successor_id, color="black", label=label)
-                if edge in duc_edges:
-                    dfg_label = ", ".join(sorted(duc_edges[edge]))
-                    G.add_edge(
-                        node_id,
-                        successor_id,
-                        color="red",
-                        style="dashed",
-                        fontcolor="red",
-                        label=dfg_label,
-                    )
+
+        # Add DFG edges
+        for (node_id, successor_id), variables in duc_edges.items():
+            dfg_label = ", ".join(sorted(variables))
+            G.add_edge(
+                node_id,
+                successor_id,
+                color="red",
+                style="dashed",
+                fontcolor="red",
+                label=dfg_label,
+            )
 
         # Attach AST clusters per CFG node
         def format_ast_node_label(ts_node) -> str:
