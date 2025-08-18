@@ -1,9 +1,10 @@
 # Define a simple dataflow problem (e.g., reaching definitions)
-from typing import Iterable, Set, List, Optional
+from typing import Iterable, List, Optional, Set
 
 from tree_sitter import Node
-from tree_climber.cfg.cfg_types import CFGNode, NodeType
+
 from tree_climber.ast_utils import dfs, get_source_text
+from tree_climber.cfg.cfg_types import CFGNode, NodeType
 from tree_climber.dataflow.dataflow_types import (
     DataflowFact,
     DataflowInitializer,
@@ -22,18 +23,6 @@ class ReachingDefinition(DataflowFact):
         return (
             f"ReachingDefinition(variable={self.variable_name}, node_id={self.node_id})"
         )
-
-
-class ParameterAlias(DataflowFact):
-    def __init__(
-        self, parameter_name: str, argument_name: str, definition_node_id: int
-    ):
-        self.parameter_name = parameter_name
-        self.argument_name = argument_name
-        self.definition_node_id = definition_node_id
-
-    def __repr__(self) -> str:
-        return f"ParameterAlias(parameter={self.parameter_name}, argument={self.argument_name}, def_node={self.definition_node_id})"
 
 
 def extract_function_call_arguments(ast_node: Node) -> List[str]:
