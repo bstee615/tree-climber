@@ -1,20 +1,28 @@
-For release 0.1.0
+## For release 0.1.0
+### Features
 - [x] Comprehensive tests and example programs for C and Java
   - [x] C (37/37 tests passed - 100% success)
   - [x] Java (29/29 tests passed - 100% success)
 - [x] CLI parity with 0.0.0
 - [x] Full list of language features that are supported and not supported (limitations)
 
-Parsing Bugs
+### Parsing Bugs
 - [ ] Java def use, next() should define the list it's operating on and hasNext(numbers) should _not_ define numbers, in enhanced for loops
-- [ ] Both languages DFG, Function parameters should alias def uses
+- [ ] Both languages DFG, Function parameters should alias def uses. https://chatgpt.com/s/t_68a29b591f6081919fa38217eeaa7646
 - [x] Both languages CFG, Function calls should have an edge from exit going back to the call
 - [x] Java def use, a++ should point to itself
 - [x] C def use, a++ should point to itself and should point to uses of a
 - [x] C and Java def use, in for loops, i++ should have a DFG edge back to i = 0
 - [x] C DFG, x += ... should be a use of previous definitions of x
 
-Java CFG Enhancement Opportunities (Low Priority)
+### UI Bugs
+- [ ] Code editor, when typing, the highlight doesn't update so points to the wrong tokens
+
+## vNext
+- [ ] Break up (desugar) CFG edges which contain multiple assignments or function calls. https://chatgpt.com/s/t_68a29bf367dc8191aa630931256a6c71
+
+## Laundry List
+### Java CFG Enhancement Opportunities (Low Priority)
 - [ ] Method call chain decomposition: Separate chained method calls into individual CFG nodes for better granularity
   - Current: `obj.method1().method2()` creates single STATEMENT node
   - Enhancement: Create separate METHOD_CALL nodes for each call in chain
@@ -36,15 +44,12 @@ Java CFG Enhancement Opportunities (Low Priority)
   - Enhancement: Capture full context (obj.method vs Class.staticMethod)
   - Benefits: Better distinction between instance and static method calls
 
-UI Bugs
-- [ ] Code editor, when typing, the highlight doesn't update so points to the wrong tokens
-
-Old list
+### Old list
 - [ ] Add class/file nodes.
 - [ ] Handle forward declarations of function calls.
 - [ ] Raise warnings throughout the code and handle gracefully where nodes are missing.
 - [ ] Avoid hardcoded constants in language specific code, preferring predicates, such as "comment" vs. "line_comment/block_comment" -> is_comment.
-- [ ] Detect potentially undefined variables
+- [ ] Detect potentially undefined variables in analyzed code.
 - [x] 💪 Need to implement main.py in parity with tree-climber
 - [x] 💪 Allow toggling Def use edges
 - [x] Java enhanced for loop, next() and hasNext() point to the same ast node.
