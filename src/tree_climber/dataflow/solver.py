@@ -22,8 +22,17 @@ class RoundRobinSolver:
             changed = False  # Reset changed for the next iteration
             for node_id, node in cfg.nodes.items():
                 old_out_facts = copy.deepcopy(out_facts[node_id])
+                predecessors = [
+                    p
+                    for p in node.predecessors
+                    if cfg.nodes.get(p).edge_labels.get(node_id)
+                    not in (
+                        "function_call",
+                        "function_return",
+                    )  # Don't propagate DFG information across function call/return edges
+                ]
                 in_facts[node_id] = problem.meet(
-                    [frozenset(out_facts[pred]) for pred in node.predecessors]
+                    [frozenset(out_facts[pred]) for pred in predecessors]
                 )
                 out_facts[node_id] = problem.transfer(node, in_facts[node_id])
                 if out_facts[node_id] != old_out_facts:
