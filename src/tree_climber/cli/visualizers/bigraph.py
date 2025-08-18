@@ -24,18 +24,17 @@ from .constants import (
 class BiGraphVisualizer(BaseVisualizer):
     @override
     def visualize(self):
-        options = self.options
         ast_root = self.ast_root
         cfg = self.cfg
         duc_edges = self.duc_edges
 
         # Combined CPG graph (AST + CFG + optional DFG overlay)
-        if not options.draw_cpg:
-            return
         if ast_root is None:
             raise ValueError("AST required to draw CPG")
         if cfg is None:
             raise ValueError("CFG required to draw CPG")
+        if duc_edges is None:
+            raise ValueError("DFG required to draw CPG")
         G = pgv.AGraph(strict=False, directed=True)
         G.graph_attr.update(
             ranksep="0.2",
@@ -113,25 +112,23 @@ class BiGraphVisualizer(BaseVisualizer):
                         labelfontcolor=AST_OVERLAY_LINKING_EDGE_COLOR,
                     )
 
-        # Add CFG edges and optional DFG overlay
+        # Add CFG edges
         for node_id, node in cfg.nodes.items():
             for succ in node.successors:
                 label = node.edge_labels.get(succ, "")
                 G.add_edge(node_id, succ, color="black", label=label)
-                if (
-                    options.draw_dfg
-                    and duc_edges is not None
-                    and (node_id, succ) in duc_edges
-                ):
-                    dfg_label = ", ".join(sorted(duc_edges[(node_id, succ)]))
-                    G.add_edge(
-                        node_id,
-                        succ,
-                        color="red",
-                        style="dashed",
-                        fontcolor="red",
-                        label=dfg_label,
-                    )
+
+        # Add DFG edges
+        for (node_id, successor_id), variables in duc_edges.items():
+            dfg_label = ", ".join(sorted(variables))
+            G.add_edge(
+                node_id,
+                successor_id,
+                color="red",
+                style="dashed",
+                fontcolor="red",
+                label=dfg_label,
+            )
 
         G.draw(str(self.output_path("cpg")), prog="dot")
         print(f"Saved CPG visualization: {self.output_path('cpg')}")
