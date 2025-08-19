@@ -3,9 +3,7 @@ from typing import Any, Dict, List, Optional
 
 from tree_sitter import Node
 
-from tree_climber.ast_utils import (
-    get_source_text,
-)
+from tree_climber.ast_utils import get_source_text
 from tree_climber.cfg.cfg_types import (
     CFGNode,
     CFGNodeMetadata,
@@ -23,17 +21,17 @@ class ControlFlowContext:
         self.current_nodes: List[int] = []  # Current active nodes
         self.switch_heads: List[int] = []  # Stack of switch statement heads
         self.labels: Dict[str, int] = {}  # Map of label names to node IDs
-        self.forward_goto_refs: Dict[
-            str, List[int]
-        ] = {}  # Forward references to labels
+        self.forward_goto_refs: Dict[str, List[int]] = (
+            {}
+        )  # Forward references to labels
         self.entry_node_ids: List[int] = []  # Stack of entry node IDs
         self.exit_node_ids: List[int] = []  # Stack of exit node IDs
-        self.function_definitions: Dict[
-            int, str
-        ] = {}  # Map of entry node IDs to function names
-        self.function_call_exits: List[
-            tuple[int, int]
-        ] = []  # List of (function_exit_id, call_return_point_id) pairs
+        self.function_definitions: Dict[int, str] = (
+            {}
+        )  # Map of entry node IDs to function names
+        self.function_call_exits: List[tuple[int, int]] = (
+            []
+        )  # List of (function_exit_id, call_return_point_id) pairs
 
     def push_loop_context(self, break_target: int, continue_target: int):
         """Push a new loop context"""

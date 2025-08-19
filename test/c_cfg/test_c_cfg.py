@@ -28,9 +28,9 @@ class CFGTestHelper:
     def assert_node_count(self, cfg: CFG, expected_count: int, msg: str = ""):
         """Assert that CFG has the expected number of nodes."""
         actual_count = len(cfg.nodes)
-        assert actual_count == expected_count, (
-            f"Expected {expected_count} nodes, got {actual_count}. {msg}"
-        )
+        assert (
+            actual_count == expected_count
+        ), f"Expected {expected_count} nodes, got {actual_count}. {msg}"
 
     def assert_node_types(
         self, cfg: CFG, expected_types: Dict[NodeType, int], msg: str = ""
@@ -71,9 +71,9 @@ class CFGTestHelper:
         for (src_id, dest_id), expected_label in expected_labels.items():
             src_node = cfg.nodes.get(src_id)
             assert src_node is not None, f"Source node {src_id} not found. {msg}"
-            assert dest_id in src_node.successors, (
-                f"Edge {src_id}->{dest_id} not found. {msg}"
-            )
+            assert (
+                dest_id in src_node.successors
+            ), f"Edge {src_id}->{dest_id} not found. {msg}"
 
             actual_label = src_node.get_edge_label(dest_id)
             assert actual_label == expected_label, (
@@ -109,21 +109,21 @@ class CFGTestHelper:
         entry_nodes = self.get_entry_nodes(cfg)
         exit_nodes = self.get_exit_nodes(cfg)
 
-        assert len(entry_nodes) == 1, (
-            f"Expected 1 entry node, got {len(entry_nodes)}. {msg}"
-        )
-        assert len(exit_nodes) == 1, (
-            f"Expected 1 exit node, got {len(exit_nodes)}. {msg}"
-        )
+        assert (
+            len(entry_nodes) == 1
+        ), f"Expected 1 entry node, got {len(entry_nodes)}. {msg}"
+        assert (
+            len(exit_nodes) == 1
+        ), f"Expected 1 exit node, got {len(exit_nodes)}. {msg}"
 
         return entry_nodes[0], exit_nodes[0]
 
     def assert_reachable_from_entry(self, cfg: CFG, msg: str = ""):
         """Assert that all nodes are reachable from the entry node."""
         entry_nodes = self.get_entry_nodes(cfg)
-        assert len(entry_nodes) == 1, (
-            f"Expected 1 entry node for reachability test. {msg}"
-        )
+        assert (
+            len(entry_nodes) == 1
+        ), f"Expected 1 entry node for reachability test. {msg}"
 
         entry_node = entry_nodes[0]
         reachable = set()
@@ -147,9 +147,9 @@ class CFGTestHelper:
     def assert_exits_reach_function_exit(self, cfg: CFG, msg: str = ""):
         """Assert that all exit nodes can reach the function exit."""
         exit_nodes = self.get_exit_nodes(cfg)
-        assert len(exit_nodes) == 1, (
-            f"Expected 1 exit node for exit reachability test. {msg}"
-        )
+        assert (
+            len(exit_nodes) == 1
+        ), f"Expected 1 exit node for exit reachability test. {msg}"
 
         function_exit = exit_nodes[0]
 
@@ -162,9 +162,9 @@ class CFGTestHelper:
         # Check that these nodes have paths to function exit
         for node in nodes_with_exit_edges:
             if node.node_type == NodeType.RETURN:
-                assert function_exit.id in node.successors, (
-                    f"Return node {node.id} should connect to function exit. {msg}"
-                )
+                assert (
+                    function_exit.id in node.successors
+                ), f"Return node {node.id} should connect to function exit. {msg}"
 
 
 @pytest.fixture
@@ -800,14 +800,14 @@ class TestNestedConstructs:
         default_node = default_nodes[0]
 
         # Verify outer switch connects to default statement with "default" label
-        assert default_node.id in outer_switch.successors, (
-            "Outer switch should connect to default statement"
-        )
+        assert (
+            default_node.id in outer_switch.successors
+        ), "Outer switch should connect to default statement"
 
         default_edge_label = outer_switch.get_edge_label(default_node.id)
-        assert default_edge_label == "default", (
-            f"Expected 'default' label, got '{default_edge_label}'"
-        )
+        assert (
+            default_edge_label == "default"
+        ), f"Expected 'default' label, got '{default_edge_label}'"
 
 
 class TestComplexPatterns:
@@ -1182,16 +1182,16 @@ class TestCFGStructuralIntegrity:
             # Check successor relationships are bidirectional
             for successor_id in node.successors:
                 successor_node = cfg.nodes[successor_id]
-                assert node_id in successor_node.predecessors, (
-                    f"Node {successor_id} should have {node_id} as predecessor"
-                )
+                assert (
+                    node_id in successor_node.predecessors
+                ), f"Node {successor_id} should have {node_id} as predecessor"
 
             # Check predecessor relationships are bidirectional
             for predecessor_id in node.predecessors:
                 predecessor_node = cfg.nodes[predecessor_id]
-                assert node_id in predecessor_node.successors, (
-                    f"Node {predecessor_id} should have {node_id} as successor"
-                )
+                assert (
+                    node_id in predecessor_node.successors
+                ), f"Node {predecessor_id} should have {node_id} as successor"
 
     def test_edge_label_consistency(self, helper):
         """Test proper true/false edge labeling."""
@@ -1220,12 +1220,12 @@ class TestCFGStructuralIntegrity:
             if len(condition_node.successors) == 2:
                 # Should have both true and false labels
                 labels = set(edge_labels.values())
-                assert "true" in labels, (
-                    f"Condition node {condition_node.id} missing 'true' label"
-                )
-                assert "false" in labels, (
-                    f"Condition node {condition_node.id} missing 'false' label"
-                )
+                assert (
+                    "true" in labels
+                ), f"Condition node {condition_node.id} missing 'true' label"
+                assert (
+                    "false" in labels
+                ), f"Condition node {condition_node.id} missing 'false' label"
 
         # Check loop headers have proper edge labels
         loop_headers = helper.get_nodes_by_type(cfg, NodeType.LOOP_HEADER)
@@ -1233,12 +1233,12 @@ class TestCFGStructuralIntegrity:
             edge_labels = loop_header.edge_labels
             if len(loop_header.successors) >= 2:
                 labels = set(edge_labels.values())
-                assert "true" in labels, (
-                    f"Loop header {loop_header.id} missing 'true' label"
-                )
-                assert "false" in labels, (
-                    f"Loop header {loop_header.id} missing 'false' label"
-                )
+                assert (
+                    "true" in labels
+                ), f"Loop header {loop_header.id} missing 'true' label"
+                assert (
+                    "false" in labels
+                ), f"Loop header {loop_header.id} missing 'false' label"
 
 
 class TestVariableAnalysis:
@@ -1263,9 +1263,11 @@ class TestVariableAnalysis:
 
         # Should include variable definitions
         assert len(all_definitions) > 0, "Should track variable definitions"
-        assert set(all_definitions) == {"argc", "x", "y"}, (
-            "Should track variable definitions"
-        )
+        assert set(all_definitions) == {
+            "argc",
+            "x",
+            "y",
+        }, "Should track variable definitions"
 
     def test_variable_uses(self, helper):
         """Test variable use tracking."""
@@ -1347,30 +1349,30 @@ class TestVariableAnalysis:
         assert continuation_node is not None, "Should find continuation node"
 
         # Verify call edge: call_node -> helper_entry
-        assert helper_entry.id in call_node.successors, (
-            "Call node should have edge to function entry"
-        )
+        assert (
+            helper_entry.id in call_node.successors
+        ), "Call node should have edge to function entry"
 
         # Verify return edge: helper_exit -> call_node
-        assert call_node.id in helper_exit.successors, (
-            "Function exit should have edge back to call node"
-        )
+        assert (
+            call_node.id in helper_exit.successors
+        ), "Function exit should have edge back to call node"
 
         # Verify continuation edge: call_node -> continuation_node
-        assert continuation_node.id in call_node.successors, (
-            "Call node should have edge to continuation"
-        )
+        assert (
+            continuation_node.id in call_node.successors
+        ), "Call node should have edge to continuation"
 
         # Verify edge labels
         call_edge_label = call_node.get_edge_label(helper_entry.id)
         return_edge_label = helper_exit.get_edge_label(call_node.id)
 
-        assert call_edge_label == "function_call", (
-            f"Call edge should be labeled 'function_call', got {call_edge_label}"
-        )
-        assert return_edge_label == "function_return", (
-            f"Return edge should be labeled 'function_return', got {return_edge_label}"
-        )
+        assert (
+            call_edge_label == "function_call"
+        ), f"Call edge should be labeled 'function_call', got {call_edge_label}"
+        assert (
+            return_edge_label == "function_return"
+        ), f"Return edge should be labeled 'function_return', got {return_edge_label}"
 
     def test_multiple_function_calls(self, helper):
         """Test multiple function calls in sequence."""
@@ -1405,9 +1407,9 @@ class TestVariableAnalysis:
         assert func2_call is not None, "Should find func2 call"
 
         # Verify calls are connected in sequence
-        assert func2_call.id in func1_call.successors, (
-            "First call should connect to second call"
-        )
+        assert (
+            func2_call.id in func1_call.successors
+        ), "First call should connect to second call"
 
         # Verify each call has proper call and return edges
         func1_call_edges = [
@@ -1455,12 +1457,12 @@ class TestVariableAnalysis:
                     return_edge_count += 1
 
         # Should have call edges for intermediate() and leaf() calls
-        assert call_edge_count >= 2, (
-            f"Should have at least 2 function call edges, got {call_edge_count}"
-        )
-        assert return_edge_count >= 2, (
-            f"Should have at least 2 function return edges, got {return_edge_count}"
-        )
+        assert (
+            call_edge_count >= 2
+        ), f"Should have at least 2 function call edges, got {call_edge_count}"
+        assert (
+            return_edge_count >= 2
+        ), f"Should have at least 2 function return edges, got {return_edge_count}"
 
 
 if __name__ == "__main__":

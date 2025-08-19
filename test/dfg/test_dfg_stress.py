@@ -6,8 +6,9 @@ using the stress test programs in C and Java.
 """
 
 import os
-import pytest
 from test.dfg.test_dfg_comprehensive import DFGTestHelper
+
+import pytest
 
 
 class TestDFGStressC:
@@ -80,9 +81,9 @@ class TestDFGStressC:
 
         # Parameter x should have multiple definitions
         x_chains = def_use_result.chains.get("x", [])
-        assert len(x_chains) >= 2, (
-            f"Expected at least 2 def-use chains for x, got {len(x_chains)}"
-        )
+        assert (
+            len(x_chains) >= 2
+        ), f"Expected at least 2 def-use chains for x, got {len(x_chains)}"
 
         # Original parameter should alias to argument
         self.helper.assert_parameter_alias(
@@ -158,9 +159,9 @@ class TestDFGStressC:
 
         # sum should have multiple definitions due to loop
         sum_chains = def_use_result.chains.get("sum", [])
-        assert len(sum_chains) >= 2, (
-            f"Expected at least 2 def-use chains for sum, got {len(sum_chains)}"
-        )
+        assert (
+            len(sum_chains) >= 2
+        ), f"Expected at least 2 def-use chains for sum, got {len(sum_chains)}"
 
         # Loop variable i should be aliased to parameter x
         self.helper.assert_parameter_alias(
@@ -208,9 +209,9 @@ class TestDFGStressC:
 
         # result should have multiple definitions
         result_chains = def_use_result.chains.get("result", [])
-        assert len(result_chains) >= 2, (
-            f"Expected multiple def-use chains for result, got {len(result_chains)}"
-        )
+        assert (
+            len(result_chains) >= 2
+        ), f"Expected multiple def-use chains for result, got {len(result_chains)}"
 
 
 class TestDFGStressJava:
@@ -279,9 +280,9 @@ class TestDFGStressJava:
 
         # Enhanced for loop should create proper dataflow
         sum_chains = def_use_result.chains.get("sum", [])
-        assert len(sum_chains) >= 1, (
-            f"Expected at least 1 def-use chain for sum, got {len(sum_chains)}"
-        )
+        assert (
+            len(sum_chains) >= 1
+        ), f"Expected at least 1 def-use chain for sum, got {len(sum_chains)}"
 
         # Parameter x should be aliased to loop variable num
         self.helper.assert_parameter_alias(
@@ -326,9 +327,9 @@ class TestDFGStressJava:
 
         # result should have definitions from both try and catch blocks
         result_chains = def_use_result.chains.get("result", [])
-        assert len(result_chains) >= 2, (
-            f"Expected multiple def-use chains for result, got {len(result_chains)}"
-        )
+        assert (
+            len(result_chains) >= 2
+        ), f"Expected multiple def-use chains for result, got {len(result_chains)}"
 
     def test_switch_with_method_calls(self):
         """Test DFG analysis with switch statements containing method calls."""
@@ -373,9 +374,9 @@ class TestDFGStressJava:
 
         # result should have multiple possible definitions
         result_chains = def_use_result.chains.get("result", [])
-        assert len(result_chains) >= 1, (
-            f"Expected at least 1 def-use chain for result, got {len(result_chains)}"
-        )
+        assert (
+            len(result_chains) >= 1
+        ), f"Expected at least 1 def-use chain for result, got {len(result_chains)}"
 
     def test_recursive_methods(self):
         """Test DFG analysis with recursive method calls."""
@@ -408,9 +409,9 @@ class TestDFGStressJava:
 
         # n should be used in multiple places within the recursive method
         n_chains = def_use_result.chains.get("n", [])
-        assert len(n_chains) >= 1, (
-            f"Expected at least 1 def-use chain for n, got {len(n_chains)}"
-        )
+        assert (
+            len(n_chains) >= 1
+        ), f"Expected at least 1 def-use chain for n, got {len(n_chains)}"
 
 
 class TestDFGEdgeCases:
@@ -447,9 +448,9 @@ class TestDFGEdgeCases:
         cfg, def_use_result, use_def_result = self.helper.build_dfg_from_code(code)
 
         # Should handle empty functions gracefully
-        assert len(def_use_result.chains) >= 0, (
-            "Should handle empty functions without error"
-        )
+        assert (
+            len(def_use_result.chains) >= 0
+        ), "Should handle empty functions without error"
 
     def test_functions_with_no_parameters(self, helper):
         """Test functions that have no parameters."""

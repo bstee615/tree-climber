@@ -10,9 +10,9 @@ Investigation: Examine the CFG before and after post-processing to see
 exactly where the default case connection is being lost.
 """
 
+from tree_climber.ast_utils import parse_source_to_ast
 from tree_climber.cfg.builder import CFGBuilder
 from tree_climber.cfg.languages.c import CCFGVisitor
-from tree_climber.ast_utils import parse_source_to_ast
 
 
 def debug_switch_before_postprocessing():

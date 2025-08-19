@@ -9,7 +9,7 @@ parsed and visited by examining the AST structure.
 Investigation: Walk through the AST to understand the switch statement structure.
 """
 
-from tree_climber.ast_utils import parse_source_to_ast, get_source_text
+from tree_climber.ast_utils import get_source_text, parse_source_to_ast
 
 
 def print_ast_structure(node, indent=0, max_depth=15):

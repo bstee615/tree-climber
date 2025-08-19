@@ -42,9 +42,11 @@ def extract_function_call_arguments(ast_node: Node) -> List[str]:
                             # Look for identifiers within the argument expression
                             for identifier in dfs(
                                 arg_child,
-                                lambda n: get_source_text(n)
-                                if n.type == "identifier"
-                                else None,
+                                lambda n: (
+                                    get_source_text(n)
+                                    if n.type == "identifier"
+                                    else None
+                                ),
                             ):
                                 if identifier:
                                     arguments.append(identifier)

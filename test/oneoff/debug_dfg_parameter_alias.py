@@ -6,11 +6,14 @@ to understand what needs to be fixed for the parsing bug:
 "Both languages DFG, Function parameters should alias def uses"
 """
 
-import tempfile
 import os
-from tree_sitter_languages import get_parser
+import tempfile
+
+from tree_sitter_language_pack import get_parser
+
 from tree_climber.cfg.builder import CFGBuilder
-from tree_climber.dataflow.analyses.def_use import DefUseSolver, UseDefSolver
+from tree_climber.dataflow.analyses.def_use import DefUseSolver
+from tree_climber.dataflow.analyses.use_def import UseDefSolver
 from tree_climber.dataflow.analyses.reaching_definitions import (
     ReachingDefinitionsProblem,
 )

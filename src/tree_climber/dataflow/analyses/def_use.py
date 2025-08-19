@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from tree_climber.cfg.visitor import CFG
-from tree_climber.dataflow.analyses.reaching_definitions import (
-    ReachingDefinition,
-)
+from tree_climber.dataflow.analyses.reaching_definitions import ReachingDefinition
 from tree_climber.dataflow.dataflow_types import DataflowResult
 
 

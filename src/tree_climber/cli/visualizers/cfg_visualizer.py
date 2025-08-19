@@ -9,9 +9,7 @@ from tree_climber.cli.visualizers.base_visualizer import (
 from tree_climber.cli.visualizers.dfg_visualizer import add_dfg_edge
 from tree_climber.cli.visualizers.utils import add_cfg_node
 
-from .constants import (
-    DEFAULT_DPI,
-)
+from .constants import DEFAULT_DPI
 
 
 class CFGVisualizer(BaseVisualizer):

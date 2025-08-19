@@ -18,10 +18,11 @@ Created: 2025-08-14
 Author: Claude Code Assistant
 """
 
-import pytest
-from typing import List, Dict, Set, Optional, Tuple
-import tempfile
 import os
+import tempfile
+from typing import Dict, List, Optional, Set, Tuple
+
+import pytest
 
 from tree_climber.cfg.builder import CFGBuilder
 from tree_climber.cfg.cfg_types import NodeType
@@ -118,15 +119,15 @@ public class TestClass {{
 
         # Check that entry nodes are in the CFG's entry list
         for entry_node in entry_nodes:
-            assert entry_node.id in cfg.entry_node_ids, (
-                f"Entry node {entry_node.id} not in CFG entry list. {message}"
-            )
+            assert (
+                entry_node.id in cfg.entry_node_ids
+            ), f"Entry node {entry_node.id} not in CFG entry list. {message}"
 
         # Check that exit nodes are in the CFG's exit list
         for exit_node in exit_nodes:
-            assert exit_node.id in cfg.exit_node_ids, (
-                f"Exit node {exit_node.id} not in CFG exit list. {message}"
-            )
+            assert (
+                exit_node.id in cfg.exit_node_ids
+            ), f"Exit node {exit_node.id} not in CFG exit list. {message}"
 
     def assert_edge_connections(
         self,
@@ -150,12 +151,12 @@ public class TestClass {{
                     n for n in cfg.nodes.values() if to_node_text in n.source_text
                 ]
 
-            assert len(from_nodes) > 0, (
-                f"Source node containing '{from_node_text}' not found. {message}"
-            )
-            assert len(to_nodes) > 0, (
-                f"Target node containing '{to_node_text}' not found. {message}"
-            )
+            assert (
+                len(from_nodes) > 0
+            ), f"Source node containing '{from_node_text}' not found. {message}"
+            assert (
+                len(to_nodes) > 0
+            ), f"Target node containing '{to_node_text}' not found. {message}"
 
             from_node = from_nodes[0]
             to_node = to_nodes[0]
@@ -167,9 +168,9 @@ public class TestClass {{
 
             if expected_label is not None:
                 actual_label = from_node.get_edge_label(to_node.id)
-                assert actual_label == expected_label, (
-                    f"Expected edge label '{expected_label}', got '{actual_label}'. {message}"
-                )
+                assert (
+                    actual_label == expected_label
+                ), f"Expected edge label '{expected_label}', got '{actual_label}'. {message}"
 
     def assert_reachability(self, cfg: CFG, message: str = ""):
         """Assert all nodes are reachable from entry nodes."""
@@ -209,16 +210,16 @@ public class TestClass {{
     ):
         """Assert method parameters are correctly extracted."""
         entry_nodes = [n for n in cfg.nodes.values() if n.node_type == NodeType.ENTRY]
-        assert len(entry_nodes) > 0, (
-            f"No entry node found for parameter validation. {message}"
-        )
+        assert (
+            len(entry_nodes) > 0
+        ), f"No entry node found for parameter validation. {message}"
 
         entry_node = entry_nodes[0]
         actual_parameters = entry_node.metadata.variable_definitions
 
-        assert actual_parameters == expected_parameters, (
-            f"Expected parameters {expected_parameters}, got {actual_parameters}. {message}"
-        )
+        assert (
+            actual_parameters == expected_parameters
+        ), f"Expected parameters {expected_parameters}, got {actual_parameters}. {message}"
 
     def assert_variable_tracking(
         self,
@@ -240,9 +241,9 @@ public class TestClass {{
         missing_uses = expected_uses - all_uses
         extra_uses = all_uses - expected_uses
 
-        assert not missing_definitions, (
-            f"Missing variable definitions: {missing_definitions}. {message}"
-        )
+        assert (
+            not missing_definitions
+        ), f"Missing variable definitions: {missing_definitions}. {message}"
         assert not missing_uses, f"Missing variable uses: {missing_uses}. {message}"
 
         # Extra definitions/uses are warnings, not errors
@@ -618,30 +619,30 @@ class TestObjectOriented:
         assert continuation_node is not None, "Should find continuation node"
 
         # Verify call edge: call_node -> helper_entry
-        assert helper_entry.id in call_node.successors, (
-            "Call node should have edge to method entry"
-        )
+        assert (
+            helper_entry.id in call_node.successors
+        ), "Call node should have edge to method entry"
 
         # Verify return edge: helper_exit -> call_node
-        assert call_node.id in helper_exit.successors, (
-            "Method exit should have edge back to call node"
-        )
+        assert (
+            call_node.id in helper_exit.successors
+        ), "Method exit should have edge back to call node"
 
         # Verify continuation edge: call_node -> continuation_node
-        assert continuation_node.id in call_node.successors, (
-            "Call node should have edge to continuation"
-        )
+        assert (
+            continuation_node.id in call_node.successors
+        ), "Call node should have edge to continuation"
 
         # Verify edge labels
         call_edge_label = call_node.get_edge_label(helper_entry.id)
         return_edge_label = helper_exit.get_edge_label(call_node.id)
 
-        assert call_edge_label == "function_call", (
-            f"Call edge should be labeled 'function_call', got {call_edge_label}"
-        )
-        assert return_edge_label == "function_return", (
-            f"Return edge should be labeled 'function_return', got {return_edge_label}"
-        )
+        assert (
+            call_edge_label == "function_call"
+        ), f"Call edge should be labeled 'function_call', got {call_edge_label}"
+        assert (
+            return_edge_label == "function_return"
+        ), f"Return edge should be labeled 'function_return', got {return_edge_label}"
 
     def test_multiple_method_calls(self):
         """Test multiple method calls in sequence."""
@@ -677,9 +678,9 @@ class TestObjectOriented:
         assert method2_call is not None, "Should find method2 call"
 
         # Verify calls are connected in sequence
-        assert method2_call.id in method1_call.successors, (
-            "First call should connect to second call"
-        )
+        assert (
+            method2_call.id in method1_call.successors
+        ), "First call should connect to second call"
 
         # Verify each call has proper call and return edges
         method1_call_edges = [
@@ -693,12 +694,12 @@ class TestObjectOriented:
             if label == "function_call"
         ]
 
-        assert len(method1_call_edges) > 0, (
-            "method1 call should have function_call edge"
-        )
-        assert len(method2_call_edges) > 0, (
-            "method2 call should have function_call edge"
-        )
+        assert (
+            len(method1_call_edges) > 0
+        ), "method1 call should have function_call edge"
+        assert (
+            len(method2_call_edges) > 0
+        ), "method2 call should have function_call edge"
 
     def test_nested_method_calls(self):
         """Test method calls within other methods."""
@@ -732,12 +733,12 @@ class TestObjectOriented:
                     return_edge_count += 1
 
         # Should have call edges for intermediate() and leaf() calls
-        assert call_edge_count >= 2, (
-            f"Should have at least 2 function call edges, got {call_edge_count}"
-        )
-        assert return_edge_count >= 2, (
-            f"Should have at least 2 function return edges, got {return_edge_count}"
-        )
+        assert (
+            call_edge_count >= 2
+        ), f"Should have at least 2 function call edges, got {call_edge_count}"
+        assert (
+            return_edge_count >= 2
+        ), f"Should have at least 2 function return edges, got {return_edge_count}"
 
 
 class TestJavaSpecific:
@@ -791,9 +792,9 @@ class TestNestedConstructs:
         loop_headers = [
             n for n in cfg.nodes.values() if n.node_type == NodeType.LOOP_HEADER
         ]
-        assert len(loop_headers) >= 2, (
-            "Should have multiple loop headers for nested loops"
-        )
+        assert (
+            len(loop_headers) >= 2
+        ), "Should have multiple loop headers for nested loops"
         self.helper.assert_reachability(cfg)
 
     def test_nested_switch_statements(self):
@@ -806,9 +807,9 @@ class TestNestedConstructs:
         switch_heads = [
             n for n in cfg.nodes.values() if n.node_type == NodeType.SWITCH_HEAD
         ]
-        assert len(switch_heads) >= 2, (
-            "Should have multiple switch heads for nested switches"
-        )
+        assert (
+            len(switch_heads) >= 2
+        ), "Should have multiple switch heads for nested switches"
         self.helper.assert_reachability(cfg)
 
 
@@ -876,9 +877,9 @@ class TestCFGStructuralIntegrity:
                 for successor_id in node.successors:
                     if successor_id in cfg.nodes:
                         successor_node = cfg.nodes[successor_id]
-                        assert node_id in successor_node.predecessors, (
-                            f"Inconsistent edge: {node_id}->{successor_id} missing reverse edge"
-                        )
+                        assert (
+                            node_id in successor_node.predecessors
+                        ), f"Inconsistent edge: {node_id}->{successor_id} missing reverse edge"
 
 
 class TestVariableAnalysis:
@@ -904,9 +905,9 @@ class TestVariableAnalysis:
         # Should include local variable definitions
         expected_vars = {"a", "b", "c"}
         found_vars = all_definitions & expected_vars
-        assert len(found_vars) > 0, (
-            f"Should track some variable definitions, got: {all_definitions}"
-        )
+        assert (
+            len(found_vars) > 0
+        ), f"Should track some variable definitions, got: {all_definitions}"
 
     def test_parameter_tracking(self):
         """Test method parameter tracking in entry nodes."""

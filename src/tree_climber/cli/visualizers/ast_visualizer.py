@@ -3,9 +3,7 @@ from typing import override
 import pygraphviz as pgv
 from tree_sitter import Node
 
-from tree_climber.cli.visualizers.base_visualizer import (
-    BaseVisualizer,
-)
+from tree_climber.cli.visualizers.base_visualizer import BaseVisualizer
 from tree_climber.cli.visualizers.utils import ast_label
 
 from .constants import (
