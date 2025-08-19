@@ -17,8 +17,8 @@ dependencies = [
     "pytest>=8.4.0",
     "streamlit>=1.46.0",
     "streamlit-agraph>=0.0.45",
-    "tree-sitter<0.21.0",
-    "tree-sitter-languages>=1.10.2",
+    "tree-sitter>=0.22.0",
+    "tree-sitter-language-pack>=0.9.0",
     "typer>=0.16.0",
     "uvicorn>=0.24.0",
 ]
@@ -34,5 +34,16 @@ build-backend = "hatchling.build"
 pythonpath = ["src"]
 testpaths = ["test"]
 
+[[tool.uv.index]]
+url = "https://pypi.org/simple"
+default = true
+
 [dependency-groups]
-dev = ["pyright>=1.1.402", "ruff>=0.12.1", "black", "isort", "pre-commit"]
+dev = [
+    "pyright>=1.1.402",
+    "ruff>=0.12.1",
+    "black",
+    "isort",
+    "pre-commit",
+    "pytest-xdist",
+]

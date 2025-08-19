@@ -11,7 +11,8 @@ import pytest
 
 from tree_climber.cfg.builder import CFGBuilder
 from tree_climber.cfg.visitor import CFG
-from tree_climber.dataflow.analyses.def_use import DefUseSolver, UseDefSolver
+from tree_climber.dataflow.analyses.def_use import DefUseSolver
+from tree_climber.dataflow.analyses.use_def import UseDefSolver
 from tree_climber.dataflow.analyses.reaching_definitions import (
     ReachingDefinitionsProblem,
 )

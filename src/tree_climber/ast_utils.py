@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Callable, List, Optional
 
 from tree_sitter import Node, Tree
-from tree_sitter_languages import get_parser
+from tree_sitter_language_pack import get_parser
 
 
 def parse_source_to_ast(source_code: str, language: str) -> Tree:

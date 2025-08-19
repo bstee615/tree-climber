@@ -9,7 +9,7 @@ to understand what needs to be fixed for the first parsing bug:
 import os
 import tempfile
 
-from tree_sitter_languages import get_parser
+from tree_sitter_language_pack import get_parser
 
 from tree_climber.cfg.languages.c import CCFGVisitor
 from tree_climber.cfg.languages.java import JavaCFGVisitor

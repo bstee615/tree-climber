@@ -1,7 +1,7 @@
 from typing import Optional
 
 from tree_sitter import Tree
-from tree_sitter_languages import get_parser
+from tree_sitter_language_pack import get_parser
 
 from tree_climber.cfg.visitor import CFG, CFGVisitor
 
