@@ -6,11 +6,13 @@ to understand what needs to be fixed for the first parsing bug:
 "Both languages CFG, Function calls should have an edge from exit going back to the call"
 """
 
-import tempfile
 import os
+import tempfile
+
 from tree_sitter_languages import get_parser
-from tree_climber.cfg.languages.java import JavaCFGVisitor
+
 from tree_climber.cfg.languages.c import CCFGVisitor
+from tree_climber.cfg.languages.java import JavaCFGVisitor
 
 # Simple Java test with function call
 java_code = """

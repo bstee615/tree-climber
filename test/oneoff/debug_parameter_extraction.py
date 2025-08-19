@@ -14,7 +14,7 @@ correct AST structure for parameter_declaration nodes.
 Investigation: Examine AST structure and fix parameter extraction logic.
 """
 
-from tree_climber.ast_utils import parse_source_to_ast, get_source_text
+from tree_climber.ast_utils import get_source_text, parse_source_to_ast
 from tree_climber.cfg.builder import CFGBuilder
 
 

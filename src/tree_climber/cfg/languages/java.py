@@ -158,12 +158,12 @@ class JavaCFGVisitor(CFGVisitor):
                     first_entry = result.entry_node_id
                 last_exits = result.exit_node_ids
 
-        assert first_entry is not None, (
-            "Translation unit must have at least one entry node"
-        )
-        assert last_exits is not None, (
-            "Translation unit must have at least one exit node"
-        )
+        assert (
+            first_entry is not None
+        ), "Translation unit must have at least one entry node"
+        assert (
+            last_exits is not None
+        ), "Translation unit must have at least one exit node"
         return CFGTraversalResult(
             entry_node_id=first_entry,
             exit_node_ids=last_exits,
@@ -514,9 +514,9 @@ class JavaCFGVisitor(CFGVisitor):
         return_id = self.create_node(NodeType.RETURN, node, get_source_text(node))
 
         # Connect to function exit
-        assert len(self.cfg.exit_node_ids) > 0, (
-            "Return statement must have an exit node"
-        )
+        assert (
+            len(self.cfg.exit_node_ids) > 0
+        ), "Return statement must have an exit node"
         self.cfg.add_edge(return_id, self.cfg.exit_node_ids[-1])
 
         # Return statements don't have normal successors

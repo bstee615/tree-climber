@@ -372,9 +372,9 @@ class TestBasicDefUse:
 
         # x should have two definitions with different uses
         x_chains = def_use_result.chains.get("x", [])
-        assert len(x_chains) == 2, (
-            f"Expected 2 def-use chains for x, got {len(x_chains)}"
-        )
+        assert (
+            len(x_chains) == 2
+        ), f"Expected 2 def-use chains for x, got {len(x_chains)}"
 
         # First definition (x = 5) should reach y assignment
         helper.assert_def_use_chain(
@@ -429,13 +429,13 @@ class TestBasicDefUse:
                 y_assignment_chain = chain
                 break
 
-        assert y_assignment_chain is not None, (
-            "Should find use-def chain for x in y assignment"
-        )
+        assert (
+            y_assignment_chain is not None
+        ), "Should find use-def chain for x in y assignment"
         # Should have definitions from both conditional branches
-        assert len(y_assignment_chain.definitions) >= 1, (
-            "x use should have at least one reaching definition"
-        )
+        assert (
+            len(y_assignment_chain.definitions) >= 1
+        ), "x use should have at least one reaching definition"
 
 
 class TestInterproceduralAnalysis:
@@ -624,9 +624,9 @@ class TestIncrementOperators:
 
         # a++ should create a def-use chain where the increment definition points to itself
         a_chains = def_use_result.chains.get("a", [])
-        assert len(a_chains) >= 1, (
-            f"Expected at least 1 def-use chain for a, got {len(a_chains)}"
-        )
+        assert (
+            len(a_chains) >= 1
+        ), f"Expected at least 1 def-use chain for a, got {len(a_chains)}"
 
         # Look for the increment chain that should point to itself
         increment_chain = None
@@ -637,17 +637,17 @@ class TestIncrementOperators:
                 increment_chain = chain
                 break
 
-        assert increment_chain is not None, (
-            "Should find def-use chain for a++ increment"
-        )
+        assert (
+            increment_chain is not None
+        ), "Should find def-use chain for a++ increment"
 
         # The increment should point to its own use (self-reference)
         # For C: a++ should point to itself AND to uses of a
         # For Java: a++ should point to itself
         increment_def_id = increment_chain.definition
-        assert increment_def_id in increment_chain.uses, (
-            "a++ should have a self-reference (definition should be in its own uses)"
-        )
+        assert (
+            increment_def_id in increment_chain.uses
+        ), "a++ should have a self-reference (definition should be in its own uses)"
 
     def test_prefix_increment_self_reference(self, helper):
         """Test that ++a should point to itself in def-use chains."""
@@ -679,9 +679,9 @@ class TestIncrementOperators:
 
         # ++a should create a def-use chain where the increment definition points to itself
         a_chains = def_use_result.chains.get("a", [])
-        assert len(a_chains) >= 1, (
-            f"Expected at least 1 def-use chain for a, got {len(a_chains)}"
-        )
+        assert (
+            len(a_chains) >= 1
+        ), f"Expected at least 1 def-use chain for a, got {len(a_chains)}"
 
         # Look for the increment chain
         increment_chain = None
@@ -692,15 +692,15 @@ class TestIncrementOperators:
                 increment_chain = chain
                 break
 
-        assert increment_chain is not None, (
-            "Should find def-use chain for ++a increment"
-        )
+        assert (
+            increment_chain is not None
+        ), "Should find def-use chain for ++a increment"
 
         # The increment should point to its own use (self-reference)
         increment_def_id = increment_chain.definition
-        assert increment_def_id in increment_chain.uses, (
-            "++a should have a self-reference"
-        )
+        assert (
+            increment_def_id in increment_chain.uses
+        ), "++a should have a self-reference"
 
     def test_increment_in_expression(self, helper):
         """Test increment operators within expressions."""
@@ -752,9 +752,9 @@ class TestIncrementOperators:
                 break
 
         assert increment_chain is not None, "Should find def-use chain for increment"
-        assert increment_node in increment_chain.uses, (
-            "a++ should have self-reference even in expressions"
-        )
+        assert (
+            increment_node in increment_chain.uses
+        ), "a++ should have self-reference even in expressions"
 
     def test_multiple_increments(self, helper):
         """Test multiple increment operations on the same variable."""
@@ -790,9 +790,9 @@ class TestIncrementOperators:
 
         # Should have multiple def-use chains for a
         a_chains = def_use_result.chains.get("a", [])
-        assert len(a_chains) >= 3, (
-            f"Expected at least 3 def-use chains for a (initial + increments), got {len(a_chains)}"
-        )
+        assert (
+            len(a_chains) >= 3
+        ), f"Expected at least 3 def-use chains for a (initial + increments), got {len(a_chains)}"
 
         # Each increment/decrement should have self-reference
         increment_chains = []
@@ -802,16 +802,16 @@ class TestIncrementOperators:
             if "++" in def_text or "--" in def_text:
                 increment_chains.append(chain)
 
-        assert len(increment_chains) >= 3, (
-            f"Expected at least 3 increment/decrement chains, got {len(increment_chains)}"
-        )
+        assert (
+            len(increment_chains) >= 3
+        ), f"Expected at least 3 increment/decrement chains, got {len(increment_chains)}"
 
         # Each increment chain should have self-reference
         for chain in increment_chains:
             increment_def_id = chain.definition
-            assert increment_def_id in chain.uses, (
-                f"Increment/decrement at node {increment_def_id} should have self-reference"
-            )
+            assert (
+                increment_def_id in chain.uses
+            ), f"Increment/decrement at node {increment_def_id} should have self-reference"
 
 
 class TestComplexDataflow:
@@ -857,15 +857,15 @@ class TestComplexDataflow:
 
         # sum should have multiple definitions due to loop
         sum_chains = def_use_result.chains.get("sum", [])
-        assert len(sum_chains) >= 2, (
-            f"Expected at least 2 def-use chains for sum, got {len(sum_chains)}"
-        )
+        assert (
+            len(sum_chains) >= 2
+        ), f"Expected at least 2 def-use chains for sum, got {len(sum_chains)}"
 
         # Parameter 'val' should be aliased to loop variable 'i'
         val_chains = def_use_result.chains.get("val", [])
-        assert len(val_chains) >= 1, (
-            f"Expected at least 1 def-use chain for val, got {len(val_chains)}"
-        )
+        assert (
+            len(val_chains) >= 1
+        ), f"Expected at least 1 def-use chain for val, got {len(val_chains)}"
 
     def test_parameter_modification(self, helper):
         """Test when parameters are modified within functions."""
@@ -901,9 +901,9 @@ class TestComplexDataflow:
 
         # Parameter 'p' should have multiple definitions
         p_chains = def_use_result.chains.get("p", [])
-        assert len(p_chains) >= 2, (
-            f"Expected at least 2 def-use chains for p, got {len(p_chains)}"
-        )
+        assert (
+            len(p_chains) >= 2
+        ), f"Expected at least 2 def-use chains for p, got {len(p_chains)}"
 
         # Original parameter should alias to argument
         helper.assert_parameter_alias(
@@ -960,9 +960,9 @@ class TestComplexDataflow:
                 b_assignment_chain = chain
                 break
 
-        assert b_assignment_chain is not None, (
-            "Should find use-def chain for 'a' in 'b = a + 1'"
-        )
+        assert (
+            b_assignment_chain is not None
+        ), "Should find use-def chain for 'a' in 'b = a + 1'"
 
         # The use of 'a' in "int b = a + 1" should ONLY reach the definition "a = 10"
         # It should NOT reach the original argument definition "x = 5"
@@ -973,12 +973,12 @@ class TestComplexDataflow:
                 reaching_defs.append(def_node.source_text.strip())
 
         # Should only have "a = 10" as reaching definition, not "x = 5"
-        assert any("a = 10" in def_text for def_text in reaching_defs), (
-            "Should have 'a = 10' as reaching definition"
-        )
-        assert not any("x = 5" in def_text for def_text in reaching_defs), (
-            f"Should NOT have 'x = 5' as reaching definition. Found: {reaching_defs}"
-        )
+        assert any(
+            "a = 10" in def_text for def_text in reaching_defs
+        ), "Should have 'a = 10' as reaching definition"
+        assert not any(
+            "x = 5" in def_text for def_text in reaching_defs
+        ), f"Should NOT have 'x = 5' as reaching definition. Found: {reaching_defs}"
 
 
 if __name__ == "__main__":

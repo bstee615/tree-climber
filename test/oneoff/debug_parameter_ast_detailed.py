@@ -11,10 +11,10 @@ to understand how to correctly extract parameter names.
 """
 
 from tree_climber.ast_utils import (
-    parse_source_to_ast,
-    get_source_text,
-    get_required_child_by_field_name,
     get_child_by_field_name,
+    get_required_child_by_field_name,
+    get_source_text,
+    parse_source_to_ast,
 )
 
 
