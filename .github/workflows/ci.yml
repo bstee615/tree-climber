@@ -72,7 +72,7 @@ jobs:
   deploy-review-app:
     name: Deploy Review App
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, lint]
     if: github.event_name == 'pull_request'
     
     steps:
@@ -82,12 +82,12 @@ jobs:
     - name: Deploy to review environment
       run: |
         echo "Deploying review app for PR #${{ github.event.pull_request.number }}"
-        echo "This job only runs when tests pass"
+        echo "This job only runs when both tests and linting pass"
         # Add your deployment commands here
         # See docs/ci-cd-workflows.md for detailed configuration examples
         # Example platforms:
         # - Vercel: npm install -g vercel && vercel deploy --token=$VERCEL_TOKEN --yes
-        # - Netlify: npm install -g netlify-cli && netlify deploy --auth=$NETLIFY_AUTH_TOKEN --site=$NETLIFY_SITE_ID
-        # - Heroku: git push heroku ${{ github.head_ref }}:main
+        # - Netlify: npm install -g netlify-cli && netlify deploy --auth=$NETLIFY_AUTH_TOKEN --site=$NETLIFY_SITE_ID --dir=dist
+        # - Heroku: curl https://cli-assets.heroku.com/install.sh | sh && git push heroku ${{ github.head_ref }}:main
         # - Railway: npm install -g @railway/cli && railway up
         # - Custom deployment script: ./deploy-review.sh

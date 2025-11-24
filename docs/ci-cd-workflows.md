@@ -81,13 +81,20 @@ The deployment job is currently configured with a placeholder script. To enable 
 - name: Deploy to Netlify
   run: |
     npm install -g netlify-cli
-    netlify deploy --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }}
+    # For frontend: netlify deploy --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }} --dir=dist
+    # For full-stack: build your application first, then deploy the output directory
+    netlify deploy --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }} --dir=dist
 ```
 
 ##### Heroku
 ```yaml
 - name: Deploy to Heroku
   run: |
+    # Install Heroku CLI
+    curl https://cli-assets.heroku.com/install.sh | sh
+    # Configure git with Heroku remote
+    git remote add heroku https://git.heroku.com/${{ secrets.HEROKU_APP_NAME }}.git
+    # Deploy
     git push heroku ${{ github.head_ref }}:main
   env:
     HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -116,14 +123,14 @@ The deployment job is currently configured with a placeholder script. To enable 
 ```
 lint (independent)
 test (independent)
-deploy-review-app (depends on: test)
+deploy-review-app (depends on: test, lint)
 ```
 
 The `deploy-review-app` job will only execute if:
 1. The workflow was triggered by a pull request
-2. The `test` job completed successfully
+2. Both the `test` and `lint` jobs completed successfully
 
-If the `test` job fails, the `deploy-review-app` job will be skipped automatically.
+If either the `test` or `lint` job fails, the `deploy-review-app` job will be skipped automatically.
 
 ## Adding Secrets
 
@@ -134,7 +141,7 @@ To configure deployment, you'll need to add secrets to your GitHub repository:
 3. Add the required secrets for your chosen deployment platform:
    - **Vercel**: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
    - **Netlify**: `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`
-   - **Heroku**: `HEROKU_API_KEY`
+   - **Heroku**: `HEROKU_API_KEY`, `HEROKU_APP_NAME`
    - **Railway**: `RAILWAY_TOKEN`
    - Or any custom tokens needed for your deployment script
 
