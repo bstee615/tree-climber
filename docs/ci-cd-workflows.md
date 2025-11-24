@@ -51,11 +51,11 @@ The CI workflow runs on:
 
 #### 3. Deploy Review App
 
-**Purpose**: Deploys a review app for pull requests after tests pass
+**Purpose**: Deploys a review app for pull requests after tests and linting pass
 
 **Conditions**:
 - Only runs on pull requests (`github.event_name == 'pull_request'`)
-- Only runs after the `test` job completes successfully (`needs: test`)
+- Only runs after both the `test` and `lint` jobs complete successfully (`needs: [test, lint]`)
 
 **Steps**:
 - Checkout code
