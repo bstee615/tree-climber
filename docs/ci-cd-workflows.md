@@ -57,6 +57,9 @@ The CI workflow runs on:
 - Only runs on pull requests (`github.event_name == 'pull_request'`)
 - Only runs after both the `test` and `lint` jobs complete successfully (`needs: [test, lint]`)
 
+**Permissions**:
+- `contents: read` - Minimal permissions following the principle of least privilege
+
 **Steps**:
 - Checkout code
 - Deploy to review environment (placeholder implementation)
