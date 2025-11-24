@@ -68,3 +68,25 @@ jobs:
     - name: Run pytest
       run: |
         uv run pytest -v
+
+  deploy-review-app:
+    name: Deploy Review App
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Deploy to review environment
+      run: |
+        echo "Deploying review app for PR #${{ github.event.pull_request.number }}"
+        echo "This job only runs when tests pass"
+        # Add your deployment commands here
+        # Example platforms:
+        # - Vercel: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+        # - Netlify: netlify deploy --prod --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}
+        # - Heroku: git push heroku ${{ github.head_ref }}:main
+        # - Railway: railway up
+        # - Custom deployment script: ./deploy-review.sh
