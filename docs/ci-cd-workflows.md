@@ -70,7 +70,10 @@ The deployment job is currently configured with a placeholder script. To enable 
 - name: Deploy to Vercel
   run: |
     npm install -g vercel
-    vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
+    vercel deploy --token=${{ secrets.VERCEL_TOKEN }} --yes
+  env:
+    VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+    VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 ```
 
 ##### Netlify
@@ -78,7 +81,7 @@ The deployment job is currently configured with a placeholder script. To enable 
 - name: Deploy to Netlify
   run: |
     npm install -g netlify-cli
-    netlify deploy --prod --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}
+    netlify deploy --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }}
 ```
 
 ##### Heroku
@@ -129,10 +132,10 @@ To configure deployment, you'll need to add secrets to your GitHub repository:
 1. Go to Settings > Secrets and variables > Actions
 2. Click "New repository secret"
 3. Add the required secrets for your chosen deployment platform:
-   - `VERCEL_TOKEN` for Vercel
-   - `NETLIFY_AUTH_TOKEN` for Netlify
-   - `HEROKU_API_KEY` for Heroku
-   - `RAILWAY_TOKEN` for Railway
+   - **Vercel**: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+   - **Netlify**: `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`
+   - **Heroku**: `HEROKU_API_KEY`
+   - **Railway**: `RAILWAY_TOKEN`
    - Or any custom tokens needed for your deployment script
 
 ## Local Development

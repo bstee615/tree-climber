@@ -84,9 +84,10 @@ jobs:
         echo "Deploying review app for PR #${{ github.event.pull_request.number }}"
         echo "This job only runs when tests pass"
         # Add your deployment commands here
+        # See docs/ci-cd-workflows.md for detailed configuration examples
         # Example platforms:
-        # - Vercel: vercel deploy --token=${{ secrets.VERCEL_TOKEN }}
-        # - Netlify: netlify deploy --prod --auth=${{ secrets.NETLIFY_AUTH_TOKEN }}
+        # - Vercel: npm install -g vercel && vercel deploy --token=$VERCEL_TOKEN --yes
+        # - Netlify: npm install -g netlify-cli && netlify deploy --auth=$NETLIFY_AUTH_TOKEN --site=$NETLIFY_SITE_ID
         # - Heroku: git push heroku ${{ github.head_ref }}:main
-        # - Railway: railway up
+        # - Railway: npm install -g @railway/cli && railway up
         # - Custom deployment script: ./deploy-review.sh
