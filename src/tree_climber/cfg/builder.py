@@ -14,8 +14,12 @@ def get_visitor(language: str) -> CFGVisitor:
         return CCFGVisitor()
     elif language == "java":
         from tree_climber.cfg.languages.java import JavaCFGVisitor
-
         return JavaCFGVisitor()
+    
+    elif language == "go":
+        from tree_climber.cfg.languages.go import GoCFGVisitor
+        return GoCFGVisitor()
+    
     else:
         raise ValueError(f"Unsupported language: {language}")
 

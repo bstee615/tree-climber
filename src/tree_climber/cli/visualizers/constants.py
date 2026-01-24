@@ -8,7 +8,7 @@ from enum import Enum
 from typing import List
 
 # Supported programming languages
-SUPPORTED_LANGUAGES: List[str] = ["c", "java"]
+SUPPORTED_LANGUAGES: List[str] = ["c", "java", "go"]
 DEFAULT_LANGUAGE: str = "c"
 
 
@@ -59,6 +59,7 @@ SHAPE_MAP = {"s": "box", "o": "ellipse", "D": "diamond"}
 LANGUAGE_EXTENSIONS: dict[str, List[str]] = {
     "c": [".c", ".h"],
     "java": [".java"],
+    "go": [".go"],
 }
 
 # Performance constants

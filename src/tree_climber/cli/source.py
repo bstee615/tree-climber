@@ -64,6 +64,7 @@ class FileSource(CodeSource):
             ".c": "c",
             ".h": "c",
             ".java": "java",
+            ".go": "go",
         }
         return extension_map.get(suffix)
 
