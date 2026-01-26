@@ -312,15 +312,34 @@ class GoCFGVisitor(CFGVisitor):
                     # Extract variable name for the function
                     var_name = self._extract_var_name(child)
                     result = self.visit_func_literal(func_literal, var_name)
+            elif child.type == "func_literal":
+                # Handle standalone function literal
+                result = self.visit_func_literal(child, "anonymous")
+            elif child.type == "expression_statement":
+                # Check if it contains a function literal
+                for expr_child in child.children:
+                    if expr_child.type == "func_literal":
+                        result = self.visit_func_literal(expr_child, "anonymous")
+                        break
             
             if result:
                 if first_entry is None:
                     first_entry = result.entry_node_id
                 last_exits = result.exit_node_ids
 
-        assert first_entry is not None, (
-            "Source file must have at least one entry node"
-        )
+        # If no function/method was found, create a minimal CFG
+        if first_entry is None:
+            # Create a placeholder entry and exit for an empty or non-function source
+            entry_id = self.create_node(NodeType.ENTRY, source_text="<empty>")
+            exit_id = self.create_node(NodeType.EXIT, source_text="<empty>")
+            self.cfg.add_edge(entry_id, exit_id)
+            self.cfg.entry_node_ids.append(entry_id)
+            self.cfg.exit_node_ids.append(exit_id)
+            return CFGTraversalResult(
+                entry_node_id=entry_id,
+                exit_node_ids=[exit_id],
+            )
+
         assert last_exits is not None, "Source file must have at least one exit node"
         return CFGTraversalResult(
             entry_node_id=first_entry,
@@ -679,7 +698,9 @@ class GoCFGVisitor(CFGVisitor):
         # Get components via named fields
         initializer = get_child_by_field_name(node, "initializer")
         value = get_child_by_field_name(node, "value")
-        body = get_required_child_by_field_name(node, "body")
+        
+        # Switch statements in Go don't have a 'body' field
+        # The case clauses are direct children of the switch_statement node
 
         entry_id = None
 
@@ -697,8 +718,7 @@ class GoCFGVisitor(CFGVisitor):
 
         # Connect initializer to switch head if present
         if entry_id is not None:
-            for exit_node in [entry_id]:
-                self.cfg.add_edge(exit_node, switch_head_id)
+            self.cfg.add_edge(entry_id, switch_head_id)
         else:
             entry_id = switch_head_id
 
@@ -708,8 +728,10 @@ class GoCFGVisitor(CFGVisitor):
         # Set up switch context for break statements
         self.context.push_switch_context(switch_exit_id, switch_head_id)
 
-        # Process switch body
-        self._create_body_node(body, switch_head_id, switch_exit_id)
+        # Process case clauses directly (they are children of the switch_statement)
+        for child in node.children:
+            if child.type == "expression_case_clause":
+                self.visit(child)
 
         # Clean up switch context
         self.context.pop_switch_context()
@@ -721,17 +743,14 @@ class GoCFGVisitor(CFGVisitor):
     def visit_expression_switch_statement(
         self, node: Node
     ) -> CFGTraversalResult:
-        """Visit an expression switch statement (alias for switch_statement)"""
-        return self.visit_switch_statement(node)
-
-    def visit_type_switch_statement(self, node: Node) -> CFGTraversalResult:
-        """Visit a type switch statement"""
-        # Similar to regular switch but for type assertions
+        """Visit an expression switch statement"""
+        # Similar to regular switch
         initializer = get_child_by_field_name(node, "initializer")
-        alias = get_child_by_field_name(node, "alias")
         value = get_child_by_field_name(node, "value")
-        body = get_required_child_by_field_name(node, "body")
-
+        
+        # Expression switch statements in Go don't have a 'body' field
+        # The case clauses are direct children of the expression_switch_statement node
+        
         entry_id = None
 
         # Handle initializer if present
@@ -739,11 +758,12 @@ class GoCFGVisitor(CFGVisitor):
             init_result = self.visit(initializer)
             entry_id = init_result.entry_node_id
 
-        # Create switch head node with type assertion
-        switch_text = f"{get_source_text(alias)} := {get_source_text(value)}" if alias and value else "type switch"
-        switch_head_id = self.create_node(
-            NodeType.SWITCH_HEAD, source_text=switch_text
-        )
+        # Create switch head node
+        if value:
+            switch_head_id = self._create_condition_node(value, NodeType.SWITCH_HEAD)
+        else:
+            # Switch without expression
+            switch_head_id = self.create_node(NodeType.SWITCH_HEAD, source_text="true")
 
         # Connect initializer to switch head if present
         if entry_id is not None:
@@ -751,16 +771,16 @@ class GoCFGVisitor(CFGVisitor):
         else:
             entry_id = switch_head_id
 
-        # Create exit node
-        switch_exit_id = self.create_node(
-            NodeType.EXIT, source_text="EXIT: type switch"
-        )
+        # Create exit node for the switch
+        switch_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: switch")
 
-        # Set up switch context
+        # Set up switch context for break statements
         self.context.push_switch_context(switch_exit_id, switch_head_id)
 
-        # Process switch body
-        self._create_body_node(body, switch_head_id, switch_exit_id)
+        # Process case clauses directly (they are children of the expression_switch_statement)
+        for child in node.children:
+            if child.type == "expression_case_clause":
+                self.visit(child)
 
         # Clean up switch context
         self.context.pop_switch_context()
@@ -901,7 +921,8 @@ class GoCFGVisitor(CFGVisitor):
 
     def visit_select_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a select statement (for channel operations)"""
-        body = get_required_child_by_field_name(node, "body")
+        # Select statements in Go don't have a 'body' field
+        # The communication case clauses are direct children of the select_statement node
 
         # Create select head node
         select_head_id = self.create_node(
@@ -914,8 +935,10 @@ class GoCFGVisitor(CFGVisitor):
         # Set up select context (similar to switch)
         self.context.push_switch_context(select_exit_id, select_head_id)
 
-        # Process select body
-        self._create_body_node(body, select_head_id, select_exit_id)
+        # Process communication case clauses directly (they are children of the select_statement)
+        for child in node.children:
+            if child.type == "communication_case":
+                self.visit(child)
 
         # Clean up context
         self.context.pop_switch_context()
@@ -1010,8 +1033,23 @@ class GoCFGVisitor(CFGVisitor):
 
     def visit_goto_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a goto statement - unconditional jump to a label"""
-        # Get label via named field
-        label_node = get_required_child_by_field_name(node, "label")
+        # Get label - goto_statement has a label_name child, not a 'label' field
+        label_node = None
+        for child in node.children:
+            if child.type == "label_name":
+                label_node = child
+                break
+        
+        if label_node is None:
+            # Fallback: try to get any identifier
+            for child in node.children:
+                if child.is_named:
+                    label_node = child
+                    break
+        
+        if label_node is None:
+            raise ValueError("goto statement must have a label")
+        
         target_label = get_source_text(label_node)
 
         # Create goto node
