@@ -1,0 +1,386 @@
+{
+  "function_name": "simple_sequence",
+  "entry_node_ids": [
+    0
+  ],
+  "exit_node_ids": [
+    1
+  ],
+  "cfg_nodes": {
+    "0": {
+      "cfg_node_id": 0,
+      "node_type": "ENTRY",
+      "source_text": "simple_sequence",
+      "successors": [
+        2
+      ],
+      "predecessors": [],
+      "edge_labels": {},
+      "ast_root_id": "0__ast_385067184",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": []
+      }
+    },
+    "1": {
+      "cfg_node_id": 1,
+      "node_type": "EXIT",
+      "source_text": "simple_sequence",
+      "successors": [],
+      "predecessors": [
+        5
+      ],
+      "edge_labels": {},
+      "ast_root_id": "1__ast_384978144",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": []
+      }
+    },
+    "2": {
+      "cfg_node_id": 2,
+      "node_type": "STATEMENT",
+      "source_text": "int x = 5;",
+      "successors": [
+        3
+      ],
+      "predecessors": [
+        0
+      ],
+      "edge_labels": {},
+      "ast_root_id": "2__ast_385749808",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [
+          "x"
+        ],
+        "variable_uses": []
+      }
+    },
+    "3": {
+      "cfg_node_id": 3,
+      "node_type": "STATEMENT",
+      "source_text": "x = x + 1;",
+      "successors": [
+        4
+      ],
+      "predecessors": [
+        2
+      ],
+      "edge_labels": {},
+      "ast_root_id": "3__ast_385749816",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [
+          "x"
+        ],
+        "variable_uses": [
+          "x"
+        ]
+      }
+    },
+    "4": {
+      "cfg_node_id": 4,
+      "node_type": "STATEMENT",
+      "source_text": "x = x * 2;",
+      "successors": [
+        5
+      ],
+      "predecessors": [
+        3
+      ],
+      "edge_labels": {},
+      "ast_root_id": "4__ast_387238344",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [
+          "x"
+        ],
+        "variable_uses": [
+          "x"
+        ]
+      }
+    },
+    "5": {
+      "cfg_node_id": 5,
+      "node_type": "RETURN",
+      "source_text": "return x;",
+      "successors": [
+        1
+      ],
+      "predecessors": [
+        4
+      ],
+      "edge_labels": {},
+      "ast_root_id": "5__ast_387328088",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "x"
+        ]
+      }
+    }
+  },
+  "ast_nodes": {
+    "0__ast_384828160": {
+      "node_id": "0__ast_384828160",
+      "node_type": "identifier",
+      "text": "simple_sequence",
+      "start_byte": 5,
+      "end_byte": 20,
+      "parent_id": "0__ast_385067184",
+      "children_ids": []
+    },
+    "0__ast_384026328": {
+      "node_id": "0__ast_384026328",
+      "node_type": "parameter_list",
+      "text": "()",
+      "start_byte": 20,
+      "end_byte": 22,
+      "parent_id": "0__ast_385067184",
+      "children_ids": []
+    },
+    "0__ast_385067184": {
+      "node_id": "0__ast_385067184",
+      "node_type": "function_declarator",
+      "text": "simple_sequence()",
+      "start_byte": 5,
+      "end_byte": 22,
+      "parent_id": null,
+      "children_ids": [
+        "0__ast_384828160",
+        "0__ast_384026328"
+      ]
+    },
+    "1__ast_384978144": {
+      "node_id": "1__ast_384978144",
+      "node_type": "}",
+      "text": "}",
+      "start_byte": 84,
+      "end_byte": 85,
+      "parent_id": null,
+      "children_ids": []
+    },
+    "2__ast_384870016": {
+      "node_id": "2__ast_384870016",
+      "node_type": "primitive_type",
+      "text": "int",
+      "start_byte": 29,
+      "end_byte": 32,
+      "parent_id": "2__ast_385749808",
+      "children_ids": []
+    },
+    "2__ast_386116208": {
+      "node_id": "2__ast_386116208",
+      "node_type": "identifier",
+      "text": "x",
+      "start_byte": 33,
+      "end_byte": 34,
+      "parent_id": "2__ast_386219264",
+      "children_ids": []
+    },
+    "2__ast_385597424": {
+      "node_id": "2__ast_385597424",
+      "node_type": "number_literal",
+      "text": "5",
+      "start_byte": 37,
+      "end_byte": 38,
+      "parent_id": "2__ast_386219264",
+      "children_ids": []
+    },
+    "2__ast_386219264": {
+      "node_id": "2__ast_386219264",
+      "node_type": "init_declarator",
+      "text": "x = 5",
+      "start_byte": 33,
+      "end_byte": 38,
+      "parent_id": "2__ast_385749808",
+      "children_ids": [
+        "2__ast_386116208",
+        "2__ast_385597424"
+      ]
+    },
+    "2__ast_385749808": {
+      "node_id": "2__ast_385749808",
+      "node_type": "declaration",
+      "text": "int x = 5;",
+      "start_byte": 29,
+      "end_byte": 39,
+      "parent_id": null,
+      "children_ids": [
+        "2__ast_384870016",
+        "2__ast_386219264"
+      ]
+    },
+    "3__ast_386370720": {
+      "node_id": "3__ast_386370720",
+      "node_type": "identifier",
+      "text": "x",
+      "start_byte": 44,
+      "end_byte": 45,
+      "parent_id": "3__ast_385876112",
+      "children_ids": []
+    },
+    "3__ast_386308368": {
+      "node_id": "3__ast_386308368",
+      "node_type": "identifier",
+      "text": "x",
+      "start_byte": 48,
+      "end_byte": 49,
+      "parent_id": "3__ast_385885408",
+      "children_ids": []
+    },
+    "3__ast_384383760": {
+      "node_id": "3__ast_384383760",
+      "node_type": "number_literal",
+      "text": "1",
+      "start_byte": 52,
+      "end_byte": 53,
+      "parent_id": "3__ast_385885408",
+      "children_ids": []
+    },
+    "3__ast_385885408": {
+      "node_id": "3__ast_385885408",
+      "node_type": "binary_expression",
+      "text": "x + 1",
+      "start_byte": 48,
+      "end_byte": 53,
+      "parent_id": "3__ast_385876112",
+      "children_ids": [
+        "3__ast_386308368",
+        "3__ast_384383760"
+      ]
+    },
+    "3__ast_385876112": {
+      "node_id": "3__ast_385876112",
+      "node_type": "assignment_expression",
+      "text": "x = x + 1",
+      "start_byte": 44,
+      "end_byte": 53,
+      "parent_id": "3__ast_385749816",
+      "children_ids": [
+        "3__ast_386370720",
+        "3__ast_385885408"
+      ]
+    },
+    "3__ast_385749816": {
+      "node_id": "3__ast_385749816",
+      "node_type": "expression_statement",
+      "text": "x = x + 1;",
+      "start_byte": 44,
+      "end_byte": 54,
+      "parent_id": null,
+      "children_ids": [
+        "3__ast_385876112"
+      ]
+    },
+    "4__ast_384988416": {
+      "node_id": "4__ast_384988416",
+      "node_type": "identifier",
+      "text": "x",
+      "start_byte": 59,
+      "end_byte": 60,
+      "parent_id": "4__ast_387090608",
+      "children_ids": []
+    },
+    "4__ast_385737008": {
+      "node_id": "4__ast_385737008",
+      "node_type": "identifier",
+      "text": "x",
+      "start_byte": 63,
+      "end_byte": 64,
+      "parent_id": "4__ast_384565344",
+      "children_ids": []
+    },
+    "4__ast_387509184": {
+      "node_id": "4__ast_387509184",
+      "node_type": "number_literal",
+      "text": "2",
+      "start_byte": 67,
+      "end_byte": 68,
+      "parent_id": "4__ast_384565344",
+      "children_ids": []
+    },
+    "4__ast_384565344": {
+      "node_id": "4__ast_384565344",
+      "node_type": "binary_expression",
+      "text": "x * 2",
+      "start_byte": 63,
+      "end_byte": 68,
+      "parent_id": "4__ast_387090608",
+      "children_ids": [
+        "4__ast_385737008",
+        "4__ast_387509184"
+      ]
+    },
+    "4__ast_387090608": {
+      "node_id": "4__ast_387090608",
+      "node_type": "assignment_expression",
+      "text": "x = x * 2",
+      "start_byte": 59,
+      "end_byte": 68,
+      "parent_id": "4__ast_387238344",
+      "children_ids": [
+        "4__ast_384988416",
+        "4__ast_384565344"
+      ]
+    },
+    "4__ast_387238344": {
+      "node_id": "4__ast_387238344",
+      "node_type": "expression_statement",
+      "text": "x = x * 2;",
+      "start_byte": 59,
+      "end_byte": 69,
+      "parent_id": null,
+      "children_ids": [
+        "4__ast_387090608"
+      ]
+    },
+    "5__ast_386899712": {
+      "node_id": "5__ast_386899712",
+      "node_type": "identifier",
+      "text": "x",
+      "start_byte": 81,
+      "end_byte": 82,
+      "parent_id": "5__ast_387328088",
+      "children_ids": []
+    },
+    "5__ast_387328088": {
+      "node_id": "5__ast_387328088",
+      "node_type": "return_statement",
+      "text": "return x;",
+      "start_byte": 74,
+      "end_byte": 83,
+      "parent_id": null,
+      "children_ids": [
+        "5__ast_386899712"
+      ]
+    }
+  },
+  "dfg_edges": [
+    {
+      "source_id": 2,
+      "target_id": 3,
+      "variables": [
+        "x"
+      ]
+    },
+    {
+      "source_id": 3,
+      "target_id": 4,
+      "variables": [
+        "x"
+      ]
+    },
+    {
+      "source_id": 4,
+      "target_id": 5,
+      "variables": [
+        "x"
+      ]
+    }
+  ]
+}

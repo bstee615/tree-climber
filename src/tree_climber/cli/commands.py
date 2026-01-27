@@ -126,3 +126,4 @@ def _analyze_dataflow(cfg: CFG) -> DefUseResult:
     dataflow_solver = RoundRobinSolver()
     def_use_solver = DefUseSolver()
     return def_use_solver.solve(cfg, dataflow_solver.solve(cfg, problem))
+

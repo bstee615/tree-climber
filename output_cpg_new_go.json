@@ -1,0 +1,3876 @@
+{
+  "function_name": "anonymous",
+  "entry_node_ids": [
+    0
+  ],
+  "exit_node_ids": [
+    1
+  ],
+  "cfg_nodes": {
+    "0": {
+      "cfg_node_id": 0,
+      "node_type": "ENTRY",
+      "source_text": "anonymous",
+      "successors": [
+        2
+      ],
+      "predecessors": [],
+      "edge_labels": {},
+      "ast_root_id": "0__ast_915912144",
+      "metadata": {
+        "function_calls": [
+          "len",
+          "Len",
+          "Stop",
+          "Until",
+          "Reset",
+          "Reset",
+          "drainBuf",
+          "Write",
+          "Write"
+        ],
+        "variable_definitions": [
+          "buffered",
+          "delay",
+          "err",
+          "_",
+          "o"
+        ],
+        "variable_uses": [
+          "buffered",
+          "o",
+          "buf",
+          "timer",
+          "timer",
+          "delay",
+          "time",
+          "o",
+          "delay",
+          "timer",
+          "delay",
+          "timer",
+          "buffered",
+          "bufsize",
+          "timer",
+          "s",
+          "s",
+          "network",
+          "err",
+          "err",
+          "err",
+          "_",
+          "err",
+          "s",
+          "o",
+          "err",
+          "err",
+          "buf",
+          "o"
+        ]
+      }
+    },
+    "1": {
+      "cfg_node_id": 1,
+      "node_type": "EXIT",
+      "source_text": "anonymous",
+      "successors": [],
+      "predecessors": [
+        32,
+        26,
+        22,
+        30
+      ],
+      "edge_labels": {},
+      "ast_root_id": "1__ast_915912048",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": []
+      }
+    },
+    "2": {
+      "cfg_node_id": 2,
+      "node_type": "STATEMENT",
+      "source_text": "buffered := len(o.msg) + buf.Len()",
+      "successors": [
+        3
+      ],
+      "predecessors": [
+        0
+      ],
+      "edge_labels": {},
+      "ast_root_id": "2__ast_915187792",
+      "metadata": {
+        "function_calls": [
+          "len",
+          "Len"
+        ],
+        "variable_definitions": [
+          "buffered"
+        ],
+        "variable_uses": [
+          "buffered",
+          "o",
+          "buf"
+        ]
+      }
+    },
+    "3": {
+      "cfg_node_id": 3,
+      "node_type": "CONDITION",
+      "source_text": "!timer.Stop()",
+      "successors": [
+        8,
+        5
+      ],
+      "predecessors": [
+        2
+      ],
+      "edge_labels": {
+        "5": "true",
+        "8": "false"
+      },
+      "ast_root_id": "3__ast_916956656",
+      "metadata": {
+        "function_calls": [
+          "Stop"
+        ],
+        "variable_definitions": [],
+        "variable_uses": [
+          "timer"
+        ]
+      }
+    },
+    "5": {
+      "cfg_node_id": 5,
+      "node_type": "SWITCH_HEAD",
+      "source_text": "SELECT",
+      "successors": [],
+      "predecessors": [
+        3
+      ],
+      "edge_labels": {},
+      "ast_root_id": "5__ast_914930832",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "timer"
+        ]
+      }
+    },
+    "8": {
+      "cfg_node_id": 8,
+      "node_type": "STATEMENT",
+      "source_text": "delay := time.Until(o.arrivalTime)",
+      "successors": [
+        9
+      ],
+      "predecessors": [
+        3
+      ],
+      "edge_labels": {},
+      "ast_root_id": "8__ast_916366928",
+      "metadata": {
+        "function_calls": [
+          "Until"
+        ],
+        "variable_definitions": [
+          "delay"
+        ],
+        "variable_uses": [
+          "delay",
+          "time",
+          "o"
+        ]
+      }
+    },
+    "9": {
+      "cfg_node_id": 9,
+      "node_type": "CONDITION",
+      "source_text": "delay >= 0",
+      "successors": [
+        11,
+        12
+      ],
+      "predecessors": [
+        8
+      ],
+      "edge_labels": {
+        "11": "true",
+        "12": "false"
+      },
+      "ast_root_id": "9__ast_914488288",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "delay"
+        ]
+      }
+    },
+    "11": {
+      "cfg_node_id": 11,
+      "node_type": "STATEMENT",
+      "source_text": "timer.Reset(delay)",
+      "successors": [
+        13
+      ],
+      "predecessors": [
+        9
+      ],
+      "edge_labels": {},
+      "ast_root_id": "11__ast_914800608",
+      "metadata": {
+        "function_calls": [
+          "Reset"
+        ],
+        "variable_definitions": [],
+        "variable_uses": [
+          "timer",
+          "delay"
+        ]
+      }
+    },
+    "12": {
+      "cfg_node_id": 12,
+      "node_type": "STATEMENT",
+      "source_text": "timer.Reset(0)",
+      "successors": [
+        13
+      ],
+      "predecessors": [
+        9
+      ],
+      "edge_labels": {},
+      "ast_root_id": "12__ast_912682672",
+      "metadata": {
+        "function_calls": [
+          "Reset"
+        ],
+        "variable_definitions": [],
+        "variable_uses": [
+          "timer"
+        ]
+      }
+    },
+    "13": {
+      "cfg_node_id": 13,
+      "node_type": "CONDITION",
+      "source_text": "buffered >= bufsize",
+      "successors": [
+        31,
+        15
+      ],
+      "predecessors": [
+        11,
+        12
+      ],
+      "edge_labels": {
+        "15": "true",
+        "31": "false"
+      },
+      "ast_root_id": "13__ast_916012240",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "buffered",
+          "bufsize"
+        ]
+      }
+    },
+    "15": {
+      "cfg_node_id": 15,
+      "node_type": "SWITCH_HEAD",
+      "source_text": "SELECT",
+      "successors": [
+        19
+      ],
+      "predecessors": [
+        13
+      ],
+      "edge_labels": {
+        "19": "<-s.reset"
+      },
+      "ast_root_id": "15__ast_914649024",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "timer",
+          "s",
+          "s",
+          "network"
+        ]
+      }
+    },
+    "19": {
+      "cfg_node_id": 19,
+      "node_type": "SWITCH_HEAD",
+      "source_text": "SELECT",
+      "successors": [],
+      "predecessors": [
+        15
+      ],
+      "edge_labels": {},
+      "ast_root_id": "19__ast_916841488",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "s"
+        ]
+      }
+    },
+    "22": {
+      "cfg_node_id": 22,
+      "node_type": "RETURN",
+      "source_text": "return network.ErrReset",
+      "successors": [
+        1
+      ],
+      "predecessors": [],
+      "edge_labels": {},
+      "ast_root_id": "22__ast_914592608",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "network"
+        ]
+      }
+    },
+    "23": {
+      "cfg_node_id": 23,
+      "node_type": "STATEMENT",
+      "source_text": "err := drainBuf()",
+      "successors": [
+        24
+      ],
+      "predecessors": [],
+      "edge_labels": {},
+      "ast_root_id": "23__ast_915800384",
+      "metadata": {
+        "function_calls": [
+          "drainBuf"
+        ],
+        "variable_definitions": [
+          "err"
+        ],
+        "variable_uses": [
+          "err"
+        ]
+      }
+    },
+    "24": {
+      "cfg_node_id": 24,
+      "node_type": "CONDITION",
+      "source_text": "err != nil",
+      "successors": [
+        26,
+        27
+      ],
+      "predecessors": [
+        23
+      ],
+      "edge_labels": {
+        "26": "true",
+        "27": "false"
+      },
+      "ast_root_id": "24__ast_915971968",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "err"
+        ]
+      }
+    },
+    "26": {
+      "cfg_node_id": 26,
+      "node_type": "RETURN",
+      "source_text": "return err",
+      "successors": [
+        1
+      ],
+      "predecessors": [
+        24
+      ],
+      "edge_labels": {},
+      "ast_root_id": "26__ast_916541216",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "err"
+        ]
+      }
+    },
+    "27": {
+      "cfg_node_id": 27,
+      "node_type": "STATEMENT",
+      "source_text": "_, err := s.write.Write(o.msg)",
+      "successors": [
+        28
+      ],
+      "predecessors": [
+        24
+      ],
+      "edge_labels": {},
+      "ast_root_id": "27__ast_914068944",
+      "metadata": {
+        "function_calls": [
+          "Write"
+        ],
+        "variable_definitions": [
+          "_"
+        ],
+        "variable_uses": [
+          "_",
+          "err",
+          "s",
+          "o"
+        ]
+      }
+    },
+    "28": {
+      "cfg_node_id": 28,
+      "node_type": "CONDITION",
+      "source_text": "err != nil",
+      "successors": [
+        32,
+        30
+      ],
+      "predecessors": [
+        27
+      ],
+      "edge_labels": {
+        "30": "true",
+        "32": "false"
+      },
+      "ast_root_id": "28__ast_914328064",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "err"
+        ]
+      }
+    },
+    "30": {
+      "cfg_node_id": 30,
+      "node_type": "RETURN",
+      "source_text": "return err",
+      "successors": [
+        1
+      ],
+      "predecessors": [
+        28
+      ],
+      "edge_labels": {},
+      "ast_root_id": "30__ast_915766208",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "err"
+        ]
+      }
+    },
+    "31": {
+      "cfg_node_id": 31,
+      "node_type": "STATEMENT",
+      "source_text": "buf.Write(o.msg)",
+      "successors": [
+        32
+      ],
+      "predecessors": [
+        13
+      ],
+      "edge_labels": {},
+      "ast_root_id": "31__ast_914917392",
+      "metadata": {
+        "function_calls": [
+          "Write"
+        ],
+        "variable_definitions": [],
+        "variable_uses": [
+          "buf",
+          "o"
+        ]
+      }
+    },
+    "32": {
+      "cfg_node_id": 32,
+      "node_type": "RETURN",
+      "source_text": "return nil",
+      "successors": [
+        1
+      ],
+      "predecessors": [
+        28,
+        31
+      ],
+      "edge_labels": {},
+      "ast_root_id": "32__ast_914794832",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": []
+      }
+    }
+  },
+  "ast_nodes": {
+    "0__ast_914176736": {
+      "node_id": "0__ast_914176736",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 6,
+      "end_byte": 7,
+      "parent_id": "0__ast_913573912",
+      "children_ids": []
+    },
+    "0__ast_914732016": {
+      "node_id": "0__ast_914732016",
+      "node_type": "type_identifier",
+      "text": "transportObject",
+      "start_byte": 9,
+      "end_byte": 24,
+      "parent_id": "0__ast_913309344",
+      "children_ids": []
+    },
+    "0__ast_913309344": {
+      "node_id": "0__ast_913309344",
+      "node_type": "pointer_type",
+      "text": "*transportObject",
+      "start_byte": 8,
+      "end_byte": 24,
+      "parent_id": "0__ast_913573912",
+      "children_ids": [
+        "0__ast_914732016"
+      ]
+    },
+    "0__ast_913573912": {
+      "node_id": "0__ast_913573912",
+      "node_type": "parameter_declaration",
+      "text": "o *transportObject",
+      "start_byte": 6,
+      "end_byte": 24,
+      "parent_id": "0__ast_917362200",
+      "children_ids": [
+        "0__ast_914176736",
+        "0__ast_913309344"
+      ]
+    },
+    "0__ast_917362200": {
+      "node_id": "0__ast_917362200",
+      "node_type": "parameter_list",
+      "text": "(o *transportObject)",
+      "start_byte": 5,
+      "end_byte": 25,
+      "parent_id": "0__ast_915912144",
+      "children_ids": [
+        "0__ast_913573912"
+      ]
+    },
+    "0__ast_914750080": {
+      "node_id": "0__ast_914750080",
+      "node_type": "type_identifier",
+      "text": "error",
+      "start_byte": 26,
+      "end_byte": 31,
+      "parent_id": "0__ast_915912144",
+      "children_ids": []
+    },
+    "0__ast_914461456": {
+      "node_id": "0__ast_914461456",
+      "node_type": "identifier",
+      "text": "buffered",
+      "start_byte": 50,
+      "end_byte": 58,
+      "parent_id": "0__ast_912338976",
+      "children_ids": []
+    },
+    "0__ast_912338976": {
+      "node_id": "0__ast_912338976",
+      "node_type": "expression_list",
+      "text": "buffered",
+      "start_byte": 50,
+      "end_byte": 58,
+      "parent_id": "0__ast_915187792",
+      "children_ids": [
+        "0__ast_914461456"
+      ]
+    },
+    "0__ast_912352336": {
+      "node_id": "0__ast_912352336",
+      "node_type": "identifier",
+      "text": "len",
+      "start_byte": 62,
+      "end_byte": 65,
+      "parent_id": "0__ast_916030272",
+      "children_ids": []
+    },
+    "0__ast_915184240": {
+      "node_id": "0__ast_915184240",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 66,
+      "end_byte": 67,
+      "parent_id": "0__ast_916388080",
+      "children_ids": []
+    },
+    "0__ast_917342368": {
+      "node_id": "0__ast_917342368",
+      "node_type": "field_identifier",
+      "text": "msg",
+      "start_byte": 68,
+      "end_byte": 71,
+      "parent_id": "0__ast_916388080",
+      "children_ids": []
+    },
+    "0__ast_916388080": {
+      "node_id": "0__ast_916388080",
+      "node_type": "selector_expression",
+      "text": "o.msg",
+      "start_byte": 66,
+      "end_byte": 71,
+      "parent_id": "0__ast_915781864",
+      "children_ids": [
+        "0__ast_915184240",
+        "0__ast_917342368"
+      ]
+    },
+    "0__ast_915781864": {
+      "node_id": "0__ast_915781864",
+      "node_type": "argument_list",
+      "text": "(o.msg)",
+      "start_byte": 65,
+      "end_byte": 72,
+      "parent_id": "0__ast_916030272",
+      "children_ids": [
+        "0__ast_916388080"
+      ]
+    },
+    "0__ast_916030272": {
+      "node_id": "0__ast_916030272",
+      "node_type": "call_expression",
+      "text": "len(o.msg)",
+      "start_byte": 62,
+      "end_byte": 72,
+      "parent_id": "0__ast_915641376",
+      "children_ids": [
+        "0__ast_912352336",
+        "0__ast_915781864"
+      ]
+    },
+    "0__ast_916177840": {
+      "node_id": "0__ast_916177840",
+      "node_type": "identifier",
+      "text": "buf",
+      "start_byte": 75,
+      "end_byte": 78,
+      "parent_id": "0__ast_915713184",
+      "children_ids": []
+    },
+    "0__ast_917144816": {
+      "node_id": "0__ast_917144816",
+      "node_type": "field_identifier",
+      "text": "Len",
+      "start_byte": 79,
+      "end_byte": 82,
+      "parent_id": "0__ast_915713184",
+      "children_ids": []
+    },
+    "0__ast_915713184": {
+      "node_id": "0__ast_915713184",
+      "node_type": "selector_expression",
+      "text": "buf.Len",
+      "start_byte": 75,
+      "end_byte": 82,
+      "parent_id": "0__ast_915384864",
+      "children_ids": [
+        "0__ast_916177840",
+        "0__ast_917144816"
+      ]
+    },
+    "0__ast_916195576": {
+      "node_id": "0__ast_916195576",
+      "node_type": "argument_list",
+      "text": "()",
+      "start_byte": 82,
+      "end_byte": 84,
+      "parent_id": "0__ast_915384864",
+      "children_ids": []
+    },
+    "0__ast_915384864": {
+      "node_id": "0__ast_915384864",
+      "node_type": "call_expression",
+      "text": "buf.Len()",
+      "start_byte": 75,
+      "end_byte": 84,
+      "parent_id": "0__ast_915641376",
+      "children_ids": [
+        "0__ast_915713184",
+        "0__ast_916195576"
+      ]
+    },
+    "0__ast_915641376": {
+      "node_id": "0__ast_915641376",
+      "node_type": "binary_expression",
+      "text": "len(o.msg) + buf.Len()",
+      "start_byte": 62,
+      "end_byte": 84,
+      "parent_id": "0__ast_912338992",
+      "children_ids": [
+        "0__ast_916030272",
+        "0__ast_915384864"
+      ]
+    },
+    "0__ast_912338992": {
+      "node_id": "0__ast_912338992",
+      "node_type": "expression_list",
+      "text": "len(o.msg) + buf.Len()",
+      "start_byte": 62,
+      "end_byte": 84,
+      "parent_id": "0__ast_915187792",
+      "children_ids": [
+        "0__ast_915641376"
+      ]
+    },
+    "0__ast_915187792": {
+      "node_id": "0__ast_915187792",
+      "node_type": "short_var_declaration",
+      "text": "buffered := len(o.msg) + buf.Len()",
+      "start_byte": 50,
+      "end_byte": 84,
+      "parent_id": "0__ast_917362216",
+      "children_ids": [
+        "0__ast_912338976",
+        "0__ast_912338992"
+      ]
+    },
+    "0__ast_914892512": {
+      "node_id": "0__ast_914892512",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 109,
+      "end_byte": 114,
+      "parent_id": "0__ast_916071520",
+      "children_ids": []
+    },
+    "0__ast_915251184": {
+      "node_id": "0__ast_915251184",
+      "node_type": "field_identifier",
+      "text": "Stop",
+      "start_byte": 115,
+      "end_byte": 119,
+      "parent_id": "0__ast_916071520",
+      "children_ids": []
+    },
+    "0__ast_916071520": {
+      "node_id": "0__ast_916071520",
+      "node_type": "selector_expression",
+      "text": "timer.Stop",
+      "start_byte": 109,
+      "end_byte": 119,
+      "parent_id": "0__ast_916994640",
+      "children_ids": [
+        "0__ast_914892512",
+        "0__ast_915251184"
+      ]
+    },
+    "0__ast_915810440": {
+      "node_id": "0__ast_915810440",
+      "node_type": "argument_list",
+      "text": "()",
+      "start_byte": 119,
+      "end_byte": 121,
+      "parent_id": "0__ast_916994640",
+      "children_ids": []
+    },
+    "0__ast_916994640": {
+      "node_id": "0__ast_916994640",
+      "node_type": "call_expression",
+      "text": "timer.Stop()",
+      "start_byte": 109,
+      "end_byte": 121,
+      "parent_id": "0__ast_916956656",
+      "children_ids": [
+        "0__ast_916071520",
+        "0__ast_915810440"
+      ]
+    },
+    "0__ast_916956656": {
+      "node_id": "0__ast_916956656",
+      "node_type": "unary_expression",
+      "text": "!timer.Stop()",
+      "start_byte": 108,
+      "end_byte": 121,
+      "parent_id": "0__ast_915380800",
+      "children_ids": [
+        "0__ast_916994640"
+      ]
+    },
+    "0__ast_916804736": {
+      "node_id": "0__ast_916804736",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 190,
+      "end_byte": 195,
+      "parent_id": "0__ast_916728848",
+      "children_ids": []
+    },
+    "0__ast_916195008": {
+      "node_id": "0__ast_916195008",
+      "node_type": "field_identifier",
+      "text": "C",
+      "start_byte": 196,
+      "end_byte": 197,
+      "parent_id": "0__ast_916728848",
+      "children_ids": []
+    },
+    "0__ast_916728848": {
+      "node_id": "0__ast_916728848",
+      "node_type": "selector_expression",
+      "text": "timer.C",
+      "start_byte": 190,
+      "end_byte": 197,
+      "parent_id": "0__ast_916476992",
+      "children_ids": [
+        "0__ast_916804736",
+        "0__ast_916195008"
+      ]
+    },
+    "0__ast_916476992": {
+      "node_id": "0__ast_916476992",
+      "node_type": "unary_expression",
+      "text": "<-timer.C",
+      "start_byte": 188,
+      "end_byte": 197,
+      "parent_id": "0__ast_916217032",
+      "children_ids": [
+        "0__ast_916728848"
+      ]
+    },
+    "0__ast_916217032": {
+      "node_id": "0__ast_916217032",
+      "node_type": "receive_statement",
+      "text": "<-timer.C",
+      "start_byte": 188,
+      "end_byte": 197,
+      "parent_id": "0__ast_916539984",
+      "children_ids": [
+        "0__ast_916476992"
+      ]
+    },
+    "0__ast_916539984": {
+      "node_id": "0__ast_916539984",
+      "node_type": "communication_case",
+      "text": "case <-timer.C:",
+      "start_byte": 183,
+      "end_byte": 198,
+      "parent_id": "0__ast_914930832",
+      "children_ids": [
+        "0__ast_916217032"
+      ]
+    },
+    "0__ast_916539992": {
+      "node_id": "0__ast_916539992",
+      "node_type": "default_case",
+      "text": "default:",
+      "start_byte": 223,
+      "end_byte": 231,
+      "parent_id": "0__ast_914930832",
+      "children_ids": []
+    },
+    "0__ast_914930832": {
+      "node_id": "0__ast_914930832",
+      "node_type": "select_statement",
+      "text": "select {                         case <-timer.C:                         default:                         }",
+      "start_byte": 150,
+      "end_byte": 257,
+      "parent_id": "0__ast_913144816",
+      "children_ids": [
+        "0__ast_916539984",
+        "0__ast_916539992"
+      ]
+    },
+    "0__ast_913144816": {
+      "node_id": "0__ast_913144816",
+      "node_type": "block",
+      "text": "{                           select {                         case <-timer.C:                         default:                         }                 }",
+      "start_byte": 122,
+      "end_byte": 275,
+      "parent_id": "0__ast_915380800",
+      "children_ids": [
+        "0__ast_914930832"
+      ]
+    },
+    "0__ast_915380800": {
+      "node_id": "0__ast_915380800",
+      "node_type": "if_statement",
+      "text": "if !timer.Stop() {                           select {                         case <-timer.C:                         default:                         }                 }",
+      "start_byte": 105,
+      "end_byte": 275,
+      "parent_id": "0__ast_917362216",
+      "children_ids": [
+        "0__ast_916956656",
+        "0__ast_913144816"
+      ]
+    },
+    "0__ast_917416288": {
+      "node_id": "0__ast_917416288",
+      "node_type": "identifier",
+      "text": "delay",
+      "start_byte": 292,
+      "end_byte": 297,
+      "parent_id": "0__ast_916274496",
+      "children_ids": []
+    },
+    "0__ast_916274496": {
+      "node_id": "0__ast_916274496",
+      "node_type": "expression_list",
+      "text": "delay",
+      "start_byte": 292,
+      "end_byte": 297,
+      "parent_id": "0__ast_916366928",
+      "children_ids": [
+        "0__ast_917416288"
+      ]
+    },
+    "0__ast_917212384": {
+      "node_id": "0__ast_917212384",
+      "node_type": "identifier",
+      "text": "time",
+      "start_byte": 301,
+      "end_byte": 305,
+      "parent_id": "0__ast_912402864",
+      "children_ids": []
+    },
+    "0__ast_914289472": {
+      "node_id": "0__ast_914289472",
+      "node_type": "field_identifier",
+      "text": "Until",
+      "start_byte": 306,
+      "end_byte": 311,
+      "parent_id": "0__ast_912402864",
+      "children_ids": []
+    },
+    "0__ast_912402864": {
+      "node_id": "0__ast_912402864",
+      "node_type": "selector_expression",
+      "text": "time.Until",
+      "start_byte": 301,
+      "end_byte": 311,
+      "parent_id": "0__ast_917319488",
+      "children_ids": [
+        "0__ast_917212384",
+        "0__ast_914289472"
+      ]
+    },
+    "0__ast_917433744": {
+      "node_id": "0__ast_917433744",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 312,
+      "end_byte": 313,
+      "parent_id": "0__ast_915519280",
+      "children_ids": []
+    },
+    "0__ast_914994848": {
+      "node_id": "0__ast_914994848",
+      "node_type": "field_identifier",
+      "text": "arrivalTime",
+      "start_byte": 314,
+      "end_byte": 325,
+      "parent_id": "0__ast_915519280",
+      "children_ids": []
+    },
+    "0__ast_915519280": {
+      "node_id": "0__ast_915519280",
+      "node_type": "selector_expression",
+      "text": "o.arrivalTime",
+      "start_byte": 312,
+      "end_byte": 325,
+      "parent_id": "0__ast_917180440",
+      "children_ids": [
+        "0__ast_917433744",
+        "0__ast_914994848"
+      ]
+    },
+    "0__ast_917180440": {
+      "node_id": "0__ast_917180440",
+      "node_type": "argument_list",
+      "text": "(o.arrivalTime)",
+      "start_byte": 311,
+      "end_byte": 326,
+      "parent_id": "0__ast_917319488",
+      "children_ids": [
+        "0__ast_915519280"
+      ]
+    },
+    "0__ast_917319488": {
+      "node_id": "0__ast_917319488",
+      "node_type": "call_expression",
+      "text": "time.Until(o.arrivalTime)",
+      "start_byte": 301,
+      "end_byte": 326,
+      "parent_id": "0__ast_916274512",
+      "children_ids": [
+        "0__ast_912402864",
+        "0__ast_917180440"
+      ]
+    },
+    "0__ast_916274512": {
+      "node_id": "0__ast_916274512",
+      "node_type": "expression_list",
+      "text": "time.Until(o.arrivalTime)",
+      "start_byte": 301,
+      "end_byte": 326,
+      "parent_id": "0__ast_916366928",
+      "children_ids": [
+        "0__ast_917319488"
+      ]
+    },
+    "0__ast_916366928": {
+      "node_id": "0__ast_916366928",
+      "node_type": "short_var_declaration",
+      "text": "delay := time.Until(o.arrivalTime)",
+      "start_byte": 292,
+      "end_byte": 326,
+      "parent_id": "0__ast_917362216",
+      "children_ids": [
+        "0__ast_916274496",
+        "0__ast_916274512"
+      ]
+    },
+    "0__ast_914497808": {
+      "node_id": "0__ast_914497808",
+      "node_type": "identifier",
+      "text": "delay",
+      "start_byte": 346,
+      "end_byte": 351,
+      "parent_id": "0__ast_914488288",
+      "children_ids": []
+    },
+    "0__ast_917036800": {
+      "node_id": "0__ast_917036800",
+      "node_type": "int_literal",
+      "text": "0",
+      "start_byte": 355,
+      "end_byte": 356,
+      "parent_id": "0__ast_914488288",
+      "children_ids": []
+    },
+    "0__ast_914488288": {
+      "node_id": "0__ast_914488288",
+      "node_type": "binary_expression",
+      "text": "delay >= 0",
+      "start_byte": 346,
+      "end_byte": 356,
+      "parent_id": "0__ast_913993952",
+      "children_ids": [
+        "0__ast_914497808",
+        "0__ast_917036800"
+      ]
+    },
+    "0__ast_914433344": {
+      "node_id": "0__ast_914433344",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 383,
+      "end_byte": 388,
+      "parent_id": "0__ast_915023824",
+      "children_ids": []
+    },
+    "0__ast_914259504": {
+      "node_id": "0__ast_914259504",
+      "node_type": "field_identifier",
+      "text": "Reset",
+      "start_byte": 389,
+      "end_byte": 394,
+      "parent_id": "0__ast_915023824",
+      "children_ids": []
+    },
+    "0__ast_915023824": {
+      "node_id": "0__ast_915023824",
+      "node_type": "selector_expression",
+      "text": "timer.Reset",
+      "start_byte": 383,
+      "end_byte": 394,
+      "parent_id": "0__ast_914147200",
+      "children_ids": [
+        "0__ast_914433344",
+        "0__ast_914259504"
+      ]
+    },
+    "0__ast_917262656": {
+      "node_id": "0__ast_917262656",
+      "node_type": "identifier",
+      "text": "delay",
+      "start_byte": 395,
+      "end_byte": 400,
+      "parent_id": "0__ast_917144024",
+      "children_ids": []
+    },
+    "0__ast_917144024": {
+      "node_id": "0__ast_917144024",
+      "node_type": "argument_list",
+      "text": "(delay)",
+      "start_byte": 394,
+      "end_byte": 401,
+      "parent_id": "0__ast_914147200",
+      "children_ids": [
+        "0__ast_917262656"
+      ]
+    },
+    "0__ast_914147200": {
+      "node_id": "0__ast_914147200",
+      "node_type": "call_expression",
+      "text": "timer.Reset(delay)",
+      "start_byte": 383,
+      "end_byte": 401,
+      "parent_id": "0__ast_914800608",
+      "children_ids": [
+        "0__ast_915023824",
+        "0__ast_917144024"
+      ]
+    },
+    "0__ast_914800608": {
+      "node_id": "0__ast_914800608",
+      "node_type": "expression_statement",
+      "text": "timer.Reset(delay)",
+      "start_byte": 383,
+      "end_byte": 401,
+      "parent_id": "0__ast_912937152",
+      "children_ids": [
+        "0__ast_914147200"
+      ]
+    },
+    "0__ast_912937152": {
+      "node_id": "0__ast_912937152",
+      "node_type": "block",
+      "text": "{                         timer.Reset(delay)                 }",
+      "start_byte": 357,
+      "end_byte": 419,
+      "parent_id": "0__ast_913993952",
+      "children_ids": [
+        "0__ast_914800608"
+      ]
+    },
+    "0__ast_915032864": {
+      "node_id": "0__ast_915032864",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 451,
+      "end_byte": 456,
+      "parent_id": "0__ast_913798352",
+      "children_ids": []
+    },
+    "0__ast_916005952": {
+      "node_id": "0__ast_916005952",
+      "node_type": "field_identifier",
+      "text": "Reset",
+      "start_byte": 457,
+      "end_byte": 462,
+      "parent_id": "0__ast_913798352",
+      "children_ids": []
+    },
+    "0__ast_913798352": {
+      "node_id": "0__ast_913798352",
+      "node_type": "selector_expression",
+      "text": "timer.Reset",
+      "start_byte": 451,
+      "end_byte": 462,
+      "parent_id": "0__ast_917183008",
+      "children_ids": [
+        "0__ast_915032864",
+        "0__ast_916005952"
+      ]
+    },
+    "0__ast_915305392": {
+      "node_id": "0__ast_915305392",
+      "node_type": "int_literal",
+      "text": "0",
+      "start_byte": 463,
+      "end_byte": 464,
+      "parent_id": "0__ast_917145480",
+      "children_ids": []
+    },
+    "0__ast_917145480": {
+      "node_id": "0__ast_917145480",
+      "node_type": "argument_list",
+      "text": "(0)",
+      "start_byte": 462,
+      "end_byte": 465,
+      "parent_id": "0__ast_917183008",
+      "children_ids": [
+        "0__ast_915305392"
+      ]
+    },
+    "0__ast_917183008": {
+      "node_id": "0__ast_917183008",
+      "node_type": "call_expression",
+      "text": "timer.Reset(0)",
+      "start_byte": 451,
+      "end_byte": 465,
+      "parent_id": "0__ast_912682672",
+      "children_ids": [
+        "0__ast_913798352",
+        "0__ast_917145480"
+      ]
+    },
+    "0__ast_912682672": {
+      "node_id": "0__ast_912682672",
+      "node_type": "expression_statement",
+      "text": "timer.Reset(0)",
+      "start_byte": 451,
+      "end_byte": 465,
+      "parent_id": "0__ast_912937168",
+      "children_ids": [
+        "0__ast_917183008"
+      ]
+    },
+    "0__ast_912937168": {
+      "node_id": "0__ast_912937168",
+      "node_type": "block",
+      "text": "{                         timer.Reset(0)                 }",
+      "start_byte": 425,
+      "end_byte": 483,
+      "parent_id": "0__ast_913993952",
+      "children_ids": [
+        "0__ast_912682672"
+      ]
+    },
+    "0__ast_913993952": {
+      "node_id": "0__ast_913993952",
+      "node_type": "if_statement",
+      "text": "if delay >= 0 {                         timer.Reset(delay)                 } else {                         timer.Reset(0)                 }",
+      "start_byte": 343,
+      "end_byte": 483,
+      "parent_id": "0__ast_917362216",
+      "children_ids": [
+        "0__ast_914488288",
+        "0__ast_912937152",
+        "0__ast_912937168"
+      ]
+    },
+    "0__ast_914284448": {
+      "node_id": "0__ast_914284448",
+      "node_type": "identifier",
+      "text": "buffered",
+      "start_byte": 504,
+      "end_byte": 512,
+      "parent_id": "0__ast_916012240",
+      "children_ids": []
+    },
+    "0__ast_916008576": {
+      "node_id": "0__ast_916008576",
+      "node_type": "identifier",
+      "text": "bufsize",
+      "start_byte": 516,
+      "end_byte": 523,
+      "parent_id": "0__ast_916012240",
+      "children_ids": []
+    },
+    "0__ast_916012240": {
+      "node_id": "0__ast_916012240",
+      "node_type": "binary_expression",
+      "text": "buffered >= bufsize",
+      "start_byte": 504,
+      "end_byte": 523,
+      "parent_id": "0__ast_916708240",
+      "children_ids": [
+        "0__ast_914284448",
+        "0__ast_916008576"
+      ]
+    },
+    "0__ast_916431840": {
+      "node_id": "0__ast_916431840",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 590,
+      "end_byte": 595,
+      "parent_id": "0__ast_914075936",
+      "children_ids": []
+    },
+    "0__ast_914071776": {
+      "node_id": "0__ast_914071776",
+      "node_type": "field_identifier",
+      "text": "C",
+      "start_byte": 596,
+      "end_byte": 597,
+      "parent_id": "0__ast_914075936",
+      "children_ids": []
+    },
+    "0__ast_914075936": {
+      "node_id": "0__ast_914075936",
+      "node_type": "selector_expression",
+      "text": "timer.C",
+      "start_byte": 590,
+      "end_byte": 597,
+      "parent_id": "0__ast_914076032",
+      "children_ids": [
+        "0__ast_916431840",
+        "0__ast_914071776"
+      ]
+    },
+    "0__ast_914076032": {
+      "node_id": "0__ast_914076032",
+      "node_type": "unary_expression",
+      "text": "<-timer.C",
+      "start_byte": 588,
+      "end_byte": 597,
+      "parent_id": "0__ast_913177032",
+      "children_ids": [
+        "0__ast_914075936"
+      ]
+    },
+    "0__ast_913177032": {
+      "node_id": "0__ast_913177032",
+      "node_type": "receive_statement",
+      "text": "<-timer.C",
+      "start_byte": 588,
+      "end_byte": 597,
+      "parent_id": "0__ast_914648912",
+      "children_ids": [
+        "0__ast_914076032"
+      ]
+    },
+    "0__ast_914648912": {
+      "node_id": "0__ast_914648912",
+      "node_type": "communication_case",
+      "text": "case <-timer.C:",
+      "start_byte": 583,
+      "end_byte": 598,
+      "parent_id": "0__ast_914649024",
+      "children_ids": [
+        "0__ast_913177032"
+      ]
+    },
+    "0__ast_914491168": {
+      "node_id": "0__ast_914491168",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 630,
+      "end_byte": 631,
+      "parent_id": "0__ast_914856064",
+      "children_ids": []
+    },
+    "0__ast_914827680": {
+      "node_id": "0__ast_914827680",
+      "node_type": "field_identifier",
+      "text": "reset",
+      "start_byte": 632,
+      "end_byte": 637,
+      "parent_id": "0__ast_914856064",
+      "children_ids": []
+    },
+    "0__ast_914856064": {
+      "node_id": "0__ast_914856064",
+      "node_type": "selector_expression",
+      "text": "s.reset",
+      "start_byte": 630,
+      "end_byte": 637,
+      "parent_id": "0__ast_914856160",
+      "children_ids": [
+        "0__ast_914491168",
+        "0__ast_914827680"
+      ]
+    },
+    "0__ast_914856160": {
+      "node_id": "0__ast_914856160",
+      "node_type": "unary_expression",
+      "text": "<-s.reset",
+      "start_byte": 628,
+      "end_byte": 637,
+      "parent_id": "0__ast_913161160",
+      "children_ids": [
+        "0__ast_914856064"
+      ]
+    },
+    "0__ast_913161160": {
+      "node_id": "0__ast_913161160",
+      "node_type": "receive_statement",
+      "text": "<-s.reset",
+      "start_byte": 628,
+      "end_byte": 637,
+      "parent_id": "0__ast_914648920",
+      "children_ids": [
+        "0__ast_914856160"
+      ]
+    },
+    "0__ast_915241936": {
+      "node_id": "0__ast_915241936",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 717,
+      "end_byte": 718,
+      "parent_id": "0__ast_915253856",
+      "children_ids": []
+    },
+    "0__ast_914758560": {
+      "node_id": "0__ast_914758560",
+      "node_type": "field_identifier",
+      "text": "reset",
+      "start_byte": 719,
+      "end_byte": 724,
+      "parent_id": "0__ast_915253856",
+      "children_ids": []
+    },
+    "0__ast_915253856": {
+      "node_id": "0__ast_915253856",
+      "node_type": "selector_expression",
+      "text": "s.reset",
+      "start_byte": 717,
+      "end_byte": 724,
+      "parent_id": "0__ast_916053880",
+      "children_ids": [
+        "0__ast_915241936",
+        "0__ast_914758560"
+      ]
+    },
+    "0__ast_915735384": {
+      "node_id": "0__ast_915735384",
+      "node_type": "field_declaration_list",
+      "text": "{}",
+      "start_byte": 734,
+      "end_byte": 736,
+      "parent_id": "0__ast_915896096",
+      "children_ids": []
+    },
+    "0__ast_915896096": {
+      "node_id": "0__ast_915896096",
+      "node_type": "struct_type",
+      "text": "struct{}",
+      "start_byte": 728,
+      "end_byte": 736,
+      "parent_id": "0__ast_915253952",
+      "children_ids": [
+        "0__ast_915735384"
+      ]
+    },
+    "0__ast_915896104": {
+      "node_id": "0__ast_915896104",
+      "node_type": "literal_value",
+      "text": "{}",
+      "start_byte": 736,
+      "end_byte": 738,
+      "parent_id": "0__ast_915253952",
+      "children_ids": []
+    },
+    "0__ast_915253952": {
+      "node_id": "0__ast_915253952",
+      "node_type": "composite_literal",
+      "text": "struct{}{}",
+      "start_byte": 728,
+      "end_byte": 738,
+      "parent_id": "0__ast_916053880",
+      "children_ids": [
+        "0__ast_915896096",
+        "0__ast_915896104"
+      ]
+    },
+    "0__ast_916053880": {
+      "node_id": "0__ast_916053880",
+      "node_type": "send_statement",
+      "text": "s.reset <- struct{}{}",
+      "start_byte": 717,
+      "end_byte": 738,
+      "parent_id": "0__ast_916513088",
+      "children_ids": [
+        "0__ast_915253856",
+        "0__ast_915253952"
+      ]
+    },
+    "0__ast_916513088": {
+      "node_id": "0__ast_916513088",
+      "node_type": "communication_case",
+      "text": "case s.reset <- struct{}{}:",
+      "start_byte": 712,
+      "end_byte": 739,
+      "parent_id": "0__ast_916841488",
+      "children_ids": [
+        "0__ast_916053880"
+      ]
+    },
+    "0__ast_916513096": {
+      "node_id": "0__ast_916513096",
+      "node_type": "default_case",
+      "text": "default:",
+      "start_byte": 772,
+      "end_byte": 780,
+      "parent_id": "0__ast_916841488",
+      "children_ids": []
+    },
+    "0__ast_916841488": {
+      "node_id": "0__ast_916841488",
+      "node_type": "select_statement",
+      "text": "select {                                 case s.reset <- struct{}{}:                                 default:                                 }",
+      "start_byte": 671,
+      "end_byte": 814,
+      "parent_id": "0__ast_914648920",
+      "children_ids": [
+        "0__ast_916513088",
+        "0__ast_916513096"
+      ]
+    },
+    "0__ast_913930112": {
+      "node_id": "0__ast_913930112",
+      "node_type": "identifier",
+      "text": "network",
+      "start_byte": 854,
+      "end_byte": 861,
+      "parent_id": "0__ast_913970272",
+      "children_ids": []
+    },
+    "0__ast_913930224": {
+      "node_id": "0__ast_913930224",
+      "node_type": "field_identifier",
+      "text": "ErrReset",
+      "start_byte": 862,
+      "end_byte": 870,
+      "parent_id": "0__ast_913970272",
+      "children_ids": []
+    },
+    "0__ast_913970272": {
+      "node_id": "0__ast_913970272",
+      "node_type": "selector_expression",
+      "text": "network.ErrReset",
+      "start_byte": 854,
+      "end_byte": 870,
+      "parent_id": "0__ast_914483352",
+      "children_ids": [
+        "0__ast_913930112",
+        "0__ast_913930224"
+      ]
+    },
+    "0__ast_914483352": {
+      "node_id": "0__ast_914483352",
+      "node_type": "expression_list",
+      "text": "network.ErrReset",
+      "start_byte": 854,
+      "end_byte": 870,
+      "parent_id": "0__ast_914592608",
+      "children_ids": [
+        "0__ast_913970272"
+      ]
+    },
+    "0__ast_914592608": {
+      "node_id": "0__ast_914592608",
+      "node_type": "return_statement",
+      "text": "return network.ErrReset",
+      "start_byte": 847,
+      "end_byte": 870,
+      "parent_id": "0__ast_914648920",
+      "children_ids": [
+        "0__ast_914483352"
+      ]
+    },
+    "0__ast_914648920": {
+      "node_id": "0__ast_914648920",
+      "node_type": "communication_case",
+      "text": "case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset",
+      "start_byte": 623,
+      "end_byte": 871,
+      "parent_id": "0__ast_914649024",
+      "children_ids": [
+        "0__ast_913161160",
+        "0__ast_916841488",
+        "0__ast_914592608"
+      ]
+    },
+    "0__ast_914649024": {
+      "node_id": "0__ast_914649024",
+      "node_type": "select_statement",
+      "text": "select {                         case <-timer.C:                         case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset                         }",
+      "start_byte": 550,
+      "end_byte": 896,
+      "parent_id": "0__ast_916703664",
+      "children_ids": [
+        "0__ast_914648912",
+        "0__ast_914648920"
+      ]
+    },
+    "0__ast_914623408": {
+      "node_id": "0__ast_914623408",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 924,
+      "end_byte": 927,
+      "parent_id": "0__ast_915505440",
+      "children_ids": []
+    },
+    "0__ast_915505440": {
+      "node_id": "0__ast_915505440",
+      "node_type": "expression_list",
+      "text": "err",
+      "start_byte": 924,
+      "end_byte": 927,
+      "parent_id": "0__ast_915800384",
+      "children_ids": [
+        "0__ast_914623408"
+      ]
+    },
+    "0__ast_914941216": {
+      "node_id": "0__ast_914941216",
+      "node_type": "identifier",
+      "text": "drainBuf",
+      "start_byte": 931,
+      "end_byte": 939,
+      "parent_id": "0__ast_914941120",
+      "children_ids": []
+    },
+    "0__ast_915800280": {
+      "node_id": "0__ast_915800280",
+      "node_type": "argument_list",
+      "text": "()",
+      "start_byte": 939,
+      "end_byte": 941,
+      "parent_id": "0__ast_914941120",
+      "children_ids": []
+    },
+    "0__ast_914941120": {
+      "node_id": "0__ast_914941120",
+      "node_type": "call_expression",
+      "text": "drainBuf()",
+      "start_byte": 931,
+      "end_byte": 941,
+      "parent_id": "0__ast_915505456",
+      "children_ids": [
+        "0__ast_914941216",
+        "0__ast_915800280"
+      ]
+    },
+    "0__ast_915505456": {
+      "node_id": "0__ast_915505456",
+      "node_type": "expression_list",
+      "text": "drainBuf()",
+      "start_byte": 931,
+      "end_byte": 941,
+      "parent_id": "0__ast_915800384",
+      "children_ids": [
+        "0__ast_914941120"
+      ]
+    },
+    "0__ast_915800384": {
+      "node_id": "0__ast_915800384",
+      "node_type": "short_var_declaration",
+      "text": "err := drainBuf()",
+      "start_byte": 924,
+      "end_byte": 941,
+      "parent_id": "0__ast_916959040",
+      "children_ids": [
+        "0__ast_915505440",
+        "0__ast_915505456"
+      ]
+    },
+    "0__ast_915505552": {
+      "node_id": "0__ast_915505552",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 943,
+      "end_byte": 946,
+      "parent_id": "0__ast_915971968",
+      "children_ids": []
+    },
+    "0__ast_915931792": {
+      "node_id": "0__ast_915931792",
+      "node_type": "nil",
+      "text": "nil",
+      "start_byte": 950,
+      "end_byte": 953,
+      "parent_id": "0__ast_915971968",
+      "children_ids": []
+    },
+    "0__ast_915971968": {
+      "node_id": "0__ast_915971968",
+      "node_type": "binary_expression",
+      "text": "err != nil",
+      "start_byte": 943,
+      "end_byte": 953,
+      "parent_id": "0__ast_916959040",
+      "children_ids": [
+        "0__ast_915505552",
+        "0__ast_915931792"
+      ]
+    },
+    "0__ast_916318400": {
+      "node_id": "0__ast_916318400",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 995,
+      "end_byte": 998,
+      "parent_id": "0__ast_916541112",
+      "children_ids": []
+    },
+    "0__ast_916541112": {
+      "node_id": "0__ast_916541112",
+      "node_type": "expression_list",
+      "text": "err",
+      "start_byte": 995,
+      "end_byte": 998,
+      "parent_id": "0__ast_916541216",
+      "children_ids": [
+        "0__ast_916318400"
+      ]
+    },
+    "0__ast_916541216": {
+      "node_id": "0__ast_916541216",
+      "node_type": "return_statement",
+      "text": "return err",
+      "start_byte": 988,
+      "end_byte": 998,
+      "parent_id": "0__ast_912499648",
+      "children_ids": [
+        "0__ast_916541112"
+      ]
+    },
+    "0__ast_912499648": {
+      "node_id": "0__ast_912499648",
+      "node_type": "block",
+      "text": "{                                 return err                         }",
+      "start_byte": 954,
+      "end_byte": 1024,
+      "parent_id": "0__ast_916959040",
+      "children_ids": [
+        "0__ast_916541216"
+      ]
+    },
+    "0__ast_916959040": {
+      "node_id": "0__ast_916959040",
+      "node_type": "if_statement",
+      "text": "if err := drainBuf(); err != nil {                                 return err                         }",
+      "start_byte": 921,
+      "end_byte": 1024,
+      "parent_id": "0__ast_916703664",
+      "children_ids": [
+        "0__ast_915800384",
+        "0__ast_915971968",
+        "0__ast_912499648"
+      ]
+    },
+    "0__ast_915259760": {
+      "node_id": "0__ast_915259760",
+      "node_type": "identifier",
+      "text": "_",
+      "start_byte": 1050,
+      "end_byte": 1051,
+      "parent_id": "0__ast_913913056",
+      "children_ids": []
+    },
+    "0__ast_917031408": {
+      "node_id": "0__ast_917031408",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 1053,
+      "end_byte": 1056,
+      "parent_id": "0__ast_913913056",
+      "children_ids": []
+    },
+    "0__ast_913913056": {
+      "node_id": "0__ast_913913056",
+      "node_type": "expression_list",
+      "text": "_, err",
+      "start_byte": 1050,
+      "end_byte": 1056,
+      "parent_id": "0__ast_914068944",
+      "children_ids": [
+        "0__ast_915259760",
+        "0__ast_917031408"
+      ]
+    },
+    "0__ast_916763392": {
+      "node_id": "0__ast_916763392",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 1060,
+      "end_byte": 1061,
+      "parent_id": "0__ast_917402544",
+      "children_ids": []
+    },
+    "0__ast_917402656": {
+      "node_id": "0__ast_917402656",
+      "node_type": "field_identifier",
+      "text": "write",
+      "start_byte": 1062,
+      "end_byte": 1067,
+      "parent_id": "0__ast_917402544",
+      "children_ids": []
+    },
+    "0__ast_917402544": {
+      "node_id": "0__ast_917402544",
+      "node_type": "selector_expression",
+      "text": "s.write",
+      "start_byte": 1060,
+      "end_byte": 1067,
+      "parent_id": "0__ast_917414624",
+      "children_ids": [
+        "0__ast_916763392",
+        "0__ast_917402656"
+      ]
+    },
+    "0__ast_917414528": {
+      "node_id": "0__ast_917414528",
+      "node_type": "field_identifier",
+      "text": "Write",
+      "start_byte": 1068,
+      "end_byte": 1073,
+      "parent_id": "0__ast_917414624",
+      "children_ids": []
+    },
+    "0__ast_917414624": {
+      "node_id": "0__ast_917414624",
+      "node_type": "selector_expression",
+      "text": "s.write.Write",
+      "start_byte": 1060,
+      "end_byte": 1073,
+      "parent_id": "0__ast_913589008",
+      "children_ids": [
+        "0__ast_917402544",
+        "0__ast_917414528"
+      ]
+    },
+    "0__ast_913212496": {
+      "node_id": "0__ast_913212496",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 1074,
+      "end_byte": 1075,
+      "parent_id": "0__ast_913299712",
+      "children_ids": []
+    },
+    "0__ast_913733728": {
+      "node_id": "0__ast_913733728",
+      "node_type": "field_identifier",
+      "text": "msg",
+      "start_byte": 1076,
+      "end_byte": 1079,
+      "parent_id": "0__ast_913299712",
+      "children_ids": []
+    },
+    "0__ast_913299712": {
+      "node_id": "0__ast_913299712",
+      "node_type": "selector_expression",
+      "text": "o.msg",
+      "start_byte": 1074,
+      "end_byte": 1079,
+      "parent_id": "0__ast_913588904",
+      "children_ids": [
+        "0__ast_913212496",
+        "0__ast_913733728"
+      ]
+    },
+    "0__ast_913588904": {
+      "node_id": "0__ast_913588904",
+      "node_type": "argument_list",
+      "text": "(o.msg)",
+      "start_byte": 1073,
+      "end_byte": 1080,
+      "parent_id": "0__ast_913589008",
+      "children_ids": [
+        "0__ast_913299712"
+      ]
+    },
+    "0__ast_913589008": {
+      "node_id": "0__ast_913589008",
+      "node_type": "call_expression",
+      "text": "s.write.Write(o.msg)",
+      "start_byte": 1060,
+      "end_byte": 1080,
+      "parent_id": "0__ast_913913072",
+      "children_ids": [
+        "0__ast_917414624",
+        "0__ast_913588904"
+      ]
+    },
+    "0__ast_913913072": {
+      "node_id": "0__ast_913913072",
+      "node_type": "expression_list",
+      "text": "s.write.Write(o.msg)",
+      "start_byte": 1060,
+      "end_byte": 1080,
+      "parent_id": "0__ast_914068944",
+      "children_ids": [
+        "0__ast_913589008"
+      ]
+    },
+    "0__ast_914068944": {
+      "node_id": "0__ast_914068944",
+      "node_type": "short_var_declaration",
+      "text": "_, err := s.write.Write(o.msg)",
+      "start_byte": 1050,
+      "end_byte": 1080,
+      "parent_id": "0__ast_916703664",
+      "children_ids": [
+        "0__ast_913913056",
+        "0__ast_913913072"
+      ]
+    },
+    "0__ast_914155216": {
+      "node_id": "0__ast_914155216",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 1108,
+      "end_byte": 1111,
+      "parent_id": "0__ast_914328064",
+      "children_ids": []
+    },
+    "0__ast_914155312": {
+      "node_id": "0__ast_914155312",
+      "node_type": "nil",
+      "text": "nil",
+      "start_byte": 1115,
+      "end_byte": 1118,
+      "parent_id": "0__ast_914328064",
+      "children_ids": []
+    },
+    "0__ast_914328064": {
+      "node_id": "0__ast_914328064",
+      "node_type": "binary_expression",
+      "text": "err != nil",
+      "start_byte": 1108,
+      "end_byte": 1118,
+      "parent_id": "0__ast_916553536",
+      "children_ids": [
+        "0__ast_914155216",
+        "0__ast_914155312"
+      ]
+    },
+    "0__ast_915246864": {
+      "node_id": "0__ast_915246864",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 1160,
+      "end_byte": 1163,
+      "parent_id": "0__ast_915490456",
+      "children_ids": []
+    },
+    "0__ast_915490456": {
+      "node_id": "0__ast_915490456",
+      "node_type": "expression_list",
+      "text": "err",
+      "start_byte": 1160,
+      "end_byte": 1163,
+      "parent_id": "0__ast_915766208",
+      "children_ids": [
+        "0__ast_915246864"
+      ]
+    },
+    "0__ast_915766208": {
+      "node_id": "0__ast_915766208",
+      "node_type": "return_statement",
+      "text": "return err",
+      "start_byte": 1153,
+      "end_byte": 1163,
+      "parent_id": "0__ast_916553440",
+      "children_ids": [
+        "0__ast_915490456"
+      ]
+    },
+    "0__ast_916553440": {
+      "node_id": "0__ast_916553440",
+      "node_type": "block",
+      "text": "{                                 return err                         }",
+      "start_byte": 1119,
+      "end_byte": 1189,
+      "parent_id": "0__ast_916553536",
+      "children_ids": [
+        "0__ast_915766208"
+      ]
+    },
+    "0__ast_916553536": {
+      "node_id": "0__ast_916553536",
+      "node_type": "if_statement",
+      "text": "if err != nil {                                 return err                         }",
+      "start_byte": 1105,
+      "end_byte": 1189,
+      "parent_id": "0__ast_916703664",
+      "children_ids": [
+        "0__ast_914328064",
+        "0__ast_916553440"
+      ]
+    },
+    "0__ast_916703664": {
+      "node_id": "0__ast_916703664",
+      "node_type": "block",
+      "text": "{                         select {                         case <-timer.C:                         case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset                         }                         if err := drainBuf(); err != nil {                                 return err                         }                          _, err := s.write.Write(o.msg)                         if err != nil {                                 return err                         }                 }",
+      "start_byte": 524,
+      "end_byte": 1207,
+      "parent_id": "0__ast_916708240",
+      "children_ids": [
+        "0__ast_914649024",
+        "0__ast_916959040",
+        "0__ast_914068944",
+        "0__ast_916553536"
+      ]
+    },
+    "0__ast_916703552": {
+      "node_id": "0__ast_916703552",
+      "node_type": "identifier",
+      "text": "buf",
+      "start_byte": 1239,
+      "end_byte": 1242,
+      "parent_id": "0__ast_916708144",
+      "children_ids": []
+    },
+    "0__ast_916688352": {
+      "node_id": "0__ast_916688352",
+      "node_type": "field_identifier",
+      "text": "Write",
+      "start_byte": 1243,
+      "end_byte": 1248,
+      "parent_id": "0__ast_916708144",
+      "children_ids": []
+    },
+    "0__ast_916708144": {
+      "node_id": "0__ast_916708144",
+      "node_type": "selector_expression",
+      "text": "buf.Write",
+      "start_byte": 1239,
+      "end_byte": 1248,
+      "parent_id": "0__ast_915006224",
+      "children_ids": [
+        "0__ast_916703552",
+        "0__ast_916688352"
+      ]
+    },
+    "0__ast_917362096": {
+      "node_id": "0__ast_917362096",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 1249,
+      "end_byte": 1250,
+      "parent_id": "0__ast_914695088",
+      "children_ids": []
+    },
+    "0__ast_914694992": {
+      "node_id": "0__ast_914694992",
+      "node_type": "field_identifier",
+      "text": "msg",
+      "start_byte": 1251,
+      "end_byte": 1254,
+      "parent_id": "0__ast_914695088",
+      "children_ids": []
+    },
+    "0__ast_914695088": {
+      "node_id": "0__ast_914695088",
+      "node_type": "selector_expression",
+      "text": "o.msg",
+      "start_byte": 1249,
+      "end_byte": 1254,
+      "parent_id": "0__ast_915006120",
+      "children_ids": [
+        "0__ast_917362096",
+        "0__ast_914694992"
+      ]
+    },
+    "0__ast_915006120": {
+      "node_id": "0__ast_915006120",
+      "node_type": "argument_list",
+      "text": "(o.msg)",
+      "start_byte": 1248,
+      "end_byte": 1255,
+      "parent_id": "0__ast_915006224",
+      "children_ids": [
+        "0__ast_914695088"
+      ]
+    },
+    "0__ast_915006224": {
+      "node_id": "0__ast_915006224",
+      "node_type": "call_expression",
+      "text": "buf.Write(o.msg)",
+      "start_byte": 1239,
+      "end_byte": 1255,
+      "parent_id": "0__ast_914917392",
+      "children_ids": [
+        "0__ast_916708144",
+        "0__ast_915006120"
+      ]
+    },
+    "0__ast_914917392": {
+      "node_id": "0__ast_914917392",
+      "node_type": "expression_statement",
+      "text": "buf.Write(o.msg)",
+      "start_byte": 1239,
+      "end_byte": 1255,
+      "parent_id": "0__ast_916703680",
+      "children_ids": [
+        "0__ast_915006224"
+      ]
+    },
+    "0__ast_916703680": {
+      "node_id": "0__ast_916703680",
+      "node_type": "block",
+      "text": "{                         buf.Write(o.msg)                 }",
+      "start_byte": 1213,
+      "end_byte": 1273,
+      "parent_id": "0__ast_916708240",
+      "children_ids": [
+        "0__ast_914917392"
+      ]
+    },
+    "0__ast_916708240": {
+      "node_id": "0__ast_916708240",
+      "node_type": "if_statement",
+      "text": "if buffered >= bufsize {                         select {                         case <-timer.C:                         case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset                         }                         if err := drainBuf(); err != nil {                                 return err                         }                          _, err := s.write.Write(o.msg)                         if err != nil {                                 return err                         }                 } else {                         buf.Write(o.msg)                 }",
+      "start_byte": 501,
+      "end_byte": 1273,
+      "parent_id": "0__ast_917362216",
+      "children_ids": [
+        "0__ast_916012240",
+        "0__ast_916703664",
+        "0__ast_916703680"
+      ]
+    },
+    "0__ast_914656544": {
+      "node_id": "0__ast_914656544",
+      "node_type": "nil",
+      "text": "nil",
+      "start_byte": 1297,
+      "end_byte": 1300,
+      "parent_id": "0__ast_916050984",
+      "children_ids": []
+    },
+    "0__ast_916050984": {
+      "node_id": "0__ast_916050984",
+      "node_type": "expression_list",
+      "text": "nil",
+      "start_byte": 1297,
+      "end_byte": 1300,
+      "parent_id": "0__ast_914794832",
+      "children_ids": [
+        "0__ast_914656544"
+      ]
+    },
+    "0__ast_914794832": {
+      "node_id": "0__ast_914794832",
+      "node_type": "return_statement",
+      "text": "return nil",
+      "start_byte": 1290,
+      "end_byte": 1300,
+      "parent_id": "0__ast_917362216",
+      "children_ids": [
+        "0__ast_916050984"
+      ]
+    },
+    "0__ast_917362216": {
+      "node_id": "0__ast_917362216",
+      "node_type": "block",
+      "text": "{                 buffered := len(o.msg) + buf.Len()                     if !timer.Stop() {                           select {                         case <-timer.C:                         default:                         }                 }                 delay := time.Until(o.arrivalTime)                 if delay >= 0 {                         timer.Reset(delay)                 } else {                         timer.Reset(0)                 }                  if buffered >= bufsize {                         select {                         case <-timer.C:                         case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset                         }                         if err := drainBuf(); err != nil {                                 return err                         }                          _, err := s.write.Write(o.msg)                         if err != nil {                                 return err                         }                 } else {                         buf.Write(o.msg)                 }                 return nil         }",
+      "start_byte": 32,
+      "end_byte": 1310,
+      "parent_id": "0__ast_915912144",
+      "children_ids": [
+        "0__ast_915187792",
+        "0__ast_915380800",
+        "0__ast_916366928",
+        "0__ast_913993952",
+        "0__ast_916708240",
+        "0__ast_914794832"
+      ]
+    },
+    "0__ast_915912144": {
+      "node_id": "0__ast_915912144",
+      "node_type": "func_literal",
+      "text": "func(o *transportObject) error {                 buffered := len(o.msg) + buf.Len()                     if !timer.Stop() {                           select {                         case <-timer.C:                         default:                         }                 }                 delay := time.Until(o.arrivalTime)                 if delay >= 0 {                         timer.Reset(delay)                 } else {                         timer.Reset(0)                 }                  if buffered >= bufsize {                         select {                         case <-timer.C:                         case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset                         }                         if err := drainBuf(); err != nil {                                 return err                         }                          _, err := s.write.Write(o.msg)                         if err != nil {                                 return err                         }                 } else {                         buf.Write(o.msg)                 }                 return nil         }",
+      "start_byte": 1,
+      "end_byte": 1310,
+      "parent_id": null,
+      "children_ids": [
+        "0__ast_917362200",
+        "0__ast_914750080",
+        "0__ast_917362216"
+      ]
+    },
+    "1__ast_915912048": {
+      "node_id": "1__ast_915912048",
+      "node_type": "}",
+      "text": "}",
+      "start_byte": 1309,
+      "end_byte": 1310,
+      "parent_id": null,
+      "children_ids": []
+    },
+    "2__ast_914461456": {
+      "node_id": "2__ast_914461456",
+      "node_type": "identifier",
+      "text": "buffered",
+      "start_byte": 50,
+      "end_byte": 58,
+      "parent_id": "2__ast_912338976",
+      "children_ids": []
+    },
+    "2__ast_912338976": {
+      "node_id": "2__ast_912338976",
+      "node_type": "expression_list",
+      "text": "buffered",
+      "start_byte": 50,
+      "end_byte": 58,
+      "parent_id": "2__ast_915187792",
+      "children_ids": [
+        "2__ast_914461456"
+      ]
+    },
+    "2__ast_912352336": {
+      "node_id": "2__ast_912352336",
+      "node_type": "identifier",
+      "text": "len",
+      "start_byte": 62,
+      "end_byte": 65,
+      "parent_id": "2__ast_916030272",
+      "children_ids": []
+    },
+    "2__ast_915184240": {
+      "node_id": "2__ast_915184240",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 66,
+      "end_byte": 67,
+      "parent_id": "2__ast_916388080",
+      "children_ids": []
+    },
+    "2__ast_917342368": {
+      "node_id": "2__ast_917342368",
+      "node_type": "field_identifier",
+      "text": "msg",
+      "start_byte": 68,
+      "end_byte": 71,
+      "parent_id": "2__ast_916388080",
+      "children_ids": []
+    },
+    "2__ast_916388080": {
+      "node_id": "2__ast_916388080",
+      "node_type": "selector_expression",
+      "text": "o.msg",
+      "start_byte": 66,
+      "end_byte": 71,
+      "parent_id": "2__ast_915781864",
+      "children_ids": [
+        "2__ast_915184240",
+        "2__ast_917342368"
+      ]
+    },
+    "2__ast_915781864": {
+      "node_id": "2__ast_915781864",
+      "node_type": "argument_list",
+      "text": "(o.msg)",
+      "start_byte": 65,
+      "end_byte": 72,
+      "parent_id": "2__ast_916030272",
+      "children_ids": [
+        "2__ast_916388080"
+      ]
+    },
+    "2__ast_916030272": {
+      "node_id": "2__ast_916030272",
+      "node_type": "call_expression",
+      "text": "len(o.msg)",
+      "start_byte": 62,
+      "end_byte": 72,
+      "parent_id": "2__ast_915641376",
+      "children_ids": [
+        "2__ast_912352336",
+        "2__ast_915781864"
+      ]
+    },
+    "2__ast_916177840": {
+      "node_id": "2__ast_916177840",
+      "node_type": "identifier",
+      "text": "buf",
+      "start_byte": 75,
+      "end_byte": 78,
+      "parent_id": "2__ast_915713184",
+      "children_ids": []
+    },
+    "2__ast_917144816": {
+      "node_id": "2__ast_917144816",
+      "node_type": "field_identifier",
+      "text": "Len",
+      "start_byte": 79,
+      "end_byte": 82,
+      "parent_id": "2__ast_915713184",
+      "children_ids": []
+    },
+    "2__ast_915713184": {
+      "node_id": "2__ast_915713184",
+      "node_type": "selector_expression",
+      "text": "buf.Len",
+      "start_byte": 75,
+      "end_byte": 82,
+      "parent_id": "2__ast_915384864",
+      "children_ids": [
+        "2__ast_916177840",
+        "2__ast_917144816"
+      ]
+    },
+    "2__ast_916195576": {
+      "node_id": "2__ast_916195576",
+      "node_type": "argument_list",
+      "text": "()",
+      "start_byte": 82,
+      "end_byte": 84,
+      "parent_id": "2__ast_915384864",
+      "children_ids": []
+    },
+    "2__ast_915384864": {
+      "node_id": "2__ast_915384864",
+      "node_type": "call_expression",
+      "text": "buf.Len()",
+      "start_byte": 75,
+      "end_byte": 84,
+      "parent_id": "2__ast_915641376",
+      "children_ids": [
+        "2__ast_915713184",
+        "2__ast_916195576"
+      ]
+    },
+    "2__ast_915641376": {
+      "node_id": "2__ast_915641376",
+      "node_type": "binary_expression",
+      "text": "len(o.msg) + buf.Len()",
+      "start_byte": 62,
+      "end_byte": 84,
+      "parent_id": "2__ast_912338992",
+      "children_ids": [
+        "2__ast_916030272",
+        "2__ast_915384864"
+      ]
+    },
+    "2__ast_912338992": {
+      "node_id": "2__ast_912338992",
+      "node_type": "expression_list",
+      "text": "len(o.msg) + buf.Len()",
+      "start_byte": 62,
+      "end_byte": 84,
+      "parent_id": "2__ast_915187792",
+      "children_ids": [
+        "2__ast_915641376"
+      ]
+    },
+    "2__ast_915187792": {
+      "node_id": "2__ast_915187792",
+      "node_type": "short_var_declaration",
+      "text": "buffered := len(o.msg) + buf.Len()",
+      "start_byte": 50,
+      "end_byte": 84,
+      "parent_id": null,
+      "children_ids": [
+        "2__ast_912338976",
+        "2__ast_912338992"
+      ]
+    },
+    "3__ast_914892512": {
+      "node_id": "3__ast_914892512",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 109,
+      "end_byte": 114,
+      "parent_id": "3__ast_916071520",
+      "children_ids": []
+    },
+    "3__ast_915251184": {
+      "node_id": "3__ast_915251184",
+      "node_type": "field_identifier",
+      "text": "Stop",
+      "start_byte": 115,
+      "end_byte": 119,
+      "parent_id": "3__ast_916071520",
+      "children_ids": []
+    },
+    "3__ast_916071520": {
+      "node_id": "3__ast_916071520",
+      "node_type": "selector_expression",
+      "text": "timer.Stop",
+      "start_byte": 109,
+      "end_byte": 119,
+      "parent_id": "3__ast_916994640",
+      "children_ids": [
+        "3__ast_914892512",
+        "3__ast_915251184"
+      ]
+    },
+    "3__ast_915810440": {
+      "node_id": "3__ast_915810440",
+      "node_type": "argument_list",
+      "text": "()",
+      "start_byte": 119,
+      "end_byte": 121,
+      "parent_id": "3__ast_916994640",
+      "children_ids": []
+    },
+    "3__ast_916994640": {
+      "node_id": "3__ast_916994640",
+      "node_type": "call_expression",
+      "text": "timer.Stop()",
+      "start_byte": 109,
+      "end_byte": 121,
+      "parent_id": "3__ast_916956656",
+      "children_ids": [
+        "3__ast_916071520",
+        "3__ast_915810440"
+      ]
+    },
+    "3__ast_916956656": {
+      "node_id": "3__ast_916956656",
+      "node_type": "unary_expression",
+      "text": "!timer.Stop()",
+      "start_byte": 108,
+      "end_byte": 121,
+      "parent_id": null,
+      "children_ids": [
+        "3__ast_916994640"
+      ]
+    },
+    "5__ast_916804736": {
+      "node_id": "5__ast_916804736",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 190,
+      "end_byte": 195,
+      "parent_id": "5__ast_916728848",
+      "children_ids": []
+    },
+    "5__ast_916195008": {
+      "node_id": "5__ast_916195008",
+      "node_type": "field_identifier",
+      "text": "C",
+      "start_byte": 196,
+      "end_byte": 197,
+      "parent_id": "5__ast_916728848",
+      "children_ids": []
+    },
+    "5__ast_916728848": {
+      "node_id": "5__ast_916728848",
+      "node_type": "selector_expression",
+      "text": "timer.C",
+      "start_byte": 190,
+      "end_byte": 197,
+      "parent_id": "5__ast_916476992",
+      "children_ids": [
+        "5__ast_916804736",
+        "5__ast_916195008"
+      ]
+    },
+    "5__ast_916476992": {
+      "node_id": "5__ast_916476992",
+      "node_type": "unary_expression",
+      "text": "<-timer.C",
+      "start_byte": 188,
+      "end_byte": 197,
+      "parent_id": "5__ast_916217032",
+      "children_ids": [
+        "5__ast_916728848"
+      ]
+    },
+    "5__ast_916217032": {
+      "node_id": "5__ast_916217032",
+      "node_type": "receive_statement",
+      "text": "<-timer.C",
+      "start_byte": 188,
+      "end_byte": 197,
+      "parent_id": "5__ast_916539984",
+      "children_ids": [
+        "5__ast_916476992"
+      ]
+    },
+    "5__ast_916539984": {
+      "node_id": "5__ast_916539984",
+      "node_type": "communication_case",
+      "text": "case <-timer.C:",
+      "start_byte": 183,
+      "end_byte": 198,
+      "parent_id": "5__ast_914930832",
+      "children_ids": [
+        "5__ast_916217032"
+      ]
+    },
+    "5__ast_916539992": {
+      "node_id": "5__ast_916539992",
+      "node_type": "default_case",
+      "text": "default:",
+      "start_byte": 223,
+      "end_byte": 231,
+      "parent_id": "5__ast_914930832",
+      "children_ids": []
+    },
+    "5__ast_914930832": {
+      "node_id": "5__ast_914930832",
+      "node_type": "select_statement",
+      "text": "select {                         case <-timer.C:                         default:                         }",
+      "start_byte": 150,
+      "end_byte": 257,
+      "parent_id": null,
+      "children_ids": [
+        "5__ast_916539984",
+        "5__ast_916539992"
+      ]
+    },
+    "8__ast_917416288": {
+      "node_id": "8__ast_917416288",
+      "node_type": "identifier",
+      "text": "delay",
+      "start_byte": 292,
+      "end_byte": 297,
+      "parent_id": "8__ast_916274496",
+      "children_ids": []
+    },
+    "8__ast_916274496": {
+      "node_id": "8__ast_916274496",
+      "node_type": "expression_list",
+      "text": "delay",
+      "start_byte": 292,
+      "end_byte": 297,
+      "parent_id": "8__ast_916366928",
+      "children_ids": [
+        "8__ast_917416288"
+      ]
+    },
+    "8__ast_917212384": {
+      "node_id": "8__ast_917212384",
+      "node_type": "identifier",
+      "text": "time",
+      "start_byte": 301,
+      "end_byte": 305,
+      "parent_id": "8__ast_912402864",
+      "children_ids": []
+    },
+    "8__ast_914289472": {
+      "node_id": "8__ast_914289472",
+      "node_type": "field_identifier",
+      "text": "Until",
+      "start_byte": 306,
+      "end_byte": 311,
+      "parent_id": "8__ast_912402864",
+      "children_ids": []
+    },
+    "8__ast_912402864": {
+      "node_id": "8__ast_912402864",
+      "node_type": "selector_expression",
+      "text": "time.Until",
+      "start_byte": 301,
+      "end_byte": 311,
+      "parent_id": "8__ast_917319488",
+      "children_ids": [
+        "8__ast_917212384",
+        "8__ast_914289472"
+      ]
+    },
+    "8__ast_917433744": {
+      "node_id": "8__ast_917433744",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 312,
+      "end_byte": 313,
+      "parent_id": "8__ast_915519280",
+      "children_ids": []
+    },
+    "8__ast_914994848": {
+      "node_id": "8__ast_914994848",
+      "node_type": "field_identifier",
+      "text": "arrivalTime",
+      "start_byte": 314,
+      "end_byte": 325,
+      "parent_id": "8__ast_915519280",
+      "children_ids": []
+    },
+    "8__ast_915519280": {
+      "node_id": "8__ast_915519280",
+      "node_type": "selector_expression",
+      "text": "o.arrivalTime",
+      "start_byte": 312,
+      "end_byte": 325,
+      "parent_id": "8__ast_917180440",
+      "children_ids": [
+        "8__ast_917433744",
+        "8__ast_914994848"
+      ]
+    },
+    "8__ast_917180440": {
+      "node_id": "8__ast_917180440",
+      "node_type": "argument_list",
+      "text": "(o.arrivalTime)",
+      "start_byte": 311,
+      "end_byte": 326,
+      "parent_id": "8__ast_917319488",
+      "children_ids": [
+        "8__ast_915519280"
+      ]
+    },
+    "8__ast_917319488": {
+      "node_id": "8__ast_917319488",
+      "node_type": "call_expression",
+      "text": "time.Until(o.arrivalTime)",
+      "start_byte": 301,
+      "end_byte": 326,
+      "parent_id": "8__ast_916274512",
+      "children_ids": [
+        "8__ast_912402864",
+        "8__ast_917180440"
+      ]
+    },
+    "8__ast_916274512": {
+      "node_id": "8__ast_916274512",
+      "node_type": "expression_list",
+      "text": "time.Until(o.arrivalTime)",
+      "start_byte": 301,
+      "end_byte": 326,
+      "parent_id": "8__ast_916366928",
+      "children_ids": [
+        "8__ast_917319488"
+      ]
+    },
+    "8__ast_916366928": {
+      "node_id": "8__ast_916366928",
+      "node_type": "short_var_declaration",
+      "text": "delay := time.Until(o.arrivalTime)",
+      "start_byte": 292,
+      "end_byte": 326,
+      "parent_id": null,
+      "children_ids": [
+        "8__ast_916274496",
+        "8__ast_916274512"
+      ]
+    },
+    "9__ast_914497808": {
+      "node_id": "9__ast_914497808",
+      "node_type": "identifier",
+      "text": "delay",
+      "start_byte": 346,
+      "end_byte": 351,
+      "parent_id": "9__ast_914488288",
+      "children_ids": []
+    },
+    "9__ast_917036800": {
+      "node_id": "9__ast_917036800",
+      "node_type": "int_literal",
+      "text": "0",
+      "start_byte": 355,
+      "end_byte": 356,
+      "parent_id": "9__ast_914488288",
+      "children_ids": []
+    },
+    "9__ast_914488288": {
+      "node_id": "9__ast_914488288",
+      "node_type": "binary_expression",
+      "text": "delay >= 0",
+      "start_byte": 346,
+      "end_byte": 356,
+      "parent_id": null,
+      "children_ids": [
+        "9__ast_914497808",
+        "9__ast_917036800"
+      ]
+    },
+    "11__ast_914433344": {
+      "node_id": "11__ast_914433344",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 383,
+      "end_byte": 388,
+      "parent_id": "11__ast_915023824",
+      "children_ids": []
+    },
+    "11__ast_914259504": {
+      "node_id": "11__ast_914259504",
+      "node_type": "field_identifier",
+      "text": "Reset",
+      "start_byte": 389,
+      "end_byte": 394,
+      "parent_id": "11__ast_915023824",
+      "children_ids": []
+    },
+    "11__ast_915023824": {
+      "node_id": "11__ast_915023824",
+      "node_type": "selector_expression",
+      "text": "timer.Reset",
+      "start_byte": 383,
+      "end_byte": 394,
+      "parent_id": "11__ast_914147200",
+      "children_ids": [
+        "11__ast_914433344",
+        "11__ast_914259504"
+      ]
+    },
+    "11__ast_917262656": {
+      "node_id": "11__ast_917262656",
+      "node_type": "identifier",
+      "text": "delay",
+      "start_byte": 395,
+      "end_byte": 400,
+      "parent_id": "11__ast_917144024",
+      "children_ids": []
+    },
+    "11__ast_917144024": {
+      "node_id": "11__ast_917144024",
+      "node_type": "argument_list",
+      "text": "(delay)",
+      "start_byte": 394,
+      "end_byte": 401,
+      "parent_id": "11__ast_914147200",
+      "children_ids": [
+        "11__ast_917262656"
+      ]
+    },
+    "11__ast_914147200": {
+      "node_id": "11__ast_914147200",
+      "node_type": "call_expression",
+      "text": "timer.Reset(delay)",
+      "start_byte": 383,
+      "end_byte": 401,
+      "parent_id": "11__ast_914800608",
+      "children_ids": [
+        "11__ast_915023824",
+        "11__ast_917144024"
+      ]
+    },
+    "11__ast_914800608": {
+      "node_id": "11__ast_914800608",
+      "node_type": "expression_statement",
+      "text": "timer.Reset(delay)",
+      "start_byte": 383,
+      "end_byte": 401,
+      "parent_id": null,
+      "children_ids": [
+        "11__ast_914147200"
+      ]
+    },
+    "12__ast_915032864": {
+      "node_id": "12__ast_915032864",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 451,
+      "end_byte": 456,
+      "parent_id": "12__ast_913798352",
+      "children_ids": []
+    },
+    "12__ast_916005952": {
+      "node_id": "12__ast_916005952",
+      "node_type": "field_identifier",
+      "text": "Reset",
+      "start_byte": 457,
+      "end_byte": 462,
+      "parent_id": "12__ast_913798352",
+      "children_ids": []
+    },
+    "12__ast_913798352": {
+      "node_id": "12__ast_913798352",
+      "node_type": "selector_expression",
+      "text": "timer.Reset",
+      "start_byte": 451,
+      "end_byte": 462,
+      "parent_id": "12__ast_917183008",
+      "children_ids": [
+        "12__ast_915032864",
+        "12__ast_916005952"
+      ]
+    },
+    "12__ast_915305392": {
+      "node_id": "12__ast_915305392",
+      "node_type": "int_literal",
+      "text": "0",
+      "start_byte": 463,
+      "end_byte": 464,
+      "parent_id": "12__ast_917145480",
+      "children_ids": []
+    },
+    "12__ast_917145480": {
+      "node_id": "12__ast_917145480",
+      "node_type": "argument_list",
+      "text": "(0)",
+      "start_byte": 462,
+      "end_byte": 465,
+      "parent_id": "12__ast_917183008",
+      "children_ids": [
+        "12__ast_915305392"
+      ]
+    },
+    "12__ast_917183008": {
+      "node_id": "12__ast_917183008",
+      "node_type": "call_expression",
+      "text": "timer.Reset(0)",
+      "start_byte": 451,
+      "end_byte": 465,
+      "parent_id": "12__ast_912682672",
+      "children_ids": [
+        "12__ast_913798352",
+        "12__ast_917145480"
+      ]
+    },
+    "12__ast_912682672": {
+      "node_id": "12__ast_912682672",
+      "node_type": "expression_statement",
+      "text": "timer.Reset(0)",
+      "start_byte": 451,
+      "end_byte": 465,
+      "parent_id": null,
+      "children_ids": [
+        "12__ast_917183008"
+      ]
+    },
+    "13__ast_914284448": {
+      "node_id": "13__ast_914284448",
+      "node_type": "identifier",
+      "text": "buffered",
+      "start_byte": 504,
+      "end_byte": 512,
+      "parent_id": "13__ast_916012240",
+      "children_ids": []
+    },
+    "13__ast_916008576": {
+      "node_id": "13__ast_916008576",
+      "node_type": "identifier",
+      "text": "bufsize",
+      "start_byte": 516,
+      "end_byte": 523,
+      "parent_id": "13__ast_916012240",
+      "children_ids": []
+    },
+    "13__ast_916012240": {
+      "node_id": "13__ast_916012240",
+      "node_type": "binary_expression",
+      "text": "buffered >= bufsize",
+      "start_byte": 504,
+      "end_byte": 523,
+      "parent_id": null,
+      "children_ids": [
+        "13__ast_914284448",
+        "13__ast_916008576"
+      ]
+    },
+    "15__ast_916431840": {
+      "node_id": "15__ast_916431840",
+      "node_type": "identifier",
+      "text": "timer",
+      "start_byte": 590,
+      "end_byte": 595,
+      "parent_id": "15__ast_914075936",
+      "children_ids": []
+    },
+    "15__ast_914071776": {
+      "node_id": "15__ast_914071776",
+      "node_type": "field_identifier",
+      "text": "C",
+      "start_byte": 596,
+      "end_byte": 597,
+      "parent_id": "15__ast_914075936",
+      "children_ids": []
+    },
+    "15__ast_914075936": {
+      "node_id": "15__ast_914075936",
+      "node_type": "selector_expression",
+      "text": "timer.C",
+      "start_byte": 590,
+      "end_byte": 597,
+      "parent_id": "15__ast_914076032",
+      "children_ids": [
+        "15__ast_916431840",
+        "15__ast_914071776"
+      ]
+    },
+    "15__ast_914076032": {
+      "node_id": "15__ast_914076032",
+      "node_type": "unary_expression",
+      "text": "<-timer.C",
+      "start_byte": 588,
+      "end_byte": 597,
+      "parent_id": "15__ast_913177032",
+      "children_ids": [
+        "15__ast_914075936"
+      ]
+    },
+    "15__ast_913177032": {
+      "node_id": "15__ast_913177032",
+      "node_type": "receive_statement",
+      "text": "<-timer.C",
+      "start_byte": 588,
+      "end_byte": 597,
+      "parent_id": "15__ast_914648912",
+      "children_ids": [
+        "15__ast_914076032"
+      ]
+    },
+    "15__ast_914648912": {
+      "node_id": "15__ast_914648912",
+      "node_type": "communication_case",
+      "text": "case <-timer.C:",
+      "start_byte": 583,
+      "end_byte": 598,
+      "parent_id": "15__ast_914649024",
+      "children_ids": [
+        "15__ast_913177032"
+      ]
+    },
+    "15__ast_914491168": {
+      "node_id": "15__ast_914491168",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 630,
+      "end_byte": 631,
+      "parent_id": "15__ast_914856064",
+      "children_ids": []
+    },
+    "15__ast_914827680": {
+      "node_id": "15__ast_914827680",
+      "node_type": "field_identifier",
+      "text": "reset",
+      "start_byte": 632,
+      "end_byte": 637,
+      "parent_id": "15__ast_914856064",
+      "children_ids": []
+    },
+    "15__ast_914856064": {
+      "node_id": "15__ast_914856064",
+      "node_type": "selector_expression",
+      "text": "s.reset",
+      "start_byte": 630,
+      "end_byte": 637,
+      "parent_id": "15__ast_914856160",
+      "children_ids": [
+        "15__ast_914491168",
+        "15__ast_914827680"
+      ]
+    },
+    "15__ast_914856160": {
+      "node_id": "15__ast_914856160",
+      "node_type": "unary_expression",
+      "text": "<-s.reset",
+      "start_byte": 628,
+      "end_byte": 637,
+      "parent_id": "15__ast_913161160",
+      "children_ids": [
+        "15__ast_914856064"
+      ]
+    },
+    "15__ast_913161160": {
+      "node_id": "15__ast_913161160",
+      "node_type": "receive_statement",
+      "text": "<-s.reset",
+      "start_byte": 628,
+      "end_byte": 637,
+      "parent_id": "15__ast_914648920",
+      "children_ids": [
+        "15__ast_914856160"
+      ]
+    },
+    "15__ast_915241936": {
+      "node_id": "15__ast_915241936",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 717,
+      "end_byte": 718,
+      "parent_id": "15__ast_915253856",
+      "children_ids": []
+    },
+    "15__ast_914758560": {
+      "node_id": "15__ast_914758560",
+      "node_type": "field_identifier",
+      "text": "reset",
+      "start_byte": 719,
+      "end_byte": 724,
+      "parent_id": "15__ast_915253856",
+      "children_ids": []
+    },
+    "15__ast_915253856": {
+      "node_id": "15__ast_915253856",
+      "node_type": "selector_expression",
+      "text": "s.reset",
+      "start_byte": 717,
+      "end_byte": 724,
+      "parent_id": "15__ast_916053880",
+      "children_ids": [
+        "15__ast_915241936",
+        "15__ast_914758560"
+      ]
+    },
+    "15__ast_915735384": {
+      "node_id": "15__ast_915735384",
+      "node_type": "field_declaration_list",
+      "text": "{}",
+      "start_byte": 734,
+      "end_byte": 736,
+      "parent_id": "15__ast_915896096",
+      "children_ids": []
+    },
+    "15__ast_915896096": {
+      "node_id": "15__ast_915896096",
+      "node_type": "struct_type",
+      "text": "struct{}",
+      "start_byte": 728,
+      "end_byte": 736,
+      "parent_id": "15__ast_915253952",
+      "children_ids": [
+        "15__ast_915735384"
+      ]
+    },
+    "15__ast_915896104": {
+      "node_id": "15__ast_915896104",
+      "node_type": "literal_value",
+      "text": "{}",
+      "start_byte": 736,
+      "end_byte": 738,
+      "parent_id": "15__ast_915253952",
+      "children_ids": []
+    },
+    "15__ast_915253952": {
+      "node_id": "15__ast_915253952",
+      "node_type": "composite_literal",
+      "text": "struct{}{}",
+      "start_byte": 728,
+      "end_byte": 738,
+      "parent_id": "15__ast_916053880",
+      "children_ids": [
+        "15__ast_915896096",
+        "15__ast_915896104"
+      ]
+    },
+    "15__ast_916053880": {
+      "node_id": "15__ast_916053880",
+      "node_type": "send_statement",
+      "text": "s.reset <- struct{}{}",
+      "start_byte": 717,
+      "end_byte": 738,
+      "parent_id": "15__ast_916513088",
+      "children_ids": [
+        "15__ast_915253856",
+        "15__ast_915253952"
+      ]
+    },
+    "15__ast_916513088": {
+      "node_id": "15__ast_916513088",
+      "node_type": "communication_case",
+      "text": "case s.reset <- struct{}{}:",
+      "start_byte": 712,
+      "end_byte": 739,
+      "parent_id": "15__ast_916841488",
+      "children_ids": [
+        "15__ast_916053880"
+      ]
+    },
+    "15__ast_916513096": {
+      "node_id": "15__ast_916513096",
+      "node_type": "default_case",
+      "text": "default:",
+      "start_byte": 772,
+      "end_byte": 780,
+      "parent_id": "15__ast_916841488",
+      "children_ids": []
+    },
+    "15__ast_916841488": {
+      "node_id": "15__ast_916841488",
+      "node_type": "select_statement",
+      "text": "select {                                 case s.reset <- struct{}{}:                                 default:                                 }",
+      "start_byte": 671,
+      "end_byte": 814,
+      "parent_id": "15__ast_914648920",
+      "children_ids": [
+        "15__ast_916513088",
+        "15__ast_916513096"
+      ]
+    },
+    "15__ast_913930112": {
+      "node_id": "15__ast_913930112",
+      "node_type": "identifier",
+      "text": "network",
+      "start_byte": 854,
+      "end_byte": 861,
+      "parent_id": "15__ast_913970272",
+      "children_ids": []
+    },
+    "15__ast_913930224": {
+      "node_id": "15__ast_913930224",
+      "node_type": "field_identifier",
+      "text": "ErrReset",
+      "start_byte": 862,
+      "end_byte": 870,
+      "parent_id": "15__ast_913970272",
+      "children_ids": []
+    },
+    "15__ast_913970272": {
+      "node_id": "15__ast_913970272",
+      "node_type": "selector_expression",
+      "text": "network.ErrReset",
+      "start_byte": 854,
+      "end_byte": 870,
+      "parent_id": "15__ast_914483352",
+      "children_ids": [
+        "15__ast_913930112",
+        "15__ast_913930224"
+      ]
+    },
+    "15__ast_914483352": {
+      "node_id": "15__ast_914483352",
+      "node_type": "expression_list",
+      "text": "network.ErrReset",
+      "start_byte": 854,
+      "end_byte": 870,
+      "parent_id": "15__ast_914592608",
+      "children_ids": [
+        "15__ast_913970272"
+      ]
+    },
+    "15__ast_914592608": {
+      "node_id": "15__ast_914592608",
+      "node_type": "return_statement",
+      "text": "return network.ErrReset",
+      "start_byte": 847,
+      "end_byte": 870,
+      "parent_id": "15__ast_914648920",
+      "children_ids": [
+        "15__ast_914483352"
+      ]
+    },
+    "15__ast_914648920": {
+      "node_id": "15__ast_914648920",
+      "node_type": "communication_case",
+      "text": "case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset",
+      "start_byte": 623,
+      "end_byte": 871,
+      "parent_id": "15__ast_914649024",
+      "children_ids": [
+        "15__ast_913161160",
+        "15__ast_916841488",
+        "15__ast_914592608"
+      ]
+    },
+    "15__ast_914649024": {
+      "node_id": "15__ast_914649024",
+      "node_type": "select_statement",
+      "text": "select {                         case <-timer.C:                         case <-s.reset:                                 select {                                 case s.reset <- struct{}{}:                                 default:                                 }                                 return network.ErrReset                         }",
+      "start_byte": 550,
+      "end_byte": 896,
+      "parent_id": null,
+      "children_ids": [
+        "15__ast_914648912",
+        "15__ast_914648920"
+      ]
+    },
+    "19__ast_915241936": {
+      "node_id": "19__ast_915241936",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 717,
+      "end_byte": 718,
+      "parent_id": "19__ast_915253856",
+      "children_ids": []
+    },
+    "19__ast_914758560": {
+      "node_id": "19__ast_914758560",
+      "node_type": "field_identifier",
+      "text": "reset",
+      "start_byte": 719,
+      "end_byte": 724,
+      "parent_id": "19__ast_915253856",
+      "children_ids": []
+    },
+    "19__ast_915253856": {
+      "node_id": "19__ast_915253856",
+      "node_type": "selector_expression",
+      "text": "s.reset",
+      "start_byte": 717,
+      "end_byte": 724,
+      "parent_id": "19__ast_916053880",
+      "children_ids": [
+        "19__ast_915241936",
+        "19__ast_914758560"
+      ]
+    },
+    "19__ast_915735384": {
+      "node_id": "19__ast_915735384",
+      "node_type": "field_declaration_list",
+      "text": "{}",
+      "start_byte": 734,
+      "end_byte": 736,
+      "parent_id": "19__ast_915896096",
+      "children_ids": []
+    },
+    "19__ast_915896096": {
+      "node_id": "19__ast_915896096",
+      "node_type": "struct_type",
+      "text": "struct{}",
+      "start_byte": 728,
+      "end_byte": 736,
+      "parent_id": "19__ast_915253952",
+      "children_ids": [
+        "19__ast_915735384"
+      ]
+    },
+    "19__ast_915896104": {
+      "node_id": "19__ast_915896104",
+      "node_type": "literal_value",
+      "text": "{}",
+      "start_byte": 736,
+      "end_byte": 738,
+      "parent_id": "19__ast_915253952",
+      "children_ids": []
+    },
+    "19__ast_915253952": {
+      "node_id": "19__ast_915253952",
+      "node_type": "composite_literal",
+      "text": "struct{}{}",
+      "start_byte": 728,
+      "end_byte": 738,
+      "parent_id": "19__ast_916053880",
+      "children_ids": [
+        "19__ast_915896096",
+        "19__ast_915896104"
+      ]
+    },
+    "19__ast_916053880": {
+      "node_id": "19__ast_916053880",
+      "node_type": "send_statement",
+      "text": "s.reset <- struct{}{}",
+      "start_byte": 717,
+      "end_byte": 738,
+      "parent_id": "19__ast_916513088",
+      "children_ids": [
+        "19__ast_915253856",
+        "19__ast_915253952"
+      ]
+    },
+    "19__ast_916513088": {
+      "node_id": "19__ast_916513088",
+      "node_type": "communication_case",
+      "text": "case s.reset <- struct{}{}:",
+      "start_byte": 712,
+      "end_byte": 739,
+      "parent_id": "19__ast_916841488",
+      "children_ids": [
+        "19__ast_916053880"
+      ]
+    },
+    "19__ast_916513096": {
+      "node_id": "19__ast_916513096",
+      "node_type": "default_case",
+      "text": "default:",
+      "start_byte": 772,
+      "end_byte": 780,
+      "parent_id": "19__ast_916841488",
+      "children_ids": []
+    },
+    "19__ast_916841488": {
+      "node_id": "19__ast_916841488",
+      "node_type": "select_statement",
+      "text": "select {                                 case s.reset <- struct{}{}:                                 default:                                 }",
+      "start_byte": 671,
+      "end_byte": 814,
+      "parent_id": null,
+      "children_ids": [
+        "19__ast_916513088",
+        "19__ast_916513096"
+      ]
+    },
+    "22__ast_913930112": {
+      "node_id": "22__ast_913930112",
+      "node_type": "identifier",
+      "text": "network",
+      "start_byte": 854,
+      "end_byte": 861,
+      "parent_id": "22__ast_913970272",
+      "children_ids": []
+    },
+    "22__ast_913930224": {
+      "node_id": "22__ast_913930224",
+      "node_type": "field_identifier",
+      "text": "ErrReset",
+      "start_byte": 862,
+      "end_byte": 870,
+      "parent_id": "22__ast_913970272",
+      "children_ids": []
+    },
+    "22__ast_913970272": {
+      "node_id": "22__ast_913970272",
+      "node_type": "selector_expression",
+      "text": "network.ErrReset",
+      "start_byte": 854,
+      "end_byte": 870,
+      "parent_id": "22__ast_914483352",
+      "children_ids": [
+        "22__ast_913930112",
+        "22__ast_913930224"
+      ]
+    },
+    "22__ast_914483352": {
+      "node_id": "22__ast_914483352",
+      "node_type": "expression_list",
+      "text": "network.ErrReset",
+      "start_byte": 854,
+      "end_byte": 870,
+      "parent_id": "22__ast_914592608",
+      "children_ids": [
+        "22__ast_913970272"
+      ]
+    },
+    "22__ast_914592608": {
+      "node_id": "22__ast_914592608",
+      "node_type": "return_statement",
+      "text": "return network.ErrReset",
+      "start_byte": 847,
+      "end_byte": 870,
+      "parent_id": null,
+      "children_ids": [
+        "22__ast_914483352"
+      ]
+    },
+    "23__ast_914623408": {
+      "node_id": "23__ast_914623408",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 924,
+      "end_byte": 927,
+      "parent_id": "23__ast_915505440",
+      "children_ids": []
+    },
+    "23__ast_915505440": {
+      "node_id": "23__ast_915505440",
+      "node_type": "expression_list",
+      "text": "err",
+      "start_byte": 924,
+      "end_byte": 927,
+      "parent_id": "23__ast_915800384",
+      "children_ids": [
+        "23__ast_914623408"
+      ]
+    },
+    "23__ast_914941216": {
+      "node_id": "23__ast_914941216",
+      "node_type": "identifier",
+      "text": "drainBuf",
+      "start_byte": 931,
+      "end_byte": 939,
+      "parent_id": "23__ast_914941120",
+      "children_ids": []
+    },
+    "23__ast_915800280": {
+      "node_id": "23__ast_915800280",
+      "node_type": "argument_list",
+      "text": "()",
+      "start_byte": 939,
+      "end_byte": 941,
+      "parent_id": "23__ast_914941120",
+      "children_ids": []
+    },
+    "23__ast_914941120": {
+      "node_id": "23__ast_914941120",
+      "node_type": "call_expression",
+      "text": "drainBuf()",
+      "start_byte": 931,
+      "end_byte": 941,
+      "parent_id": "23__ast_915505456",
+      "children_ids": [
+        "23__ast_914941216",
+        "23__ast_915800280"
+      ]
+    },
+    "23__ast_915505456": {
+      "node_id": "23__ast_915505456",
+      "node_type": "expression_list",
+      "text": "drainBuf()",
+      "start_byte": 931,
+      "end_byte": 941,
+      "parent_id": "23__ast_915800384",
+      "children_ids": [
+        "23__ast_914941120"
+      ]
+    },
+    "23__ast_915800384": {
+      "node_id": "23__ast_915800384",
+      "node_type": "short_var_declaration",
+      "text": "err := drainBuf()",
+      "start_byte": 924,
+      "end_byte": 941,
+      "parent_id": null,
+      "children_ids": [
+        "23__ast_915505440",
+        "23__ast_915505456"
+      ]
+    },
+    "24__ast_915505552": {
+      "node_id": "24__ast_915505552",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 943,
+      "end_byte": 946,
+      "parent_id": "24__ast_915971968",
+      "children_ids": []
+    },
+    "24__ast_915931792": {
+      "node_id": "24__ast_915931792",
+      "node_type": "nil",
+      "text": "nil",
+      "start_byte": 950,
+      "end_byte": 953,
+      "parent_id": "24__ast_915971968",
+      "children_ids": []
+    },
+    "24__ast_915971968": {
+      "node_id": "24__ast_915971968",
+      "node_type": "binary_expression",
+      "text": "err != nil",
+      "start_byte": 943,
+      "end_byte": 953,
+      "parent_id": null,
+      "children_ids": [
+        "24__ast_915505552",
+        "24__ast_915931792"
+      ]
+    },
+    "26__ast_916318400": {
+      "node_id": "26__ast_916318400",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 995,
+      "end_byte": 998,
+      "parent_id": "26__ast_916541112",
+      "children_ids": []
+    },
+    "26__ast_916541112": {
+      "node_id": "26__ast_916541112",
+      "node_type": "expression_list",
+      "text": "err",
+      "start_byte": 995,
+      "end_byte": 998,
+      "parent_id": "26__ast_916541216",
+      "children_ids": [
+        "26__ast_916318400"
+      ]
+    },
+    "26__ast_916541216": {
+      "node_id": "26__ast_916541216",
+      "node_type": "return_statement",
+      "text": "return err",
+      "start_byte": 988,
+      "end_byte": 998,
+      "parent_id": null,
+      "children_ids": [
+        "26__ast_916541112"
+      ]
+    },
+    "27__ast_915259760": {
+      "node_id": "27__ast_915259760",
+      "node_type": "identifier",
+      "text": "_",
+      "start_byte": 1050,
+      "end_byte": 1051,
+      "parent_id": "27__ast_913913056",
+      "children_ids": []
+    },
+    "27__ast_917031408": {
+      "node_id": "27__ast_917031408",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 1053,
+      "end_byte": 1056,
+      "parent_id": "27__ast_913913056",
+      "children_ids": []
+    },
+    "27__ast_913913056": {
+      "node_id": "27__ast_913913056",
+      "node_type": "expression_list",
+      "text": "_, err",
+      "start_byte": 1050,
+      "end_byte": 1056,
+      "parent_id": "27__ast_914068944",
+      "children_ids": [
+        "27__ast_915259760",
+        "27__ast_917031408"
+      ]
+    },
+    "27__ast_916763392": {
+      "node_id": "27__ast_916763392",
+      "node_type": "identifier",
+      "text": "s",
+      "start_byte": 1060,
+      "end_byte": 1061,
+      "parent_id": "27__ast_917402544",
+      "children_ids": []
+    },
+    "27__ast_917402656": {
+      "node_id": "27__ast_917402656",
+      "node_type": "field_identifier",
+      "text": "write",
+      "start_byte": 1062,
+      "end_byte": 1067,
+      "parent_id": "27__ast_917402544",
+      "children_ids": []
+    },
+    "27__ast_917402544": {
+      "node_id": "27__ast_917402544",
+      "node_type": "selector_expression",
+      "text": "s.write",
+      "start_byte": 1060,
+      "end_byte": 1067,
+      "parent_id": "27__ast_917414624",
+      "children_ids": [
+        "27__ast_916763392",
+        "27__ast_917402656"
+      ]
+    },
+    "27__ast_917414528": {
+      "node_id": "27__ast_917414528",
+      "node_type": "field_identifier",
+      "text": "Write",
+      "start_byte": 1068,
+      "end_byte": 1073,
+      "parent_id": "27__ast_917414624",
+      "children_ids": []
+    },
+    "27__ast_917414624": {
+      "node_id": "27__ast_917414624",
+      "node_type": "selector_expression",
+      "text": "s.write.Write",
+      "start_byte": 1060,
+      "end_byte": 1073,
+      "parent_id": "27__ast_913589008",
+      "children_ids": [
+        "27__ast_917402544",
+        "27__ast_917414528"
+      ]
+    },
+    "27__ast_913212496": {
+      "node_id": "27__ast_913212496",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 1074,
+      "end_byte": 1075,
+      "parent_id": "27__ast_913299712",
+      "children_ids": []
+    },
+    "27__ast_913733728": {
+      "node_id": "27__ast_913733728",
+      "node_type": "field_identifier",
+      "text": "msg",
+      "start_byte": 1076,
+      "end_byte": 1079,
+      "parent_id": "27__ast_913299712",
+      "children_ids": []
+    },
+    "27__ast_913299712": {
+      "node_id": "27__ast_913299712",
+      "node_type": "selector_expression",
+      "text": "o.msg",
+      "start_byte": 1074,
+      "end_byte": 1079,
+      "parent_id": "27__ast_913588904",
+      "children_ids": [
+        "27__ast_913212496",
+        "27__ast_913733728"
+      ]
+    },
+    "27__ast_913588904": {
+      "node_id": "27__ast_913588904",
+      "node_type": "argument_list",
+      "text": "(o.msg)",
+      "start_byte": 1073,
+      "end_byte": 1080,
+      "parent_id": "27__ast_913589008",
+      "children_ids": [
+        "27__ast_913299712"
+      ]
+    },
+    "27__ast_913589008": {
+      "node_id": "27__ast_913589008",
+      "node_type": "call_expression",
+      "text": "s.write.Write(o.msg)",
+      "start_byte": 1060,
+      "end_byte": 1080,
+      "parent_id": "27__ast_913913072",
+      "children_ids": [
+        "27__ast_917414624",
+        "27__ast_913588904"
+      ]
+    },
+    "27__ast_913913072": {
+      "node_id": "27__ast_913913072",
+      "node_type": "expression_list",
+      "text": "s.write.Write(o.msg)",
+      "start_byte": 1060,
+      "end_byte": 1080,
+      "parent_id": "27__ast_914068944",
+      "children_ids": [
+        "27__ast_913589008"
+      ]
+    },
+    "27__ast_914068944": {
+      "node_id": "27__ast_914068944",
+      "node_type": "short_var_declaration",
+      "text": "_, err := s.write.Write(o.msg)",
+      "start_byte": 1050,
+      "end_byte": 1080,
+      "parent_id": null,
+      "children_ids": [
+        "27__ast_913913056",
+        "27__ast_913913072"
+      ]
+    },
+    "28__ast_914155216": {
+      "node_id": "28__ast_914155216",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 1108,
+      "end_byte": 1111,
+      "parent_id": "28__ast_914328064",
+      "children_ids": []
+    },
+    "28__ast_914155312": {
+      "node_id": "28__ast_914155312",
+      "node_type": "nil",
+      "text": "nil",
+      "start_byte": 1115,
+      "end_byte": 1118,
+      "parent_id": "28__ast_914328064",
+      "children_ids": []
+    },
+    "28__ast_914328064": {
+      "node_id": "28__ast_914328064",
+      "node_type": "binary_expression",
+      "text": "err != nil",
+      "start_byte": 1108,
+      "end_byte": 1118,
+      "parent_id": null,
+      "children_ids": [
+        "28__ast_914155216",
+        "28__ast_914155312"
+      ]
+    },
+    "30__ast_915246864": {
+      "node_id": "30__ast_915246864",
+      "node_type": "identifier",
+      "text": "err",
+      "start_byte": 1160,
+      "end_byte": 1163,
+      "parent_id": "30__ast_915490456",
+      "children_ids": []
+    },
+    "30__ast_915490456": {
+      "node_id": "30__ast_915490456",
+      "node_type": "expression_list",
+      "text": "err",
+      "start_byte": 1160,
+      "end_byte": 1163,
+      "parent_id": "30__ast_915766208",
+      "children_ids": [
+        "30__ast_915246864"
+      ]
+    },
+    "30__ast_915766208": {
+      "node_id": "30__ast_915766208",
+      "node_type": "return_statement",
+      "text": "return err",
+      "start_byte": 1153,
+      "end_byte": 1163,
+      "parent_id": null,
+      "children_ids": [
+        "30__ast_915490456"
+      ]
+    },
+    "31__ast_916703552": {
+      "node_id": "31__ast_916703552",
+      "node_type": "identifier",
+      "text": "buf",
+      "start_byte": 1239,
+      "end_byte": 1242,
+      "parent_id": "31__ast_916708144",
+      "children_ids": []
+    },
+    "31__ast_916688352": {
+      "node_id": "31__ast_916688352",
+      "node_type": "field_identifier",
+      "text": "Write",
+      "start_byte": 1243,
+      "end_byte": 1248,
+      "parent_id": "31__ast_916708144",
+      "children_ids": []
+    },
+    "31__ast_916708144": {
+      "node_id": "31__ast_916708144",
+      "node_type": "selector_expression",
+      "text": "buf.Write",
+      "start_byte": 1239,
+      "end_byte": 1248,
+      "parent_id": "31__ast_915006224",
+      "children_ids": [
+        "31__ast_916703552",
+        "31__ast_916688352"
+      ]
+    },
+    "31__ast_917362096": {
+      "node_id": "31__ast_917362096",
+      "node_type": "identifier",
+      "text": "o",
+      "start_byte": 1249,
+      "end_byte": 1250,
+      "parent_id": "31__ast_914695088",
+      "children_ids": []
+    },
+    "31__ast_914694992": {
+      "node_id": "31__ast_914694992",
+      "node_type": "field_identifier",
+      "text": "msg",
+      "start_byte": 1251,
+      "end_byte": 1254,
+      "parent_id": "31__ast_914695088",
+      "children_ids": []
+    },
+    "31__ast_914695088": {
+      "node_id": "31__ast_914695088",
+      "node_type": "selector_expression",
+      "text": "o.msg",
+      "start_byte": 1249,
+      "end_byte": 1254,
+      "parent_id": "31__ast_915006120",
+      "children_ids": [
+        "31__ast_917362096",
+        "31__ast_914694992"
+      ]
+    },
+    "31__ast_915006120": {
+      "node_id": "31__ast_915006120",
+      "node_type": "argument_list",
+      "text": "(o.msg)",
+      "start_byte": 1248,
+      "end_byte": 1255,
+      "parent_id": "31__ast_915006224",
+      "children_ids": [
+        "31__ast_914695088"
+      ]
+    },
+    "31__ast_915006224": {
+      "node_id": "31__ast_915006224",
+      "node_type": "call_expression",
+      "text": "buf.Write(o.msg)",
+      "start_byte": 1239,
+      "end_byte": 1255,
+      "parent_id": "31__ast_914917392",
+      "children_ids": [
+        "31__ast_916708144",
+        "31__ast_915006120"
+      ]
+    },
+    "31__ast_914917392": {
+      "node_id": "31__ast_914917392",
+      "node_type": "expression_statement",
+      "text": "buf.Write(o.msg)",
+      "start_byte": 1239,
+      "end_byte": 1255,
+      "parent_id": null,
+      "children_ids": [
+        "31__ast_915006224"
+      ]
+    },
+    "32__ast_914656544": {
+      "node_id": "32__ast_914656544",
+      "node_type": "nil",
+      "text": "nil",
+      "start_byte": 1297,
+      "end_byte": 1300,
+      "parent_id": "32__ast_916050984",
+      "children_ids": []
+    },
+    "32__ast_916050984": {
+      "node_id": "32__ast_916050984",
+      "node_type": "expression_list",
+      "text": "nil",
+      "start_byte": 1297,
+      "end_byte": 1300,
+      "parent_id": "32__ast_914794832",
+      "children_ids": [
+        "32__ast_914656544"
+      ]
+    },
+    "32__ast_914794832": {
+      "node_id": "32__ast_914794832",
+      "node_type": "return_statement",
+      "text": "return nil",
+      "start_byte": 1290,
+      "end_byte": 1300,
+      "parent_id": null,
+      "children_ids": [
+        "32__ast_916050984"
+      ]
+    }
+  },
+  "dfg_edges": [
+    {
+      "source_id": 0,
+      "target_id": 2,
+      "variables": [
+        "buffered",
+        "o"
+      ]
+    },
+    {
+      "source_id": 2,
+      "target_id": 13,
+      "variables": [
+        "buffered"
+      ]
+    },
+    {
+      "source_id": 0,
+      "target_id": 8,
+      "variables": [
+        "delay",
+        "o"
+      ]
+    },
+    {
+      "source_id": 0,
+      "target_id": 31,
+      "variables": [
+        "o"
+      ]
+    },
+    {
+      "source_id": 8,
+      "target_id": 9,
+      "variables": [
+        "delay"
+      ]
+    },
+    {
+      "source_id": 8,
+      "target_id": 11,
+      "variables": [
+        "delay"
+      ]
+    },
+    {
+      "source_id": 23,
+      "target_id": 24,
+      "variables": [
+        "err"
+      ]
+    },
+    {
+      "source_id": 23,
+      "target_id": 26,
+      "variables": [
+        "err"
+      ]
+    },
+    {
+      "source_id": 23,
+      "target_id": 27,
+      "variables": [
+        "err"
+      ]
+    },
+    {
+      "source_id": 23,
+      "target_id": 28,
+      "variables": [
+        "err"
+      ]
+    },
+    {
+      "source_id": 23,
+      "target_id": 30,
+      "variables": [
+        "err"
+      ]
+    }
+  ]
+}
