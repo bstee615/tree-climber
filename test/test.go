@@ -6,20 +6,22 @@
 
 // Sample functions to test Go language parsing
 
-func main() {
-	result := add(5, 3)
-	fmt.Println("Result:", result)
+// func main() {
+// 	result := 5 + 3
+// 	fmt.Println("Result:", result)
 	
-	greet("World")
+// 	greet("World")
 	
-	person := Person{Name: "Alice", Age: 30}
-	person.SayHello()
-}
+// 	person := Person{Name: "Alice", Age: 30}
+// 	person.SayHello()
+// }
 
 // Simple function with parameters and return value
-// func add(a int, b int) int {
-// 	return a + b
-// }
+func add(a int, b int) int {
+	a = a + 1
+	b = a + 2
+	return a + b
+}
 
 // // Function with single parameter
 // func greet(name string) {

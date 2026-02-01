@@ -17,4 +17,4 @@ wheels/
 
 /src/tree_climber/classification/data
 /src/tree_climber/classification/checkpoint
-/
+/src/tree_climber/classification/*.json

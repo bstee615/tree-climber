@@ -105,7 +105,7 @@ def analyze_source_code(source: CodeSource, options: AnalysisOptions) -> None:
             SUPPORTED_LAYOUTS[options.layout](*visualizer_options).visualize()
 
     if not options.quiet:
-        typer.echo("✨ Analysis complete!")
+        typer.echo("Analysis complete!")
 
 
 def _parse_source_string(source_code: str, language: str) -> Tree:

@@ -13,8 +13,6 @@ def preprocess_and_save(csv_path, output_dir):
     
     df = pd.read_csv(csv_path)
     
-    df = df[24000:27000]
-        
     processed_files = []
 
     print(f"Starting embedding for {len(df)} samples...")
@@ -28,10 +26,8 @@ def preprocess_and_save(csv_path, output_dir):
             # Attach respective label (convert to tensor long)
             pyg_data.y = torch.tensor([row['label']], dtype=torch.long)
             
-            # save data using the row's id
-            file_name = f"c_data_{index}.pt"
             # save data
-            # file_name = f"c_data_{index}.pt"
+            file_name = f"go_data_{index}.pt"
             file_path = os.path.join(output_dir, file_name)
             torch.save(pyg_data, file_path)
             
@@ -43,12 +39,12 @@ def preprocess_and_save(csv_path, output_dir):
     print(f"Finished! Saved {len(processed_files)} files to {output_dir}")
 
 if __name__ == "__main__":
-    TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/cpp_train_cpg.csv"
-    # VAL_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/mul_go_val_cpg.csv"
-    # TEST_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/mul_go_test_cpg.csv"
+    TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data_mapped/mul_go_train_cpg.csv"
+    VAL_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data_mapped/mul_go_val_cpg.csv"
+    TEST_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data_mapped/mul_go_test_cpg.csv"
     TRAIN_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/train"
-    VAL_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/val"
-    TEST_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/test"
+    VAL_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/val"
+    TEST_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/test"
     preprocess_and_save(TRAIN_PATH, TRAIN_TORCH_DIR)
-    # preprocess_and_save(VAL_PATH, VAL_TORCH_DIR)
-    # preprocess_and_save(TEST_PATH, TEST_TORCH_DIR)
+    preprocess_and_save(VAL_PATH, VAL_TORCH_DIR)
+    preprocess_and_save(TEST_PATH, TEST_TORCH_DIR)

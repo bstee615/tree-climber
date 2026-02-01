@@ -3,7 +3,7 @@ from tree_sitter import Tree
 from tree_climber.ast_utils import parse_source_to_ast
 from tree_climber.cfg.builder import CFGBuilder
 from tree_climber.cfg.visitor import CFG
-from tree_climber.cli.cpg import CPG
+from tree_climber.cli.cpg_mapped import CPG
 from tree_climber.dataflow.analyses.def_use import DefUseResult, DefUseSolver
 from tree_climber.dataflow.analyses.reaching_definitions import (
     ReachingDefinitionsProblem,

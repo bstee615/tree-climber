@@ -2,6 +2,7 @@ from tree_climber.classification.helper_parser import analyze_source_code
 from tree_climber.cli.cpg import CPG
 import json
 import pandas as pd
+import re
 
 source_code = """
 int simple_sequence() {
@@ -12,40 +13,77 @@ int simple_sequence() {
 }
 """
 CPG_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data"
-TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_train.csv"
-VAL_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_val.csv"
-TEST_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_test.csv"
+TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpp_train_data.csv"
+# VAL_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_val.csv"
+# TEST_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_test.csv"
+
+def convert_destructor_to_function(code: str) -> str:
+    """
+    Convert C++ destructor definition from format:
+    'VAR1 :: ~ FUN1 ( ) { ... }'
+    to simplified format:
+    'void FUN1 ( ) { ... }' (for valid C syntax)
+    or just 'FUN1 ( ) { ... }' if add_return_type=False
+    
+    Args:
+        code: The C++ function definition string
+        
+    Returns:
+        The converted function definition string
+    """
+    # Strip leading/trailing whitespace
+    code = code.strip()
+    
+    # Pattern to match: CLASS_NAME :: ~ FUNCTION_NAME ( ) { ... }
+    # We want to remove the CLASS_NAME :: ~ part
+    pattern = r'^(\w+)\s*::\s*~\s*(\w+)\s*(.*)$'
+    match = re.match(pattern, code, re.DOTALL)
+    
+    if match:
+        # Extract function name and the rest (parameters and body)
+        function_name = match.group(2)
+        rest = match.group(3)
+        # Add void return type for valid C syntax
+        return f"void {function_name} {rest}"
+    
+    # If no match, return original code
+    return code
 
 def main():
     train_dataset = pd.read_csv(TRAIN_PATH)
-    val_dataset = pd.read_csv(VAL_PATH)
-    test_dataset = pd.read_csv(TEST_PATH)
+    # val_dataset = pd.read_csv(VAL_PATH)
+    # test_dataset = pd.read_csv(TEST_PATH)
+    
     
     for index, row in train_dataset.iterrows():
         print(row['code'])
-        cpg = analyze_source_code(row['code'], language="go")
+        input_code = convert_destructor_to_function(row['code'])
+        cpg = analyze_source_code(input_code, language="cpp")
         data = cpg.save_json()
         train_dataset.at[index, 'code'] = data
         
-    for index, row in val_dataset.iterrows():
-        cpg = analyze_source_code(row['code'], language="go")
-        data = cpg.save_json()
-        val_dataset.at[index, 'code'] = data
+    # for index, row in val_dataset.iterrows():
+    #     cpg = analyze_source_code(row['code'], language="go")
+    #     data = cpg.save_json()
+    #     val_dataset.at[index, 'code'] = data
     
-    for index, row in test_dataset.iterrows():
-        cpg = analyze_source_code(row['code'], language="go")
-        data = cpg.save_json()
-        test_dataset.at[index, 'code'] = data
+    # for index, row in test_dataset.iterrows():
+    #     cpg = analyze_source_code(row['code'], language="go")
+    #     data = cpg.save_json()
+    #     test_dataset.at[index, 'code'] = data
     
-    train_dataset.to_csv(CPG_DIR + "/mul_go_train_cpg.csv", index=False)
-    val_dataset.to_csv(CPG_DIR + "/mul_go_val_cpg.csv", index=False)
-    test_dataset.to_csv(CPG_DIR + "/mul_go_test_cpg.csv", index=False)
+    train_dataset.to_csv(CPG_DIR + "/cpp_train_cpg.csv", index=False)
+    # val_dataset.to_csv(CPG_DIR + "/mul_go_val_cpg.csv", index=False)
+    # test_dataset.to_csv(CPG_DIR + "/mul_go_test_cpg.csv", index=False)
     
     # cpg = analyze_source_code(source_code, language="go")
     # data = cpg.save_json()
     # new_cpg = CPG.load_json(data)
     # with open("output_cpg_new_c.json", "w", encoding="utf-8") as f:
     #     json.dump(new_cpg.to_dict(), f, indent=2)
+    
+    # Uncomment to run the main function
+    # main()
 
 if __name__ == "__main__":
     main()
