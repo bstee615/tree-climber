@@ -22,6 +22,18 @@ class CCFGVisitor(CFGVisitor):
     """C-specific CFG visitor implementation"""
 
     # Helper methods
+    def _find_function_declarator(self, declarator: Node) -> Optional[Node]:
+        """Find the function_declarator node, which might be nested in pointer_declarator."""
+        if declarator.type == "function_declarator":
+            return declarator
+        elif declarator.type == "pointer_declarator":
+            # Look for function_declarator in children
+            for child in declarator.children:
+                result = self._find_function_declarator(child)
+                if result:
+                    return result
+        return None
+
     def _create_condition_node(self, condition_node: Node, node_type: NodeType) -> int:
         """Create a condition/header node with proper text."""
         condition_text = get_source_text(condition_node)
@@ -161,6 +173,15 @@ class CCFGVisitor(CFGVisitor):
                 if first_entry is None:
                     first_entry = result.entry_node_id
                 last_exits = result.exit_node_ids
+            elif child.type == "ERROR":
+                # Try to find function definitions within ERROR nodes
+                # This can happen with C++ syntax parsed as C
+                for subchild in child.children:
+                    if subchild.type == "function_definition":
+                        result = self.visit(subchild)
+                        if first_entry is None:
+                            first_entry = result.entry_node_id
+                        last_exits = result.exit_node_ids
 
         assert first_entry is not None, (
             "Translation unit must have at least one entry node"
@@ -184,10 +205,16 @@ class CCFGVisitor(CFGVisitor):
         parameters = []
         closing_brace = None
 
-        # Look for identifier (function name) and parameter_list in declarator
-        function_identifier = get_required_child_by_field_name(declarator, "declarator")
+        # The declarator might be a pointer_declarator (for pointer return types)
+        # or a function_declarator directly. Find the function_declarator.
+        function_declarator = self._find_function_declarator(declarator)
+        if not function_declarator:
+            raise ValueError(f"Could not find function_declarator in {declarator.type}")
+
+        # Look for identifier (function name) and parameter_list in function_declarator
+        function_identifier = get_required_child_by_field_name(function_declarator, "declarator")
         function_name = get_source_text(function_identifier)
-        parameter_list = get_required_child_by_field_name(declarator, "parameters")
+        parameter_list = get_required_child_by_field_name(function_declarator, "parameters")
         for param in parameter_list.children:
             match param.type:
                 case "parameter_declaration":
@@ -221,7 +248,7 @@ class CCFGVisitor(CFGVisitor):
         # Create entry node with function name and parameters
         param_info = function_name
         entry_id = self.create_node(
-            NodeType.ENTRY, source_text=param_info, ast_node=declarator
+            NodeType.ENTRY, source_text=param_info, ast_node=function_identifier
         )
         self.cfg.nodes[entry_id].metadata.variable_definitions.extend(parameters)
         self.cfg.entry_node_ids.append(entry_id)
@@ -337,40 +364,60 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_for_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a for loop"""
-        # Get components via named fields
-        init_expr = get_required_child_by_field_name(node, "initializer")
-        condition_expr = get_required_child_by_field_name(node, "condition")
-        update_expr = get_required_child_by_field_name(node, "update")
+        # Get components via named fields (all parts are optional in C/C++)
+        init_expr = get_child_by_field_name(node, "initializer")
+        condition_expr = get_child_by_field_name(node, "condition")
+        update_expr = get_child_by_field_name(node, "update")
         body_stmt = get_required_child_by_field_name(node, "body")
 
-        # Create initialization node with actual initialization code
-        init_text = get_source_text(init_expr)
-        init_id = self.create_node(NodeType.STATEMENT, init_expr, init_text)
+        # Track the entry and previous node for chaining
+        entry_id = None
+        prev_id = None
 
-        # Create condition node
-        condition_text = get_source_text(condition_expr)
-        condition_id = self.create_node(
-            NodeType.LOOP_HEADER, condition_expr, condition_text
-        )
+        # Create initialization node if present
+        if init_expr:
+            init_text = get_source_text(init_expr)
+            init_id = self.create_node(NodeType.STATEMENT, init_expr, init_text)
+            entry_id = init_id
+            prev_id = init_id
 
-        # Create update node with actual update code
-        update_text = get_source_text(update_expr)
-        update_id = self.create_node(NodeType.STATEMENT, update_expr, update_text)
+        # Create condition node if present, otherwise create a simple loop header
+        if condition_expr:
+            condition_text = get_source_text(condition_expr)
+            condition_id = self.create_node(
+                NodeType.LOOP_HEADER, condition_expr, condition_text
+            )
+        else:
+            # Infinite loop (no condition)
+            condition_id = self.create_node(
+                NodeType.LOOP_HEADER, node, "for (infinite loop)"
+            )
+        
+        if entry_id is None:
+            entry_id = condition_id
+        
+        if prev_id:
+            self.cfg.add_edge(prev_id, condition_id)
+
+        # Create update node if present
+        update_id = None
+        if update_expr:
+            update_text = get_source_text(update_expr)
+            update_id = self.create_node(NodeType.STATEMENT, update_expr, update_text)
 
         # Create exit node
         exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: for loop")
 
-        # Connect init to condition
-        self.cfg.add_edge(init_id, condition_id)
+        # Set up loop context - continue goes to update (or condition if no update)
+        continue_target = update_id if update_id else condition_id
+        self.context.push_loop_context(exit_id, continue_target)
 
-        # Set up loop context
-        self.context.push_loop_context(exit_id, update_id)
+        # Process body - connects condition to body entry
+        self._create_body_node(body_stmt, condition_id, continue_target, edge_label="true")
 
-        # Process body
-        self._create_body_node(body_stmt, condition_id, update_id, edge_label="true")
-
-        # Connect update back to condition
-        self.cfg.add_edge(update_id, condition_id)
+        # If there's an update node, connect it back to condition
+        if update_id:
+            self.cfg.add_edge(update_id, condition_id)
 
         # Connect condition to exit (false branch) with "false" label
         self.cfg.add_edge(condition_id, exit_id, "false")
@@ -378,7 +425,7 @@ class CCFGVisitor(CFGVisitor):
         # Clean up loop context
         self.context.pop_loop_context()
 
-        return CFGTraversalResult(entry_node_id=init_id, exit_node_ids=[exit_id])
+        return CFGTraversalResult(entry_node_id=entry_id, exit_node_ids=[exit_id])
 
     def visit_break_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a break statement"""

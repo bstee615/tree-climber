@@ -8,7 +8,7 @@ from tree_climber.cfg.visitor import CFG, CFGVisitor
 
 def get_visitor(language: str) -> CFGVisitor:
     """Get the appropriate visitor class based on the language"""
-    if language == "c":
+    if language == "c" or language == "cpp":
         from tree_climber.cfg.languages.c import CCFGVisitor
 
         return CCFGVisitor()
