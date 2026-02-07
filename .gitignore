@@ -18,4 +18,4 @@ wheels/
 /src/tree_climber/classification/data
 /src/tree_climber/classification/checkpoint*
 /src/tree_climber/classification/*.json
-
+/src/tree_climber/cli/debug_dict.txt
