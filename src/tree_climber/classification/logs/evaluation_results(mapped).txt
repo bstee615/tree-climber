@@ -1,0 +1,38 @@
+Evaluation started on device: cuda
+Model path: ./checkpoint_mapped/best_model.pt
+Test data directory: /home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/test
+
+Number of test samples: 437
+
+Model loaded successfully
+
+============================================================
+EVALUATION RESULTS
+============================================================
+
+Test Loss: 0.5831
+
+============================================================
+PERFORMANCE METRICS
+============================================================
+Accuracy:  0.5973
+Precision: 0.5799
+Recall:    0.9106
+F1-Score:  0.7086
+
+============================================================
+CLASSIFICATION REPORT
+============================================================
+                precision    recall  f1-score   support
+
+Non-Vulnerable     0.6912    0.2327    0.3481       202
+    Vulnerable     0.5799    0.9106    0.7086       235
+
+      accuracy                         0.5973       437
+     macro avg     0.6356    0.5717    0.5284       437
+  weighted avg     0.6314    0.5973    0.5420       437
+
+============================================================
+
+
+Results saved to: ./logs/evaluation_results(mapped).txt

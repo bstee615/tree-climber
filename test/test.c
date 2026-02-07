@@ -1,68 +1,39 @@
-int foo() {
-    return 42;
+// --- FUNCTION STRUCTURE ---
+ // Function Definition with parameters and return value
+int calculateSum(int a, int b) {
+// --- OPERATORS (Arithmetic) ---
+    return a + b;
 }
 
-int test_cfg_constructs(int n) {
-    int a = 0;
-    int b = 1;
-    int c = 3;
-    int result = 1;
-    
-    /* Test conditional branching with
-    true/false labels
-    */
-    if (n <= 1) {
-        return 1;
+void printResult(double value) {
+   printf("Result: %f\n", value);
+}
+int main() {
+    // --- DATA TYPES ---
+    int myInt = 10;
+    long myLong = 100000L;
+    float myFloat = 5.5f;
+    double myDouble = 99.99;
+    char myChar = ’X’;
+    char myString[] = "Hello AST"; // String and char array
+    // Function Invocation (Call)
+    int result = calculateSum(myInt, 5);
+    // --- OPERATORS (Logic & Comparison) ---
+    int condition = (result > 10) && (myFloat < 10.0);
+    // --- CONTROL FLOW ---
+    // If-Else Statement
+    if (condition) {
+    printResult(myDouble); // Function call
     } else {
-        c = 5;
+    printResult(0.0);
     }
-
-    if (a > 10) {
-        foo();
+    // For Loop
+    for (int i = 0; i < 5; i++) {
+    myInt = myInt + 1;
     }
-    
-    c = 10;
-    
-    // Test for loop with true/false labels
-    for (int i = 2; i <= n; i++) {
-        result *= i;
+    // While Loop
+    while (myLong > 99990) {
+    myLong = myLong - 1;
     }
-    
-    // Test while loop
-    while (n > 0) {
-        n--;
-    }
-    
-    // Test do-while loop
-    do {
-        result += 1;
-        n -= 1;
-    } while (n > 0);
-    
-    // Test switch statement
-    switch (result % 3) {
-        case 0:
-            result *= 2;
-            break;
-        case 1:
-            result += 10;
-            // Fall through to case 2
-        case 2:
-            result -= 5;
-            break;
-        default:
-            result = 0;
-    }
-    
-    // Test labeled statements and goto
-    if (result > 100) {
-        goto too_large;
-    }
-    
-    result += 1;
-    
-    too_large:
-        result = 100;
-    
-    return result;
+    return 0;
 }

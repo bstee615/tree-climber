@@ -16,5 +16,6 @@ wheels/
 !test/example.c_cpg*.png
 
 /src/tree_climber/classification/data
-/src/tree_climber/classification/checkpoint
+/src/tree_climber/classification/checkpoint*
 /src/tree_climber/classification/*.json
+

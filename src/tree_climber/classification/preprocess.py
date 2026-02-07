@@ -13,14 +13,13 @@ def preprocess_and_save(csv_path, output_dir):
     
     df = pd.read_csv(csv_path)
     
-    df = df[24000:27000]
+    df = df[48000:51000]
         
     processed_files = []
 
     print(f"Starting embedding for {len(df)} samples...")
     for index, row in tqdm(df.iterrows(), total=len(df)):
         try:
-            
             cpg_json = json.loads(row['code'])
             
             pyg_data = embedder.transform(cpg_json)
@@ -43,10 +42,10 @@ def preprocess_and_save(csv_path, output_dir):
     print(f"Finished! Saved {len(processed_files)} files to {output_dir}")
 
 if __name__ == "__main__":
-    TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/cpp_train_cpg.csv"
+    TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/cpp_train_nor_cpg.csv"
     # VAL_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/mul_go_val_cpg.csv"
     # TEST_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data/mul_go_test_cpg.csv"
-    TRAIN_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/train"
+    TRAIN_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/train_cpp_nor"
     VAL_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/val"
     TEST_TORCH_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/test"
     preprocess_and_save(TRAIN_PATH, TRAIN_TORCH_DIR)

@@ -1,62 +1,49 @@
 // package main
 
-// import (
-// 	"fmt"
-// )
+// import "fmt"
 
-// Sample functions to test Go language parsing
-
-// func main() {
-// 	result := 5 + 3
-// 	fmt.Println("Result:", result)
-	
-// 	greet("World")
-	
-// 	person := Person{Name: "Alice", Age: 30}
-// 	person.SayHello()
-// }
-
-// Simple function with parameters and return value
-func add(a int, b int) int {
-	a = a + 1
-	b = a + 2
+// --- FUNCTION STRUCTURE ---
+// Function Definition with parameters and return value
+func calculateSum(a int, b int) int {
+	// --- OPERATORS (Arithmetic) ---
 	return a + b
 }
 
-// // Function with single parameter
-// func greet(name string) {
-// 	fmt.Printf("Hello, %s!\n", name)
-// }
+func printResult(value float64) {
+	fmt.Printf("Result: %f\n", value)
+}
 
-// // Struct definition
-// type Person struct {
-// 	Name string
-// 	Age  int
-// }
+func main() {
+	// --- DATA TYPES ---
+	var myInt int = 10
+	var myLong int64 = 100000
+	var myFloat float32 = 5.5
+	var myDouble float64 = 99.99
+	var myChar rune = 'X'
+	var myString string = "Hello AST" // String
 
-// // Method on struct
-// func (p Person) SayHello() {
-// 	fmt.Printf("Hi, I'm %s and I'm %d years old\n", p.Name, p.Age)
-// }
+	// Function Invocation (Call)
+	result := calculateSum(myInt, 5)
 
-// // Function with multiple return values
-// func divide(a, b float64) (float64, error) {
-// 	if b == 0 {
-// 		return 0, fmt.Errorf("division by zero")
-// 	}
-// 	return a / b, nil
-// }
+	// --- OPERATORS (Logic & Comparison) ---
+	condition := (result > 10) && (myFloat < 10.0)
 
-// // Variadic function
-// func sum(numbers ...int) int {
-// 	total := 0
-// 	for _, num := range numbers {
-// 		total += num
-// 	}
-// 	return total
-// }
+	// --- CONTROL FLOW ---
+	// If-Else Statement
+	if condition {
+		printResult(myDouble) // Function call
+	} else {
+		printResult(0.0)
+	}
 
-// // Anonymous function
-// var multiply = func(x, y int) int {
-// 	return x * y
-// }
+	// For Loop
+	for i := 0; i < 5; i++ {
+		myInt = myInt + 1
+	}
+
+	// While Loop (Go doesn't have while, use for loop)
+	for myLong > 99990 {
+		myLong = myLong - 1
+	}
+
+}

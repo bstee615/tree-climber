@@ -1,5 +1,5 @@
 """
-Control Flow Graph (CFG) Generator Framework using py-tree-sitter for C language.
+Control Flow Graph (CFG) Generator Framework using py-tree-sitter for C++ language.
 This framework uses the visitor pattern with depth-first traversal to build CFGs.
 """
 
@@ -18,15 +18,15 @@ from tree_climber.cfg.cfg_types import CFGTraversalResult, NodeType
 from tree_climber.cfg.visitor import CFGVisitor
 
 
-class CCFGVisitor(CFGVisitor):
-    """C-specific CFG visitor implementation"""
+class CppCFGVisitor(CFGVisitor):
+    """C++-specific CFG visitor implementation"""
 
     # Helper methods
     def _find_function_declarator(self, declarator: Node) -> Optional[Node]:
-        """Find the function_declarator node, which might be nested in pointer_declarator."""
+        """Find the function_declarator node, which might be nested in pointer_declarator or reference_declarator."""
         if declarator.type == "function_declarator":
             return declarator
-        elif declarator.type == "pointer_declarator":
+        elif declarator.type in ["pointer_declarator", "reference_declarator"]:
             # Look for function_declarator in children
             for child in declarator.children:
                 result = self._find_function_declarator(child)
@@ -84,7 +84,7 @@ class CCFGVisitor(CFGVisitor):
             if node.type == "call_expression":
                 identifier = None
                 for child in node.children:
-                    if child.type == "identifier":
+                    if child.type in ["identifier", "qualified_identifier", "field_expression"]:
                         assert identifier is None, (
                             "Multiple identifiers found in call expression"
                         )
@@ -129,6 +129,8 @@ class CCFGVisitor(CFGVisitor):
                         "parameter_declaration",  # Parameter declarations
                         "init_declarator",  # Variable declarations
                         "function_declarator",  # Function declarations
+                        "qualified_identifier",  # Part of namespace::identifier
+                        "field_expression",  # Part of object.field
                     ]:
                         return None
                     if node.parent.type == "assignment_expression":
@@ -152,6 +154,7 @@ class CCFGVisitor(CFGVisitor):
         non_linear_types = [
             "if_statement",
             "for_statement",
+            "for_range_loop",
             "while_statement",
             "do_statement",
             "switch_statement",
@@ -160,6 +163,8 @@ class CCFGVisitor(CFGVisitor):
             "return_statement",
             "goto_statement",
             "compound_statement",
+            "try_statement",
+            "throw_statement",
         ]
 
         # Check if node type isn't one of the non-linear types
@@ -184,8 +189,7 @@ class CCFGVisitor(CFGVisitor):
         error_text = node.text.decode()[:50] if node.text else "unknown"
         error_msg = f"ERROR: {error_text}"
         node_id = self.create_node(NodeType.STATEMENT, node, error_msg)
-        
-        
+                
         return CFGTraversalResult(entry_node_id=node_id, exit_node_ids=[node_id])
 
     def visit_translation_unit(self, node: Node) -> CFGTraversalResult:
@@ -213,7 +217,8 @@ class CCFGVisitor(CFGVisitor):
                         if first_entry is None:
                             first_entry = result.entry_node_id
                         last_exits = result.exit_node_ids
-                
+            
+
         if first_entry is None:
             # Create a placeholder entry/exit for completely unparseable code
             child_types = [child.type for child in node.children if child.is_named]
@@ -228,8 +233,7 @@ class CCFGVisitor(CFGVisitor):
             )
             self.cfg.add_edge(placeholder_entry, placeholder_exit)
             self.cfg.entry_node_ids.append(placeholder_entry)
-            self.cfg.exit_node_ids.append(placeholder_exit)
-            
+            self.cfg.exit_node_ids.append(placeholder_exit)            
             return CFGTraversalResult(
                 entry_node_id=placeholder_entry,
                 exit_node_ids=[placeholder_exit],
@@ -255,15 +259,38 @@ class CCFGVisitor(CFGVisitor):
         # or a function_declarator directly. Find the function_declarator.
         function_declarator = self._find_function_declarator(declarator)
         if not function_declarator:
-            raise ValueError(f"Could not find function_declarator in {declarator.type}")
+            # Malformed function - treat as error and create minimal CFG
+            error_msg = f"Could not find function_declarator in {declarator.type}"
+            
+            # Create minimal entry/exit nodes
+            placeholder_entry = self.create_node(
+                NodeType.ENTRY, source_text="ENTRY: Malformed function"
+            )
+            placeholder_exit = self.create_node(
+                NodeType.EXIT, source_text="EXIT: Malformed function"
+            )
+            self.cfg.add_edge(placeholder_entry, placeholder_exit)
+            self.cfg.entry_node_ids.append(placeholder_entry)
+            self.cfg.exit_node_ids.append(placeholder_exit)
+            
+            return CFGTraversalResult(entry_node_id=placeholder_entry, exit_node_ids=[placeholder_exit])
 
         # Look for identifier (function name) and parameter_list in function_declarator
         function_identifier = get_required_child_by_field_name(function_declarator, "declarator")
-        function_name = get_source_text(function_identifier)
+        
+        # Handle qualified identifiers (e.g., ClassName::FunctionName)
+        if function_identifier.type == "qualified_identifier":
+            # Get the last part (function name) from qualified identifier
+            for child in function_identifier.children:
+                if child.type == "identifier" and child != function_identifier.children[0]:
+                    function_name = get_source_text(child)
+        else:
+            function_name = get_source_text(function_identifier)
+            
         parameter_list = get_required_child_by_field_name(function_declarator, "parameters")
         for param in parameter_list.children:
             match param.type:
-                case "parameter_declaration":
+                case "parameter_declaration" | "optional_parameter_declaration":
                     # Get the declarator within the parameter
                     declarator_child = get_child_by_field_name(param, "declarator")
                     if declarator_child:
@@ -271,9 +298,9 @@ class CCFGVisitor(CFGVisitor):
                         if declarator_child.type == "identifier":
                             param_name = get_source_text(declarator_child)
                             parameters.append(param_name)
-                        # For pointer declarators
-                        elif declarator_child.type == "pointer_declarator":
-                            # Find the identifier within the pointer declarator
+                        # For pointer/reference declarators
+                        elif declarator_child.type in ["pointer_declarator", "reference_declarator"]:
+                            # Find the identifier within the declarator
                             for grandchild in declarator_child.children:
                                 if grandchild.type == "identifier":
                                     param_name = get_source_text(grandchild)
@@ -410,7 +437,7 @@ class CCFGVisitor(CFGVisitor):
 
     def visit_for_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a for loop"""
-        # Get components via named fields (all parts are optional in C/C++)
+        # Get components via named fields (all parts are optional in C++)
         init_expr = get_child_by_field_name(node, "initializer")
         condition_expr = get_child_by_field_name(node, "condition")
         update_expr = get_child_by_field_name(node, "update")
@@ -473,6 +500,44 @@ class CCFGVisitor(CFGVisitor):
 
         return CFGTraversalResult(entry_node_id=entry_id, exit_node_ids=[exit_id])
 
+    def visit_for_range_loop(self, node: Node) -> CFGTraversalResult:
+        """Visit a C++ range-based for loop (for (auto x : container))"""
+        # Get components via named fields
+        declarator = get_child_by_field_name(node, "declarator")
+        right_expr = get_child_by_field_name(node, "right")
+        body_stmt = get_required_child_by_field_name(node, "body")
+
+        # Create initialization node with range declaration
+        if declarator and right_expr:
+            init_text = f"{get_source_text(declarator)} : {get_source_text(right_expr)}"
+        else:
+            init_text = "range-based for"
+        
+        init_id = self.create_node(NodeType.STATEMENT, node, init_text)
+        
+        # Create loop header
+        loop_header_id = self.create_node(
+            NodeType.LOOP_HEADER, node, "for (range-based)"
+        )
+        self.cfg.add_edge(init_id, loop_header_id)
+
+        # Create exit node
+        exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: for range loop")
+
+        # Set up loop context
+        self.context.push_loop_context(exit_id, loop_header_id)
+
+        # Process body
+        self._create_body_node(body_stmt, loop_header_id, loop_header_id, edge_label="true")
+
+        # Connect condition to exit (false branch)
+        self.cfg.add_edge(loop_header_id, exit_id, "false")
+
+        # Clean up loop context
+        self.context.pop_loop_context()
+
+        return CFGTraversalResult(entry_node_id=init_id, exit_node_ids=[exit_id])
+
     def visit_break_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a break statement"""
         break_id = self.create_node(NodeType.BREAK, node, get_source_text(node))
@@ -527,6 +592,16 @@ class CCFGVisitor(CFGVisitor):
         return CFGTraversalResult(
             entry_node_id=return_id, exit_node_ids=[]
         )  # Return statements don't have normal successors
+
+    def visit_throw_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a throw statement (C++ exception)"""
+        throw_id = self.create_node(NodeType.STATEMENT, node, get_source_text(node))
+
+        # Throw statements terminate normal control flow
+        # In a more complete implementation, we'd track exception handlers
+        return CFGTraversalResult(
+            entry_node_id=throw_id, exit_node_ids=[]
+        )
 
     def visit_do_statement(self, node: Node) -> CFGTraversalResult:
         """Visit a do-while loop"""
@@ -715,3 +790,57 @@ class CCFGVisitor(CFGVisitor):
 
         # Goto statements don't have normal successors (control flow is transferred)
         return CFGTraversalResult(entry_node_id=goto_id, exit_node_ids=[])
+
+    def visit_try_statement(self, node: Node) -> CFGTraversalResult:
+        """Visit a try-catch statement (simplified exception handling)"""
+        # Get components via named fields
+        body_node = get_required_child_by_field_name(node, "body")
+
+        # Create try entry node
+        try_entry_id = self.create_node(NodeType.STATEMENT, source_text="TRY")
+
+        # Process try body
+        body_result = self.visit(body_node)
+        self.cfg.add_edge(try_entry_id, body_result.entry_node_id)
+
+        # Create exit node for the entire try-catch
+        try_exit_id = self.create_node(NodeType.EXIT, source_text="EXIT: try-catch")
+
+        # Connect try body exits to try exit
+        for exit_id in body_result.exit_node_ids:
+            self.cfg.add_edge(exit_id, try_exit_id)
+
+        # Process catch clauses
+        exit_nodes = [try_exit_id]
+        for child in node.children:
+            if child.type == "catch_clause":
+                catch_result = self.visit(child)
+                # Connect try entry to catch (exception path)
+                self.cfg.add_edge(try_entry_id, catch_result.entry_node_id, "exception")
+                # Connect catch exits to try exit
+                for exit_id in catch_result.exit_node_ids:
+                    self.cfg.add_edge(exit_id, try_exit_id)
+
+        return CFGTraversalResult(entry_node_id=try_entry_id, exit_node_ids=exit_nodes)
+
+    def visit_catch_clause(self, node: Node) -> CFGTraversalResult:
+        """Visit a catch clause"""
+        # Get body via named field
+        body_node = get_required_child_by_field_name(node, "body")
+
+        # Create catch node
+        catch_params = get_child_by_field_name(node, "parameters")
+        if catch_params:
+            catch_text = f"CATCH: {get_source_text(catch_params)}"
+        else:
+            catch_text = "CATCH: (...)"
+        
+        catch_id = self.create_node(NodeType.STATEMENT, source_text=catch_text)
+
+        # Process catch body
+        body_result = self.visit(body_node)
+        self.cfg.add_edge(catch_id, body_result.entry_node_id)
+
+        return CFGTraversalResult(
+            entry_node_id=catch_id, exit_node_ids=body_result.exit_node_ids
+        )

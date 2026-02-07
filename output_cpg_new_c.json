@@ -1,0 +1,267 @@
+{
+  "function_name": "FUN1",
+  "entry_node_ids": [
+    0
+  ],
+  "exit_node_ids": [
+    1
+  ],
+  "cfg_nodes": {
+    "0": {
+      "cfg_node_id": 0,
+      "node_type": "ENTRY",
+      "source_text": "FUN1",
+      "successors": [
+        2
+      ],
+      "predecessors": [],
+      "edge_labels": {},
+      "ast_root_id": "0__ast_190687952",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [
+          "VAR2",
+          "VAR3"
+        ],
+        "variable_uses": []
+      }
+    },
+    "1": {
+      "cfg_node_id": 1,
+      "node_type": "EXIT",
+      "source_text": "FUN1",
+      "successors": [],
+      "predecessors": [
+        2
+      ],
+      "edge_labels": {},
+      "ast_root_id": "1__ast_187712496",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": []
+      }
+    },
+    "2": {
+      "cfg_node_id": 2,
+      "node_type": "RETURN",
+      "source_text": "return VAR3 >= VAR2->VAR4 && VAR3 < VAR2->VAR4 + VAR2->VAR5;",
+      "successors": [
+        1
+      ],
+      "predecessors": [
+        0
+      ],
+      "edge_labels": {},
+      "ast_root_id": "2__ast_187712488",
+      "metadata": {
+        "function_calls": [],
+        "variable_definitions": [],
+        "variable_uses": [
+          "VAR3",
+          "VAR2",
+          "VAR3",
+          "VAR2",
+          "VAR2"
+        ]
+      }
+    }
+  },
+  "ast_nodes": {
+    "0__ast_190687952": {
+      "node_id": "0__ast_190687952",
+      "node_type": "identifier",
+      "text": "FUN1",
+      "start_byte": 159,
+      "end_byte": 163,
+      "parent_id": null,
+      "children_ids": []
+    },
+    "1__ast_187712496": {
+      "node_id": "1__ast_187712496",
+      "node_type": "}",
+      "text": "}",
+      "start_byte": 251,
+      "end_byte": 252,
+      "parent_id": null,
+      "children_ids": []
+    },
+    "2__ast_189408464": {
+      "node_id": "2__ast_189408464",
+      "node_type": "identifier",
+      "text": "VAR3",
+      "start_byte": 197,
+      "end_byte": 201,
+      "parent_id": "2__ast_189880112",
+      "children_ids": []
+    },
+    "2__ast_189131392": {
+      "node_id": "2__ast_189131392",
+      "node_type": "identifier",
+      "text": "VAR2",
+      "start_byte": 205,
+      "end_byte": 209,
+      "parent_id": "2__ast_189470192",
+      "children_ids": []
+    },
+    "2__ast_189356960": {
+      "node_id": "2__ast_189356960",
+      "node_type": "field_identifier",
+      "text": "VAR4",
+      "start_byte": 211,
+      "end_byte": 215,
+      "parent_id": "2__ast_189470192",
+      "children_ids": []
+    },
+    "2__ast_189470192": {
+      "node_id": "2__ast_189470192",
+      "node_type": "field_expression",
+      "text": "VAR2->VAR4",
+      "start_byte": 205,
+      "end_byte": 215,
+      "parent_id": "2__ast_189880112",
+      "children_ids": [
+        "2__ast_189131392",
+        "2__ast_189356960"
+      ]
+    },
+    "2__ast_189880112": {
+      "node_id": "2__ast_189880112",
+      "node_type": "binary_expression",
+      "text": "VAR3 >= VAR2->VAR4",
+      "start_byte": 197,
+      "end_byte": 215,
+      "parent_id": "2__ast_190423072",
+      "children_ids": [
+        "2__ast_189408464",
+        "2__ast_189470192"
+      ]
+    },
+    "2__ast_190438784": {
+      "node_id": "2__ast_190438784",
+      "node_type": "identifier",
+      "text": "VAR3",
+      "start_byte": 219,
+      "end_byte": 223,
+      "parent_id": "2__ast_189905664",
+      "children_ids": []
+    },
+    "2__ast_191078624": {
+      "node_id": "2__ast_191078624",
+      "node_type": "identifier",
+      "text": "VAR2",
+      "start_byte": 226,
+      "end_byte": 230,
+      "parent_id": "2__ast_189620608",
+      "children_ids": []
+    },
+    "2__ast_189065584": {
+      "node_id": "2__ast_189065584",
+      "node_type": "field_identifier",
+      "text": "VAR4",
+      "start_byte": 232,
+      "end_byte": 236,
+      "parent_id": "2__ast_189620608",
+      "children_ids": []
+    },
+    "2__ast_189620608": {
+      "node_id": "2__ast_189620608",
+      "node_type": "field_expression",
+      "text": "VAR2->VAR4",
+      "start_byte": 226,
+      "end_byte": 236,
+      "parent_id": "2__ast_191701648",
+      "children_ids": [
+        "2__ast_191078624",
+        "2__ast_189065584"
+      ]
+    },
+    "2__ast_190853184": {
+      "node_id": "2__ast_190853184",
+      "node_type": "identifier",
+      "text": "VAR2",
+      "start_byte": 239,
+      "end_byte": 243,
+      "parent_id": "2__ast_191181616",
+      "children_ids": []
+    },
+    "2__ast_191085184": {
+      "node_id": "2__ast_191085184",
+      "node_type": "field_identifier",
+      "text": "VAR5",
+      "start_byte": 245,
+      "end_byte": 249,
+      "parent_id": "2__ast_191181616",
+      "children_ids": []
+    },
+    "2__ast_191181616": {
+      "node_id": "2__ast_191181616",
+      "node_type": "field_expression",
+      "text": "VAR2->VAR5",
+      "start_byte": 239,
+      "end_byte": 249,
+      "parent_id": "2__ast_191701648",
+      "children_ids": [
+        "2__ast_190853184",
+        "2__ast_191085184"
+      ]
+    },
+    "2__ast_191701648": {
+      "node_id": "2__ast_191701648",
+      "node_type": "binary_expression",
+      "text": "VAR2->VAR4 + VAR2->VAR5",
+      "start_byte": 226,
+      "end_byte": 249,
+      "parent_id": "2__ast_189905664",
+      "children_ids": [
+        "2__ast_189620608",
+        "2__ast_191181616"
+      ]
+    },
+    "2__ast_189905664": {
+      "node_id": "2__ast_189905664",
+      "node_type": "binary_expression",
+      "text": "VAR3 < VAR2->VAR4 + VAR2->VAR5",
+      "start_byte": 219,
+      "end_byte": 249,
+      "parent_id": "2__ast_190423072",
+      "children_ids": [
+        "2__ast_190438784",
+        "2__ast_191701648"
+      ]
+    },
+    "2__ast_190423072": {
+      "node_id": "2__ast_190423072",
+      "node_type": "binary_expression",
+      "text": "VAR3 >= VAR2->VAR4 && VAR3 < VAR2->VAR4 + VAR2->VAR5",
+      "start_byte": 197,
+      "end_byte": 249,
+      "parent_id": "2__ast_187712488",
+      "children_ids": [
+        "2__ast_189880112",
+        "2__ast_189905664"
+      ]
+    },
+    "2__ast_187712488": {
+      "node_id": "2__ast_187712488",
+      "node_type": "return_statement",
+      "text": "return VAR3 >= VAR2->VAR4 && VAR3 < VAR2->VAR4 + VAR2->VAR5;",
+      "start_byte": 190,
+      "end_byte": 250,
+      "parent_id": null,
+      "children_ids": [
+        "2__ast_190423072"
+      ]
+    }
+  },
+  "dfg_edges": [
+    {
+      "source_id": 0,
+      "target_id": 2,
+      "variables": [
+        "VAR2",
+        "VAR3"
+      ]
+    }
+  ]
+}

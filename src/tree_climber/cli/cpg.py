@@ -210,6 +210,8 @@ class CPG:
                 for node_id, node_data in self.ast_nodes.items()
             },
             "dfg_edges": [edge.to_dict() for edge in self.dfg_edges],
+            "has_errors": self.has_errors,
+            "error_nodes": self.error_nodes,
         }
     
     @classmethod
@@ -218,6 +220,8 @@ class CPG:
         cpg.function_name = data.get("function_name")
         cpg.entry_node_ids = data.get("entry_node_ids", [])
         cpg.exit_node_ids = data.get("exit_node_ids", [])
+        cpg.has_errors = data.get("has_errors", False)
+        cpg.error_nodes = data.get("error_nodes", [])
         
         # Reconstruct CFG nodes
         for node_id_str, node_dict in data.get("cfg_nodes", {}).items():

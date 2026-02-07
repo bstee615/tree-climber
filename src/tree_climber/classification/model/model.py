@@ -7,9 +7,9 @@ from torch_geometric.nn import global_mean_pool, global_max_pool
 torch.manual_seed(2020)
 
 gated_graph_conv_args = {
-    "out_channels": 256,    # Kích thước vector ẩn sau khi đi qua GNN
-    "num_layers": 6,        # Số bước truyền tin (Message Passing)
-    "num_relations": 4      # BẮT BUỘC: Vì ta có 4 loại cạnh (CFG, DFG, AST, Link)
+    "out_channels": 256,    # hidden vector size after GNN
+    "num_layers": 6,        #  (Message Passing Steps)
+    "num_relations": 4      # Compulsory: 4 edge types (CFG, DFG, AST, Link)
 }
 
 emb_size = 768
@@ -44,12 +44,12 @@ class Conv(nn.Module):
         self.mp_2 = nn.MaxPool1d(**maxpool1d_2)
 
     def forward(self, hidden, x):
-        # hidden: đầu ra từ GNN, x: embedding gốc từ CodeBERT
+        # hidden: output of GNN, x: embedding from CodeBERT
         concat = torch.cat([hidden, x], 1)
         concat_size = hidden.shape[1] + x.shape[1]
         
-        # Reshape cho Conv1d: (batch_size, channels, length)
-        # Ở đây ta coi số lượng node là chiều dài chuỗi trong batch
+        # Reshape Conv1d: (batch_size, channels, length)
+        # Consider number of nodes is the length of the squence in batch
         concat = concat.view(-1, self.conv1d_1_args["in_channels"], concat_size)
         Z = self.mp_1(F.relu(self.conv1d_1(concat)))
         Z = self.mp_2(self.conv1d_2(Z))
@@ -69,7 +69,7 @@ class Net(nn.Module):
     def __init__(self, gated_graph_conv_args, conv_args, emb_size, device):
         super(Net, self).__init__()
         
-        # QUAN TRỌNG: Đảm bảo gated_graph_conv_args['num_relations'] = 4
+        # gated_graph_conv_args['num_relation] = 4
         # (0: CFG, 1: DFG, 2: AST, 3: Link)
         in_channels = emb_size
         out_channels = gated_graph_conv_args["out_channels"]
@@ -97,12 +97,18 @@ class Net(nn.Module):
         # edge_index: [2, num_edges]
         # edge_attr: [num_edges] (Loại cạnh)
         # batch: [num_nodes] (Chỉ số graph cho mỗi node)
-        x, edge_index, edge_type, batch = data.x, data.edge_index, data.edge_attr, data.batch
+        x, edge_index, edge_attr, batch = data.x, data.edge_index, data.edge_attr, data.batch
+        
+        # Handle graphs with no edges (empty edge_index)
+        if edge_index.numel() == 0:
+            # Create properly shaped empty edge_index [2, 0] for graphs without edges
+            edge_index = edge_index.new_empty((2, 0))
+            edge_attr = edge_attr.new_empty((0,))
         
         # Apply RGCN layers
         h = x
         for conv in self.convs:
-            h = F.relu(conv(h, edge_index, edge_type))
+            h = F.relu(conv(h, edge_index, edge_attr))
         
         # Graph-level pooling: aggregate node embeddings to graph embeddings
         # h: [num_nodes, out_channels] -> graph_emb: [batch_size, out_channels * 2]

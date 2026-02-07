@@ -140,6 +140,7 @@ class CFG:
         self._next_id = 0
         self.context = context
 
+
     def create_node(
         self,
         node_type: NodeType,

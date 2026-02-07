@@ -163,6 +163,8 @@ class CPG:
         self.exit_node_ids: List[int] = []
         self.function_name: Optional[str] = None
         self.show_only_named = show_only_named
+        self.has_errors: bool = False
+        self.error_nodes: List = []
     
     def build_from_analysis(
         self, 
@@ -173,6 +175,7 @@ class CPG:
         self.function_name = cfg.function_name
         self.entry_node_ids = cfg.entry_node_ids.copy()
         self.exit_node_ids = cfg.exit_node_ids.copy()
+        self.error_nodes = cfg.error_nodes.copy()
         
         # Build CFG nodes with AST subtrees
         for node_id, cfg_node in cfg.nodes.items():
