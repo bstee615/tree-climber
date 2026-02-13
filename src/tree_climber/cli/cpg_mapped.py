@@ -90,6 +90,73 @@ def replace_go_to_cpp(code: str) -> str:
         code = re.sub(pattern, f'{cpp_node}', code)
     return code
 
+java_to_cpp = {
+    "program": "translation_unit",
+    "class_declaration": "class_specifier",
+    "method_declaration": "function_definition",
+    "formal_parameters": "parameter_list",
+    "block": "compound_statement",
+    "local_variable_declaration": "declaration",
+    "integral_type": "primitive_type",
+    "variable_declarator": "init_declarator",
+    "try_statement": "try_statement",
+    "catch_clause": "catch_clause",
+    "catch_formal_parameter": "parameter_declaration",
+    "catch_type": "type_qualifier",
+    "field_access": "field_expression",
+    "for_statement": "for_statement",
+    "binary_expression": "binary_expression",
+    "update_expression": "update_expression",
+    "if_statement": "if_statement",
+    "parenthesized_expression": "parenthesized_expression",
+    "continue_statement": "continue_statement",
+    "else": "else_clause",
+    "expression_statement": "expression_statement",
+    "assignment_expression": "assignment_expression",
+    "method_invocation": "call_expression",
+    "string_literal": "string_literal",
+    "argument_list": "argument_list",
+    "constructor_declaration": "function_definition", # C++ coi constructor như hàm          # Root node
+
+    # --- Câu lệnh (Statements) ---
+    "return_statement": "return_statement",
+    "while_statement": "while_statement",
+    "do_statement": "do_statement",
+    "switch_statement": "switch_statement",
+    "break_statement": "break_statement",
+    "case_label": "case_statement",          # Java: case L:, C++: case L:
+
+    # --- Biểu thức (Expressions) ---
+    "object_creation_expression": "new_expression", # new Object()
+    "array_access": "subscript_expression",         # arr[i]
+    "unary_expression": "unary_expression",         # -a, !b
+    "cast_expression": "cast_expression",           # (int)a
+    "this": "this",                                 # keyword this
+
+    # --- Kiểu dữ liệu (Types) ---
+    "floating_point_type": "primitive_type", # float, double
+    "boolean_type": "primitive_type",        # boolean
+    "void_type": "primitive_type",           # void
+    "array_type": "array_declarator",        # int[] -> int[] (Lưu ý: cấu trúc cây khác nhau nhiều)
+
+    # --- Literals ---
+    "decimal_integer_literal": "number_literal",
+    "true": "true",                          # Node type là boolean_literal hoặc true
+    "false": "false",
+    "null_literal": "null",                  # hoặc nullptr trong C++ hiện đại
+    "character_literal": "char_literal",     # 'c'
+}
+
+def replace_java_to_cpp(code: str) -> str:
+    """
+    Replace Java-specific syntax elements with C++ equivalents in the source code.
+    """
+    for java_node, cpp_node in java_to_cpp.items():
+        # Regex: match Java node names and replace with C++ equivalents
+        pattern = rf'({java_node})'
+        code = re.sub(pattern, f'{cpp_node}', code)
+    return code
+
 @dataclass
 class ASTNodeData:
     
@@ -175,7 +242,6 @@ class CPG:
         self.function_name = cfg.function_name
         self.entry_node_ids = cfg.entry_node_ids.copy()
         self.exit_node_ids = cfg.exit_node_ids.copy()
-        self.error_nodes = cfg.error_nodes.copy()
         
         # Build CFG nodes with AST subtrees
         for node_id, cfg_node in cfg.nodes.items():
@@ -236,9 +302,9 @@ class CPG:
             text_str = ""
         
         # Create AST node data
-        mapped_node_type = replace_go_to_cpp(node_type)
-        with open("/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/cli/debug_dict.txt", "a") as f:
-            f.write(f"{node_type} : {mapped_node_type} \n")
+        mapped_node_type = replace_java_to_cpp(node_type)
+        # with open("/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/cli/debug_dict.txt", "a") as f:
+        #     f.write(f"{node_type} : {mapped_node_type} \n")
         ast_node_data = ASTNodeData(
             node_id=ast_node_id,
             node_type=mapped_node_type,

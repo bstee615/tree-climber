@@ -204,7 +204,7 @@ class JavaCFGVisitor(CFGVisitor):
         """Visit a method declaration"""
         # Get components via named fields
         identifier = get_required_child_by_field_name(node, "name")
-        body_node = get_required_child_by_field_name(node, "body")
+        body_node = get_child_by_field_name(node, "body")  # May be None for abstract methods
         parameters = get_child_by_field_name(node, "parameters")  # This one is correct
 
         # Extract method name
@@ -220,9 +220,10 @@ class JavaCFGVisitor(CFGVisitor):
 
         # Find closing brace in body for exit node location
         closing_brace = None
-        for child in body_node.children:
-            if child.type == "}":
-                closing_brace = child
+        if body_node:
+            for child in body_node.children:
+                if child.type == "}":
+                    closing_brace = child
 
         self.cfg.function_name = method_name
 
@@ -242,7 +243,61 @@ class JavaCFGVisitor(CFGVisitor):
         self.cfg.exit_node_ids.append(exit_id)
         self.context.push_exit(exit_id)
 
-        # Process method body
+        # Process method body (if it exists - abstract methods have no body)
+        if body_node:
+            self._create_body_node(body_node, entry_id, exit_id)
+        else:
+            # For abstract methods, just connect entry to exit
+            self.cfg.add_edge(entry_id, exit_id)
+
+        self.context.pop_entry()
+        self.context.pop_exit()
+
+        return CFGTraversalResult(entry_node_id=entry_id, exit_node_ids=[exit_id])
+
+    def visit_constructor_declaration(self, node: Node) -> CFGTraversalResult:
+        """Visit a constructor declaration"""
+        # Get components via named fields
+        identifier = get_required_child_by_field_name(node, "name")
+        body_node = get_required_child_by_field_name(node, "body")
+        parameters = get_child_by_field_name(node, "parameters")
+
+        # Extract constructor name
+        constructor_name = get_source_text(identifier)
+
+        # Extract parameters list
+        param_list = []
+        if parameters:
+            for param in parameters.children:
+                if param.type == "formal_parameter":
+                    param_identifier = get_required_child_by_field_name(param, "name")
+                    param_list.append(get_source_text(param_identifier))
+
+        # Find closing brace in body for exit node location
+        closing_brace = None
+        for child in body_node.children:
+            if child.type == "}":
+                closing_brace = child
+
+        self.cfg.function_name = constructor_name
+
+        # Create entry node with constructor name and parameters
+        entry_id = self.create_node(
+            NodeType.ENTRY, source_text=constructor_name, ast_node=identifier
+        )
+        self.cfg.nodes[entry_id].metadata.variable_definitions.extend(param_list)
+        self.cfg.entry_node_ids.append(entry_id)
+        self.context.push_entry(entry_id)
+        self.context.register_function_definition(entry_id, constructor_name)
+
+        # Create exit node
+        exit_id = self.create_node(
+            NodeType.EXIT, source_text=constructor_name, ast_node=closing_brace
+        )
+        self.cfg.exit_node_ids.append(exit_id)
+        self.context.push_exit(exit_id)
+
+        # Process constructor body
         self._create_body_node(body_node, entry_id, exit_id)
 
         self.context.pop_entry()

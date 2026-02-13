@@ -34,14 +34,14 @@ def train():
     LEARNING_RATE = 1e-4
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    MODEL_SAVE_PATH = "./checkpoint_trvd_nor/best_model.pt"
-    MODEL_SAVE_DIR = "./checkpoint_trvd_nor"
+    MODEL_SAVE_PATH = "./checkpoint_primevul/best_model.pt"
+    MODEL_SAVE_DIR = "./checkpoint_primevul"
     if not os.path.exists(MODEL_SAVE_DIR):
         os.makedirs(MODEL_SAVE_DIR)
         
-    LOG_FILE = "./logs/training_log(trvd_nor).txt"
-    TRAIN_DATA_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/train"
-    VAL_DATA_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/val"
+    LOG_FILE = "./logs/training_log(primevul).txt"
+    TRAIN_DATA_DIR = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/primevul/train"
+    VAL_DATA_DIR = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/primevul/val"
 
     # --- 2. Chuẩn bị Logging ---
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO, 

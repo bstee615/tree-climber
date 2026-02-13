@@ -1,0 +1,38 @@
+Evaluation started on device: cuda
+Model path: ./checkpoint_babel/best_model.pt
+Test data directory: /home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/babel_c/test
+
+Number of test samples: 2732
+
+Model loaded successfully
+
+============================================================
+EVALUATION RESULTS
+============================================================
+
+Test Loss: 0.6631
+
+============================================================
+PERFORMANCE METRICS
+============================================================
+Accuracy:  0.5666
+Precision: 0.5233
+Recall:    0.4725
+F1-Score:  0.4966
+
+============================================================
+CLASSIFICATION REPORT
+============================================================
+                precision    recall  f1-score   support
+
+Non-Vulnerable     0.5965    0.6444    0.6195      1496
+    Vulnerable     0.5233    0.4725    0.4966      1236
+
+      accuracy                         0.5666      2732
+     macro avg     0.5599    0.5584    0.5581      2732
+  weighted avg     0.5634    0.5666    0.5639      2732
+
+============================================================
+
+
+Results saved to: ./logs/evaluation_results(babel).txt

@@ -1,0 +1,108 @@
+Training started on device: cuda
+--- Epoch 4 Results ---
+Train Loss: 0.5361 | Val Loss: 0.5623
+Accuracy: 0.7073 | Precision: 0.8857 | Recall: 0.4921 | F1-Score: 0.6327
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.6364    0.9333    0.7568        60
+           1     0.8857    0.4921    0.6327        63
+
+    accuracy                         0.7073       123
+   macro avg     0.7610    0.7127    0.6947       123
+weighted avg     0.7641    0.7073    0.6932       123
+
+
+
+--- Epoch 5 Results ---
+Train Loss: 0.5348 | Val Loss: 0.4939
+Accuracy: 0.7724 | Precision: 0.7612 | Recall: 0.8095 | F1-Score: 0.7846
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.7857    0.7333    0.7586        60
+           1     0.7612    0.8095    0.7846        63
+
+    accuracy                         0.7724       123
+   macro avg     0.7735    0.7714    0.7716       123
+weighted avg     0.7732    0.7724    0.7719       123
+
+
+--> Best model saved with F1: 0.7846
+
+--- Epoch 6 Results ---
+Train Loss: 0.5256 | Val Loss: 0.5132
+Accuracy: 0.7398 | Precision: 0.7013 | Recall: 0.8571 | F1-Score: 0.7714
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.8043    0.6167    0.6981        60
+           1     0.7013    0.8571    0.7714        63
+
+    accuracy                         0.7398       123
+   macro avg     0.7528    0.7369    0.7348       123
+weighted avg     0.7516    0.7398    0.7357       123
+
+
+
+--- Epoch 7 Results ---
+Train Loss: 0.4786 | Val Loss: 0.5516
+Accuracy: 0.7398 | Precision: 0.8298 | Recall: 0.6190 | F1-Score: 0.7091
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.6842    0.8667    0.7647        60
+           1     0.8298    0.6190    0.7091        63
+
+    accuracy                         0.7398       123
+   macro avg     0.7570    0.7429    0.7369       123
+weighted avg     0.7588    0.7398    0.7362       123
+
+
+
+--- Epoch 8 Results ---
+Train Loss: 0.4640 | Val Loss: 0.5148
+Accuracy: 0.7561 | Precision: 0.7324 | Recall: 0.8254 | F1-Score: 0.7761
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.7885    0.6833    0.7321        60
+           1     0.7324    0.8254    0.7761        63
+
+    accuracy                         0.7561       123
+   macro avg     0.7604    0.7544    0.7541       123
+weighted avg     0.7597    0.7561    0.7547       123
+
+
+
+--- Epoch 9 Results ---
+Train Loss: 0.4601 | Val Loss: 0.4876
+Accuracy: 0.7724 | Precision: 0.7536 | Recall: 0.8254 | F1-Score: 0.7879
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.7963    0.7167    0.7544        60
+           1     0.7536    0.8254    0.7879        63
+
+    accuracy                         0.7724       123
+   macro avg     0.7750    0.7710    0.7711       123
+weighted avg     0.7744    0.7724    0.7715       123
+
+
+--> Best model saved with F1: 0.7879
+
+--- Epoch 10 Results ---
+Train Loss: 0.4569 | Val Loss: 0.4994
+Accuracy: 0.7480 | Precision: 0.7162 | Recall: 0.8413 | F1-Score: 0.7737
+Classification Report:
+              precision    recall  f1-score   support
+
+           0     0.7959    0.6500    0.7156        60
+           1     0.7162    0.8413    0.7737        63
+
+    accuracy                         0.7480       123
+   macro avg     0.7561    0.7456    0.7447       123
+weighted avg     0.7551    0.7480    0.7454       123
+
+
+Training Complete!

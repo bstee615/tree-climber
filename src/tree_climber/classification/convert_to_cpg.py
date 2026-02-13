@@ -12,10 +12,10 @@ int simple_sequence() {
     return x;
 }
 """
-CPG_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data"
-TRAIN_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/cpp(go)_train_normalized.csv"
-# VAL_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_val.csv"
-# TEST_PATH = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/mul_go_test.csv"
+CPG_DIR = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/cpg_data"
+TRAIN_PATH = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/primevul_train.csv"
+VAL_PATH = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/primevul_val.csv"
+TEST_PATH = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/primevul_test.csv"
 
 def convert_destructor_to_function(code: str) -> str:
     """
@@ -134,8 +134,8 @@ def convert_destructor_to_function(code: str) -> str:
 
 def main():
     train_dataset = pd.read_csv(TRAIN_PATH)
-    # val_dataset = pd.read_csv(VAL_PATH)
-    # test_dataset = pd.read_csv(TEST_PATH)
+    val_dataset = pd.read_csv(VAL_PATH)
+    test_dataset = pd.read_csv(TEST_PATH)
     
     
     for index, row in train_dataset.iterrows():
@@ -145,19 +145,24 @@ def main():
         data = cpg.save_json()
         train_dataset.at[index, 'code'] = data
         
-    # for index, row in val_dataset.iterrows():
-    #     cpg = analyze_source_code(row['code'], language="go")
-    #     data = cpg.save_json()
-    #     val_dataset.at[index, 'code'] = data
+    for index, row in val_dataset.iterrows():
+        print(row['code'])
+        input_code = convert_destructor_to_function(row['code'])
+        cpg = analyze_source_code(input_code, language="cpp")
+        data = cpg.save_json()
+        val_dataset.at[index, 'code'] = data
     
-    # for index, row in test_dataset.iterrows():
-    #     cpg = analyze_source_code(row['code'], language="go")
-    #     data = cpg.save_json()
-    #     test_dataset.at[index, 'code'] = data
+    for index, row in test_dataset.iterrows():
+        print(row['code'])
+        # input_code = "public class Test { " + row['code'][:-1] + " }" 
+        input_code = convert_destructor_to_function(row['code'])
+        cpg = analyze_source_code(input_code, language="java")
+        data = cpg.save_json()
+        test_dataset.at[index, 'code'] = data
     
-    train_dataset.to_csv(CPG_DIR + "/cpp(go)_train_nor_cpg.csv", index=False)
-    # val_dataset.to_csv(CPG_DIR + "/mul_go_val_cpg.csv", index=False)
-    # test_dataset.to_csv(CPG_DIR + "/mul_go_test_cpg.csv", index=False)
+    train_dataset.to_csv(CPG_DIR + "/cpp(primevul)_full_train_cpg.csv", index=False)
+    val_dataset.to_csv(CPG_DIR + "/cpp(primevul)_full_val_cpg.csv", index=False)
+    test_dataset.to_csv(CPG_DIR + "/java(primevul)_full_test_cpg.csv", index=False)
     
     # cpg = analyze_source_code(source_code, language="go")
     # data = cpg.save_json()

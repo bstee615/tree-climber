@@ -1,0 +1,8 @@
+Evaluation started on device: cuda
+Model path: ./checkpoint_primevul/best_model.pt
+Test data directory: /drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/primevul/test
+
+Number of test samples: 117
+
+Model loaded successfully
+

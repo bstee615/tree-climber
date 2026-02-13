@@ -1,0 +1,38 @@
+Evaluation started on device: cuda
+Model path: ./checkpoint_primevul/best_model.pt
+Test data directory: /drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/java_test_079(mapped)
+
+Number of test samples: 6343
+
+Model loaded successfully
+
+============================================================
+EVALUATION RESULTS
+============================================================
+
+Test Loss: 0.4875
+
+============================================================
+PERFORMANCE METRICS
+============================================================
+Accuracy:  0.7623
+Precision: 0.8286
+Recall:    0.3958
+F1-Score:  0.5357
+
+============================================================
+CLASSIFICATION REPORT
+============================================================
+                precision    recall  f1-score   support
+
+Non-Vulnerable     0.7491    0.9566    0.8402      4145
+    Vulnerable     0.8286    0.3958    0.5357      2198
+
+      accuracy                         0.7623      6343
+     macro avg     0.7888    0.6762    0.6880      6343
+  weighted avg     0.7766    0.7623    0.7347      6343
+
+============================================================
+
+
+Results saved to: ./logs/evaluation_results(primevul_079).txt

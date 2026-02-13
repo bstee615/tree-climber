@@ -30,9 +30,9 @@ def evaluate():
     BATCH_SIZE = 8
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    MODEL_PATH = "./checkpoint_trvd_nor/best_model.pt"
-    TEST_DATA_DIR = "/home/nguyenducduong/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/mapped/test"
-    LOG_FILE = "./logs/evaluation_results(trvd_nor).txt"
+    MODEL_PATH = "./checkpoint_primevul/best_model.pt"
+    TEST_DATA_DIR = "/drive1/cuongtm/hienlt/treeclimber/src/tree_climber/classification/data/torch_data/java_test_079(mapped)"
+    LOG_FILE = "./logs/evaluation_results(primevul_079).txt"
     
    
     logging.basicConfig(filename=LOG_FILE, level=logging.INFO, 

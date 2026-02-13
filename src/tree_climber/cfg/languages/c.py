@@ -192,7 +192,6 @@ class CCFGVisitor(CFGVisitor):
         """Visit the root translation unit node"""
         first_entry = None
         last_exits = None
-        has_errors = False
         
         for child in node.children:
             if child.type == "function_definition":
@@ -200,11 +199,7 @@ class CCFGVisitor(CFGVisitor):
                 if first_entry is None:
                     first_entry = result.entry_node_id
                 last_exits = result.exit_node_ids
-            elif child.type == "ERROR":
-                has_errors = True
-                error_text = child.text.decode()[:100] if child.text else "unknown"
-                error_msg = f"ERROR node in translation unit: {error_text}..."
-                
+            elif child.type == "ERROR":                
                 # Try to find function definitions within ERROR nodes recursively
                 function_defs = self._find_function_definitions_in_error(child)
                 if function_defs:
@@ -485,8 +480,6 @@ class CCFGVisitor(CFGVisitor):
             # No break target - malformed code, treat as statement
             import sys
             print(f"Warning: break statement without loop context", file=sys.stderr)
-            self.cfg.has_errors = True
-            self.cfg.error_nodes.append((break_id, "break without loop context"))
 
         # The break statement terminates the current control flow.
         # No normal successors, and an empty exit node list indicates
@@ -507,8 +500,6 @@ class CCFGVisitor(CFGVisitor):
             # No continue target - malformed code, treat as statement that doesn't continue normally
             import sys
             print(f"Warning: continue statement without loop context", file=sys.stderr)
-            self.cfg.has_errors = True
-            self.cfg.error_nodes.append((continue_id, "continue without loop context"))
 
         return CFGTraversalResult(
             entry_node_id=continue_id, exit_node_ids=[]
@@ -691,10 +682,12 @@ class CCFGVisitor(CFGVisitor):
         # Process body statement
         if body_stmt:
             body_result = self.visit(body_stmt)
-            self.cfg.add_edge(label_id, body_result.entry_node_id)
-            return CFGTraversalResult(
-                entry_node_id=label_id, exit_node_ids=body_result.exit_node_ids
-            )
+            # Check if visit returned a result (some nodes like comments return None)
+            if body_result:
+                self.cfg.add_edge(label_id, body_result.entry_node_id)
+                return CFGTraversalResult(
+                    entry_node_id=label_id, exit_node_ids=body_result.exit_node_ids
+                )
 
         return CFGTraversalResult(entry_node_id=label_id, exit_node_ids=[label_id])
 
